@@ -33,18 +33,18 @@ General layout:
 
    smashbox
    ├── bin/
-   │   └── smash*                        	: main test driver + other utilities for direct shell use
+   │   └── smash*                               : main test driver + other utilities for direct shell use
    ├── etc/				
-   │   └── smashbox.conf			: configuration file - this is also the default configuration for smashbox/bin utilities and for test-cases
+   │   └── smashbox.conf                        : configuration file - this is also the default configuration for smashbox/bin utilities and for test-cases
    ├── lib/                                     : main collection of test-cases
    │   ├── test_nplusone.py			
    │   └── ...  			        
-   ├── python/					: implementation of tools and API library for tests
+   ├── python/                                  : implementation of tools and API library for tests
    │   └── smashbox/utilities                   : here is the utilities used directly in the test-cases
-   ├── server/					: server-side procedures used in the tests
-   ├── client/					: owncloud client helpers 
-   │   └── compile-owncloud-sync-client*	: 
-   └── README					: this file
+   ├── server/                                  : server-side procedures used in the tests
+   ├── client/                                  : owncloud client helpers 
+   │   └── compile-owncloud-sync-client*        : 
+   └── README                                   : this file
    
 </pre>
 
