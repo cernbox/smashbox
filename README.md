@@ -27,7 +27,9 @@ with direct webdav access.
 Project tree
 ============
 
-General layout::
+General layout:
+
+<pre>
 
    smashbox
    ├── bin/
@@ -44,6 +46,7 @@ General layout::
    │   └── compile-owncloud-sync-client*	: 
    └── README					: this file
    
+</pre>
 
 Installation
 ============
