@@ -77,14 +77,14 @@ scenario. The test-case specifies which actions happen simultaneously.
 
 Examples:
 
-  # basic test
-  bin/smash lib/test_basicSync.py
-
-  # run a test with different paremeters
-  bin/smash -o nplusone_nfiles=10 lib/test_nplusone.py
-
-  # run all tests - print summaries only
-  bin/smash --quiet lib/test_*.py
+    # basic test
+    bin/smash lib/test_basicSync.py
+    
+    # run a test with different paremeters
+    bin/smash -o nplusone_nfiles=10 lib/test_nplusone.py
+    
+    # run all tests - print summaries only
+    bin/smash --quiet lib/test_*.py
 
 You will find main log files in ~/smashdir/log* and all temporary files and detailed logs for each test-case in ~/smashdir/<test-case>
 
@@ -132,11 +132,11 @@ In the future we would like to add other possibilities
 
 Local working directories keep temporary files, local sync folders, etc. General structure (some elements of the path may be ommited, others may be transformed)::
 
-   <smashdir>/<rundir>/<testname>
+     <smashdir>/<rundir>/<testname>
 
 Server test accounts follow this general naming scheme (some elements may be ommited, others may be transformed) ::
 
-   smash-<runid>-<collection>-<testname>
+    smash-<runid>-<collection>-<testname>
    
 
 Single test mode
@@ -144,25 +144,25 @@ Single test mode
 
 Single test modes are triggered when running individual tests::
 
-  smash smashbox/lib/test_nplusone.py
+    smash smashbox/lib/test_nplusone.py
 
 If workdir_runid_enabled option is enabled then local working directory will be everytime different (and unique)::
  
-   <runbasedir>/test_nplusone-<runid>
+    <runbasedir>/test_nplusone-<runid>
 
 The format of <runid> identifier is defined by the runid option.
 
 Otherwise the local working directory will be the same (and cleaned-up before running the test)::
 
-   <runbasedir>/test_nplusone
+    <runbasedir>/test_nplusone
 
 If oc_account_runid_enabled is enabled then the test account on the server will be everytime different (and unique)::
 
-   smash-nplusone-<runid>
+    smash-nplusone-<runid>
 
 Otherwsie the test account on the server will be everytime the same (and will be cleaned-up before running the test)::
 
-   smash-nplusone
+    smash-nplusone
 
 The account_cleanup_procedure defines how the account is cleaned-up before running the test. These procedures are defined in smashbox/python/smashbox.
 
@@ -171,23 +171,23 @@ Collection test mode (NOT YET IMPLEMENTED)
 
 Collection test mode is triggered when running one or more test collections::
 
-   smash smashbox/lib ~/mytestcollection
+    smash smashbox/lib ~/mytestcollection
 
 If workdir_runid_enabled option is enabled then local working directory for each test will be everytime different (and unique)::
 
-   <runbasedir>/<runid>/<collection>/test_nplusone
+    <runbasedir>/<runid>/<collection>/test_nplusone
 
 If workdir_runid_enabled option is disabled (None) then local working directory will be the same (and cleaned up before running the test)::
 
-   <runbasedir>/<collection>/test_nplusone
+    <runbasedir>/<collection>/test_nplusone
 
 If oc_account_runid_enabled is enabled then the test account on the server will be everytime different (and unique)::
 
-   smash-<runid>-<collection>-nplusone
+    smash-<runid>-<collection>-nplusone
 
 If oc_account_runid_enabled is disabled then the test account on the server will be the same every time (see cleanup notes above)::
 
-   smash-<collection>-nplusone
+    smash-<collection>-nplusone
 
 
 
