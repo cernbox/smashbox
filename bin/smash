@@ -1,0 +1,151 @@
+#!/usr/bin/env python
+# -*- python -*-
+#
+# The _open_SmashBox Project.
+#
+# Author: Jakub T. Moscicki, CERN, 2013
+# License: AGPL
+#
+#$Id: $
+#
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Perform internal setup of the environment.
+# This is a Copy/Paste logic which must stay in THIS file
+def standardSetup():
+   import sys, os.path
+   # insert the path to cernafs based on the relative position of this scrip inside the service directory tree
+   exeDir = os.path.abspath(os.path.normpath(os.path.dirname(sys.argv[0])))
+   pythonDir = os.path.join(os.path.dirname(exeDir), 'python' )
+   sys.path.insert(0, pythonDir)
+   import smashbox.setup
+   smashbox.setup.standardSetup(sys.argv[0]) # execute a setup hook
+
+standardSetup()
+del standardSetup
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+def main():
+   import os, os.path, sys
+   import datetime
+   import smashbox.script
+
+   parser=smashbox.script.arg_parser(description='Run the tests and smash the box')
+
+   parser.add_argument('tests', metavar='test', type=str, nargs='+',
+                      help='single test (file) or test collection (directory)')
+
+   args = parser.parse_args()
+
+   config = smashbox.script.configure(args.options)
+
+   import logging
+   logging.addLevelName(35,"INFO")
+   logging.QUIET = 35
+   
+   # in the --quiet mode we do not log INFO
+   # use log_quiet() to log in the --quiet mode
+   def log_quiet(fmt,*args, **kwds):
+       logger.log(logging.QUIET,fmt,*args,**kwds)
+   
+   if args.quiet:
+       level = logging.WARNING
+   elif args.verbose:
+       level = logging.DEBUG 
+   else:
+       level = logging.INFO
+
+   logger = smashbox.script.getLogger()
+   print "LEVEL",level
+   logger.setLevel(level)
+
+   # we will pass the loglevel to worker processes in the config
+   # object (we use leading underscore for such internal stuff)
+   config._loglevel = level
+   
+   # check for mandatory configuration 
+   if not config.oc_account_password:
+      logger.error("The oc_account_password not set in smashbox.conf")
+      sys.exit(0)
+            
+   #tests = []
+   test_mode = "single"
+
+   for t in args.tests:
+      if not os.path.exists(t):
+         logger.critical("Test target does not exist: %s (%s)",repr(t),os.path.abspath(t))
+         sys.exit(1)
+
+      if os.path.isdir(t):
+         logger.warning("Collections not supported yet... this test target will be ignored: %t",t)
+         continue #test_mode = "collection"
+
+      t = os.path.abspath(t)
+      logger.info("Test target: %s",t)
+      #tests.append(t)
+
+   logger.info("Test mode: %s",test_mode)
+
+   # handle some specific parameters
+   if not config.runid:
+      config.runid = datetime.datetime.now().strftime("%y%m%d-%H%M%S")
+
+   config.smashdir = os.path.expanduser(config.smashdir)
+
+   # note: specifying "localhost" may give you SSL problems
+   # (authentication error reported by ocsync) so we get the real
+   # hostname here
+   if config.oc_server.strip() in ['localhost', '']:
+       import socket
+       config.oc_server = socket.gethostname()
+
+   top_smash = os.path.abspath(os.path.normpath(os.path.dirname(os.path.dirname(sys.argv[0]))))
+
+   # relative paths are resolved wrt to <top_smash>
+   # absolute paths are left as-is
+   config.oc_server_tools_path = os.path.join(top_smash,config.oc_server_tools_path)
+   config.oc_sync_cmd = os.path.join(top_smash,config.oc_sync_cmd)
+   
+   def run_multiprocessing_engine(config,t):
+       import subprocess, pickle
+       cmd = ['python',os.path.join(os.path.dirname(os.path.dirname(__file__)),'python/smashbox/multiprocessing_engine.py'), t, pickle.dumps(config)]
+       p = subprocess.Popen(cmd)
+       p.communicate()
+
+
+   log_quiet('oc_server: %s',config.oc_server)
+   log_quiet('oc_ssl_enabled: %s',config.oc_ssl_enabled)
+   
+   user_defined_oc_account_name = config.oc_account_name
+
+   for t in args.tests:
+
+      workdir = None
+
+      def barename(t):
+         return os.path.splitext(os.path.basename(t))[0]
+      
+      if test_mode == "single":
+         config.rundir = os.path.join(config.smashdir, barename(t))
+         if config.workdir_runid_enabled:
+            config.rundir += '-'+str(config.runid)
+
+         if not user_defined_oc_account_name:
+            config.oc_account_name = barename(t)
+
+         if config.oc_account_runid_enabled:
+            config.oc_account_name += '-'+str(config.runid)
+
+      log_quiet('running %s in %s as %s',t,config.rundir,config.oc_account_name)
+      run_multiprocessing_engine(config,os.path.abspath(t))
+
+if __name__ == '__main__':
+   main()
+
+
+
+
+
+
+
+
