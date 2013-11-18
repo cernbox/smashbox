@@ -1,0 +1,83 @@
+#
+# The _open_SmashBox Project.
+#
+# Author: Jakub T. Moscicki, CERN, 2013
+# License: AGPL
+#
+# this is the main config file template: copy to smashbox.conf and adjust the settings
+#
+# this template should work without changes if you are running your tests directly on the owncloud application server
+#
+
+# this is the top directory where all local working files are kept (test working direcotires, test logs, test data, temporary filesets, ..)
+smashdir = "~/smashdir"
+
+# name of the account used for testing
+# if None then account name is chosen automatically (based on the test name)
+oc_account_name=None
+
+# password for test accounts: all test account will have the same password
+# if not set then it's an error
+oc_account_password=""
+
+# owncloud test server
+# if left blank or "localhost" then the real hostname of the localhost will be set
+oc_server = ''
+
+# should we use protocols with SSL (https, ownclouds)
+oc_ssl_enabled = True
+
+# how to invoke shell commands on the server
+# for localhost there is no problem - leave it blank
+# for remote host it may be set like this: "ssh -t -l root " + oc_server
+# note: configure ssh for passwordless login 
+# note: -t option is to make it possible to run sudo
+oc_server_shell_cmd = ""
+
+# Data directory on the owncloud server.
+# 
+oc_server_datadirectory = "/var/www/html/owncloud/data"
+
+# a path to server side tools (create_user.php, ...)  
+#
+# it may be specified as relative path "dir" and then resolves to
+# <smashbox>/dir where <smashbox> is the top-level of of the tree
+# containing THIS configuration file
+#
+
+oc_server_tools_path = "server-tools"
+
+# a path to ocsync command with options
+# this path should work for all client hosts
+#
+# it may be specified as relative path "dir" and then resolves to
+# <smashbox>/dir where <smashbox> is the top-level of of the tree
+# containing THIS configuration file
+#
+oc_sync_cmd = "client/build/build-ocsync-0.82.0-ssl-patch/client/ocsync -d 100 -c "
+
+# number of times to repeat ocsync run every time
+oc_sync_repeat = 1
+
+####################################
+
+# unique identifier of your test run
+# if None then the runid is chosen automatically (and stored in this variable)
+runid = None
+
+# if True then the local working directory path will have the runid added to it automatically
+workdir_runid_enabled=False
+
+# if True then the runid will be part of the oc_account_name automatically
+oc_account_runid_enabled=False
+
+####################################
+
+# this defines the default account cleanup procedure
+#   - "account_delete": delete account if exists and then create a new account with the same name
+#
+# these are not implemeted yet:
+#   - "sync_delete": delete all files via a sync run
+#   - "webdav_delete": delete all files via webdav DELETE request
+#   - "filesystem_delete": delete all files directly on the server's filesystem
+oc_account_cleanup_procedure = "account_delete"

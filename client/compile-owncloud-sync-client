@@ -1,0 +1,113 @@
+#
+# The _open_SmashBox Project.
+#
+# Author: Jakub T. Moscicki, CERN, 2013
+# License: AGPL
+#
+# this script compiles and downloads the owncloud clients automatically
+# versions are controlled by variables below
+#  - src: download sources
+#  - build: contains build directories
+#  - patches: applied patches (if any)
+
+# if a patch is applied the name of a build directory is changed to reflect that fact
+
+# offical version of the client
+# previous verions: 0.80, 1.3
+export OCSYNC=ocsync-0.90.2
+export MIRALL=mirall-1.4.1
+export DOWNLOAD_PATH=
+
+# latest development preview (with a different download path on the server)
+#export OCSYNC=ocsync-0.82.0
+#export MIRALL=mirall-1.4.0beta2
+#export DOWNLOAD_PATH=testing
+
+
+# this specifies if to apply patches
+# $PATCH is also appended to build directory name to distguish patched from vanilla builds
+#export PATCH=
+export PATCH=ssl-patch
+
+#############################################################################################
+
+# workspace is the directory where this script resides
+
+# http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
+PREFIX="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+PREFIX=`readlink -f $PREFIX` # this is to remove any symlinks that may be local (such as /b)
+
+cat << EOF
+======================================================"
+compiling owncloud client
+-------------------------
+PREFIX=$PREFIX
+PATCH=$PATCH
+OCSYNC=$OCSYNC
+MIRALL=$MIRALL
+-------------------------
+EOF
+
+cd $PREFIX
+
+# download sources if needed
+
+mkdir -p src
+
+cd src
+
+test -f ${OCSYNC}.tar.bz2 || wget http://download.owncloud.com/download/${DOWNLOAD_PATH}/${OCSYNC}.tar.bz2
+test -f ${MIRALL}.tar.bz2 || wget http://download.owncloud.com/download/${DOWNLOAD_PATH}/${MIRALL}.tar.bz2
+
+test -d ${OCSYNC} || tar fvxj ${OCSYNC}.tar.bz2 
+test -d ${MIRALL} || tar fvxj ${MIRALL}.tar.bz2 
+
+cd ..
+
+# patch sources if needed
+
+if [ $PATCH ]; then
+ echo Patching: "$PATCH"
+ cd src
+
+ # adjust source directory names
+
+ rm -rf ${OCSYNC}-${PATCH}
+ rm -rf ${MIRALL}-${PATCH}
+ mv ${OCSYNC} ${OCSYNC}-${PATCH}
+ mv ${MIRALL} ${MIRALL}-${PATCH}
+
+ # adjust build directory names
+
+ export OCSYNC=${OCSYNC}-${PATCH}
+ export MIRALL=${MIRALL}-${PATCH}
+ cd ..
+
+ # patch sources
+
+ patch --backup ${PREFIX}/src/${OCSYNC}/modules/csync_owncloud.c patches/ocsync-ssl.patch
+fi
+
+# BUILD
+
+mkdir -p build
+cd build
+
+rm -rf build-${OCSYNC}
+mkdir build-${OCSYNC}
+cd  build-${OCSYNC}
+cmake -DCMAKE_BUILD_TYPE=Debug  ${PREFIX}/src/${OCSYNC}
+make
+
+mkdir include
+cp csync_version.h include
+cp ${PREFIX}/src/${OCSYNC}/src/*.h include
+cd ..
+
+rm -rf build-${MIRALL}
+mkdir build-${MIRALL}
+cd build-${MIRALL}
+cmake -DCMAKE_BUILD_TYPE="Debug" ${PREFIX}/src/${MIRALL} -DCSYNC_BUILD_PATH=${PREFIX}/build/build-${OCSYNC} -DCSYNC_INCLUDE_PATH=${PREFIX}/build/build-${OCSYNC}/include/
+make
+
