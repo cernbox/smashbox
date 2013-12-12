@@ -1,0 +1,9 @@
+
+Tests to add
+============
+
+ - Metadata propagation of files (atime, ctime, mtime).
+ - Long paths (>255 characters nested directory tree)
+ - Complex file write/update patterns (in place, MS Office-like writes, ...)
+
+
