@@ -9,21 +9,46 @@ import time
 
 ######## TEST SETUP AND PREPARATION
 
-def reset_owncloud_account(cleanup_procedure='account_delete'):
-    """ Cleanup the current test account on the owncloud server (remote state). Run this once at the beginning of the test.
+def reset_owncloud_account(reset_procedure=None):
+    """ 
+    Prepare the test account on the owncloud server (remote state). Run this once at the beginning of the test.
+
+    The reset_procedure defines what actually happens. If not set then the config default oc_account_reset_procedure applies.
+    
+    Normally the account is deleted and recreated ('delete')
+
+    If reset_procedure is set to 'keep' than the account is not deleted, so the state from the previous run is kept.
+
     """
-    logger.info('reset_owncloud_account')    
-    delete_owncloud_account(config.oc_account_name)
+    if reset_procedure is None:
+        reset_procedure = config.oc_account_reset_procedure
+
+    logger.info('reset_owncloud_account (%s)', reset_procedure)
+
+    if reset_procedure == 'delete':
+        delete_owncloud_account(config.oc_account_name)
+
     return create_owncloud_account(config.oc_account_name,config.oc_account_password)
 
-def reset_rundir():
-    """ Cleanup the run directory for the current test (local state). Run this once at the beginning of the test.
+def reset_rundir(reset_procedure=None):
+    """ Prepare the run directory for the current test (local state). Run this once at the beginning of the test.
+
+    The reset_procedure defines what actually happens. If not set then the config default rundir_reset_procedure applies.
+
+    Normally the run directory is deleted ('delete'). To keep the local run directory intact specify "keep".
+
     """
-    
+    if reset_procedure is None:
+        reset_procedure = config.rundir_reset_procedure
+
+    logger.info('reset_rundir (%s)', reset_procedure)
+
     #assert(config.rundir)
     # that's a bit dangerous... so let's try to mitiage the risk
-    assert( os.path.realpath(config.rundir).startswith(os.path.realpath(config.smashdir)) )
-    removeTree(config.rundir)
+    
+    if reset_procedure == 'delete':
+        assert( os.path.realpath(config.rundir).startswith(os.path.realpath(config.smashdir)) )
+        removeTree(config.rundir)
 
 def make_workdir(name=None):
     """ Create a worker directory in the current run directory for the test (by default the name is derived from the worker's name). 

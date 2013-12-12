@@ -35,6 +35,8 @@ def main():
    parser.add_argument('tests', metavar='test', type=str, nargs='*',
                       help='single test (file) or test collection (directory)')
 
+   parser.add_argument('--keep', action="store_true", help='incremental test on top of existing files: keep current state of the account both locally and on the server')
+
    args = parser.parse_args()
 
    config = smashbox.script.configure(args.options)
@@ -88,6 +90,10 @@ def main():
 
    ############
    # handle specific config options
+
+   if args.keep:
+      config.oc_account_reset_procedure = 'keep'
+      config.rundir_reset_procedure = 'keep'
 
    if not config.runid:
       config.runid = datetime.datetime.now().strftime("%y%m%d-%H%M%S")

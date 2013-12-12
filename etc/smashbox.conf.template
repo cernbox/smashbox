@@ -74,10 +74,18 @@ oc_account_runid_enabled=False
 ####################################
 
 # this defines the default account cleanup procedure
-#   - "account_delete": delete account if exists and then create a new account with the same name
+#   - "delete": delete account if exists and then create a new account with the same name
+#   - "keep": don't delete existing account but create one if needed
 #
 # these are not implemeted yet:
 #   - "sync_delete": delete all files via a sync run
 #   - "webdav_delete": delete all files via webdav DELETE request
 #   - "filesystem_delete": delete all files directly on the server's filesystem
-oc_account_cleanup_procedure = "account_delete"
+oc_account_reset_procedure = "delete"
+
+# this defined the default local run directory reset procedure
+#   - "delete": delete everything in the local run directory prior to running the test
+#   - "keep": keep all files (from the previous run)
+rundir_reset_procedure = "delete"
+
+
