@@ -29,7 +29,7 @@ oc_ssl_enabled = True
 
 # how to invoke shell commands on the server
 # for localhost there is no problem - leave it blank
-# for remote host it may be set like this: "ssh -t -l root " + oc_server
+# for remote host it may be set like this: "ssh -t -l root $oc_server"
 # note: configure ssh for passwordless login 
 # note: -t option is to make it possible to run sudo
 oc_server_shell_cmd = ""

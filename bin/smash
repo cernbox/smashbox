@@ -32,7 +32,7 @@ def main():
 
    parser=smashbox.script.arg_parser(description='Run the tests and smash the box')
 
-   parser.add_argument('tests', metavar='test', type=str, nargs='+',
+   parser.add_argument('tests', metavar='test', type=str, nargs='*',
                       help='single test (file) or test collection (directory)')
 
    args = parser.parse_args()
@@ -86,7 +86,9 @@ def main():
 
    logger.info("Test mode: %s",test_mode)
 
-   # handle some specific parameters
+   ############
+   # handle specific config options
+
    if not config.runid:
       config.runid = datetime.datetime.now().strftime("%y%m%d-%H%M%S")
 
@@ -105,7 +107,26 @@ def main():
    # absolute paths are left as-is
    config.oc_server_tools_path = os.path.join(top_smash,config.oc_server_tools_path)
    config.oc_sync_cmd = os.path.join(top_smash,config.oc_sync_cmd)
+
+   import string
+
+   try:
+      config.oc_server_shell_cmd = string.Template(config.oc_server_shell_cmd).substitute({'oc_server':config.oc_server})
+   except ValueError,x:
+      logger.critical('Malformed options oc_server_shell_cmd: %s %s'%(repr(config.oc_server_shell_cmd),repr(x)))
+      sys.exit(1)
+
+   #
+   ###########
    
+   if args.dry_run:
+      log_quiet('*** DRY RUN ***')
+      smashbox.script.config_log(logging.INFO)
+
+   if not args.tests:
+      logger.warning("No tests specified to run...")
+      sys.exit(1)
+
    def run_multiprocessing_engine(config,t):
        import subprocess, pickle
        cmd = ['python',os.path.join(os.path.dirname(os.path.dirname(__file__)),'python/smashbox/multiprocessing_engine.py'), t, pickle.dumps(config)]
@@ -137,7 +158,13 @@ def main():
             config.oc_account_name += '-'+str(config.runid)
 
       log_quiet('running %s in %s as %s',t,config.rundir,config.oc_account_name)
-      run_multiprocessing_engine(config,os.path.abspath(t))
+
+      if not args.dry_run:
+         run_multiprocessing_engine(config,os.path.abspath(t))
+
+
+   if args.dry_run:
+      log_quiet('*** DRY RUN ***')
 
 if __name__ == '__main__':
    main()
