@@ -5,5 +5,8 @@ Tests to add
  - Metadata propagation of files (atime, ctime, mtime).
  - Long paths (>255 characters nested directory tree)
  - Complex file write/update patterns (in place, MS Office-like writes, ...)
+ - Raname an existing synced file into a directory with the same name...
+ - distaster recovery: roll back database to previous version (old etag may reapper for a file modified on the server => what will happen to a client which has not yet synced and has the old etag locally?)
+
 
 
