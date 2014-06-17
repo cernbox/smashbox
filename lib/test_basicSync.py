@@ -42,12 +42,16 @@ def creator(step):
     createfile(os.path.join(d,'TEST_FILE_DELETED_WINNER.dat'),'0',count=1000,bs=filesizeKB)
     createfile(os.path.join(d,'TEST_FILE_DELETED_BOTH.dat'),'0',count=1000,bs=filesizeKB)
     
+    list_files(d)
     run_ocsync(d)
+    list_files(d)
 
     step(7,'download the repository')
     run_ocsync(d)
 
-    final_check(d)
+    step(8,'final check')
+    final_check(d,expected_conflict=False)
+
 
 @add_worker
 def winner(step):
@@ -70,7 +74,9 @@ def winner(step):
 
     run_ocsync(d,N=3)
 
-    final_check(d)
+    step(8,'final check')
+    final_check(d,expected_conflict=False)
+
 
 # this is the loser which lost it's local state db after initial sync
 
@@ -101,19 +107,45 @@ def loser(step):
     step(6,'final sync')
     run_ocsync(d)
 
-    final_check(d)
+    step(8,'final check')
+    final_check(d,expected_conflict=True)
 
 @add_worker
 def checker(step):
     
     step(7,'download the repository for final verification')
     d = make_workdir()
-    run_ocsync(d)
+    run_ocsync(d,N=3)
+
+    step(8,'final check')
+    final_check(d,expected_conflict=False)
+
+
+# Note: in 1.6 client conflict files are excluded by default - so they should be never propagated to the server
+def final_check(d,expected_conflict):
+    import glob
+
+    list_files(d)
     
-    final_check(d)
+    conflict_files = glob.glob(os.path.join(d,'*_conflict-*-*'))
+    deleted_files = glob.glob(os.path.join(d,'*_DELETED*'))
 
+    logger.debug('conflict files in %s: %s',d,conflict_files)
+    logger.debug('deleted files in %s: %s',d,deleted_files)
 
-def final_check(d):
+    
+    if not rmLocalStateDB:
+        error_check(implies(expected_conflict,len(conflict_files)==1), "we expect exactly one conflict file, got %d conflict files"%len(conflict_files) )
+        error_check(implies(not expected_conflict,len(conflict_files)==0), "we expect exactly NO conflict files, got %d conflict files"%len(conflict_files) )
+
+        for fn in conflict_files:
+            error_check('_BOTH' in fn, """only files modified in BOTH workers have a conflict -  all other files should be conflict-free""")  
+
+        error_check(len(deleted_files) == 0, 'deleted files should not be there normally')
+    else:
+        pass
+
+def final_check_1_5(d): # this logic applies for 1.5.x client and owncloud server...
     """ Final verification: all local sync folders should look the same. We expect conflicts and handling of deleted files depending on the rmLocalStateDB option. See code for details.
     """
     import glob
