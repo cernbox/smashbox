@@ -27,8 +27,12 @@ def reset_owncloud_account(reset_procedure=None):
 
     if reset_procedure == 'delete':
         delete_owncloud_account(config.oc_account_name)
+        return create_owncloud_account(config.oc_account_name,config.oc_account_password)
 
-    return create_owncloud_account(config.oc_account_name,config.oc_account_password)
+    if reset_procedure == 'webdav_delete':
+        webdav_delete('/') # delete the complete webdav endpoint associated with the remote account
+        webdav_delete('/') # FIXME: workaround current bug in EOS (https://savannah.cern.ch/bugs/index.php?104661) 
+        webdav_mkcol('/') # and recreate it...
 
 def reset_rundir(reset_procedure=None):
     """ Prepare the run directory for the current test (local state). Run this once at the beginning of the test.
@@ -84,6 +88,9 @@ def oc_webdav_url(protocol='http',remote_folder=""):
   if config.oc_ssl_enabled:
       protocol += 's'
 
+      
+  remote_folder = remote_folder.lstrip('/') # strip-off any leading / characters to prevent 1) abspath result from the join below, 2) double // and alike...
+
   remote_path = os.path.join(config.oc_webdav_endpoint,remote_folder)
 
   #remote_path = os.path.join('owncloud/remote.php/webdav',remote_folder)  # this is for standard owncloud 
@@ -104,18 +111,26 @@ def run_ocsync(local_folder,remote_folder="",N=None):
     if N is None:
         N = config.oc_sync_repeat
 
+    local_folder += '/' #FIXME: HACK - is a trailing slash really needed by 1.6 owncloudcmd client?
+
     for i in range(N):
         t0 = datetime.datetime.now()
-        cmd = config.oc_sync_cmd+' '+local_folder+' '+oc_webdav_url('owncloud',remote_folder)+" >> "+ config.rundir+"/%s-ocsync.step%02d.cnt%03d.log 2>&1"%(reflection.getProcessName(),reflection.getCurrentStep(),ocsync_cnt)
+        cmd = config.oc_sync_cmd+' '+local_folder+' '+oc_webdav_url('owncloud',remote_folder)+" >> "+ config.rundir+"/%s-ocsync.step%02d.cnt%03d.log 2>&1"%(reflection.getProcessName(),reflection.getCurrentStep(),i)
         runcmd(cmd,ignore_exitcode=True) # exitcode of ocsync is not reliable
         logger.info('sync finished: %s',datetime.datetime.now()-t0)
         ocsync_cnt+=1
 
 
 
-def list_webdav_propfind(path):
+def webdav_propfind_ls(path):
     runcmd('curl -s -k -XPROPFIND %s | xmllint --format -'%oc_webdav_url(remote_folder=path))
 
+def webdav_delete(path):
+    runcmd('curl -k -X DELETE %s '%oc_webdav_url(remote_folder=path))
+
+def webdav_mkcol(path):
+    runcmd('curl -k -X MKCOL %s '%oc_webdav_url(remote_folder=path))
+                   
 
 ##### SHELL COMMANDS AND TIME FUNCTIONS
         
@@ -219,6 +234,11 @@ def get_md5_versions_on_server(fn):
         #log(result[-1])
 
     return result
+
+####### LOGIC OPERANDS  ############
+
+def implies(p,q):
+    return not p or q;
 
 ####### ERROR REPORTING ############
 
