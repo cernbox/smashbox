@@ -84,7 +84,10 @@ def oc_webdav_url(protocol='http',remote_folder=""):
   if config.oc_ssl_enabled:
       protocol += 's'
 
-  remote_path = os.path.join('owncloud/remote.php/webdav',remote_folder)
+  remote_path = os.path.join(config.oc_webdav_endpoint,remote_folder)
+
+  #remote_path = os.path.join('owncloud/remote.php/webdav',remote_folder)  # this is for standard owncloud 
+
   return protocol+('://%(oc_account_name)s:%(oc_account_password)s@%(oc_server)s/'%config)+remote_path
 
 
