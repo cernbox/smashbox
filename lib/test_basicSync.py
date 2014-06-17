@@ -89,7 +89,7 @@ def loser(step):
     removeFile(os.path.join(d,'TEST_FILE_DELETED_LOSER.dat'))
     removeFile(os.path.join(d,'TEST_FILE_DELETED_BOTH.dat'))
 
-    createfile(os.path.join(d,'TEST_FILE_MODIFIED_LOSER.dat'),'1',count=1000,bs=filesizeKB)
+    createfile(os.path.join(d,'TEST_FILE_MODIFIED_LOSER.dat'),'2',count=1000,bs=filesizeKB)
     createfile(os.path.join(d,'TEST_FILE_MODIFIED_BOTH.dat'),'2',count=1000,bs=filesizeKB)
 
     # remove the sync db
