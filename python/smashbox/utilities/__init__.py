@@ -98,9 +98,8 @@ def oc_webdav_url(protocol='http',remote_folder=""):
   return protocol+('://%(oc_account_name)s:%(oc_account_password)s@%(oc_server)s/'%config)+remote_path
 
 
-# this is a local variable for each worker
-ocsync_cnt = 0
-
+# this is a local variable for each worker that keeps track of the repeat count for the current step
+ocsync_cnt = {}
 
 def run_ocsync(local_folder,remote_folder="",N=None):
     """ Run the ocsync for local_folder against remote_folder (or the main folder on the owncloud account if remote_folder is None).
@@ -111,14 +110,18 @@ def run_ocsync(local_folder,remote_folder="",N=None):
     if N is None:
         N = config.oc_sync_repeat
 
+    current_step = reflection.getCurrentStep()
+
+    ocsync_cnt.setdefault(current_step,0)
+
     local_folder += '/' #FIXME: HACK - is a trailing slash really needed by 1.6 owncloudcmd client?
 
     for i in range(N):
         t0 = datetime.datetime.now()
-        cmd = config.oc_sync_cmd+' '+local_folder+' '+oc_webdav_url('owncloud',remote_folder)+" >> "+ config.rundir+"/%s-ocsync.step%02d.cnt%03d.log 2>&1"%(reflection.getProcessName(),reflection.getCurrentStep(),i)
+        cmd = config.oc_sync_cmd+' '+local_folder+' '+oc_webdav_url('owncloud',remote_folder)+" >> "+ config.rundir+"/%s-ocsync.step%02d.cnt%03d.log 2>&1"%(reflection.getProcessName(),current_step,ocsync_cnt[current_step])
         runcmd(cmd,ignore_exitcode=True) # exitcode of ocsync is not reliable
         logger.info('sync finished: %s',datetime.datetime.now()-t0)
-        ocsync_cnt+=1
+        ocsync_cnt[current_step]+=1
 
 
 
@@ -134,10 +137,10 @@ def webdav_mkcol(path):
 
 ##### SHELL COMMANDS AND TIME FUNCTIONS
         
-def runcmd(cmd,ignore_exitcode=False,echo=True,allow_stderr=True):
+def runcmd(cmd,ignore_exitcode=False,echo=True,allow_stderr=True,shell=True):
     logger.info('running %s',repr(cmd))
 
-    process=subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    process=subprocess.Popen(cmd,shell=shell,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     stdout, stderr = process.communicate()
 
     if echo:
@@ -196,12 +199,18 @@ def list_files(path,recursive=False):
 ### DATA FILES AND VERSIONS
 
 def createfile(fn,c,count,bs):
-    runcmd("dd if=/dev/zero count=%s bs=%s | tr '\\000' %s > %s"%(count,bs,c,fn),allow_stderr=True)
+    # this replaces the dd as 1) more portable, 2) not prone to problems with escaping funny filenames in shell commands
+    logger.info('createfile %s character=%s count=%d bs=%d',fn,repr(c),count,bs)
+    buf = c*bs
+    of = file(fn,'w')
+    for i in range(count):
+        of.write(buf)
+    of.close()
+
 
 def createfile_zero(fn,count,bs):
-    runcmd('dd if=/dev/zero of=%s count=%s bs=%s'%(fn,count,bs),allow_stderr=True)
+    createfile(fn,'\0',count,bs)
 
-    
 def md5sum(fn):
     process=subprocess.Popen('md5sum %s'%fn,shell=True,stdout=subprocess.PIPE)
     out = process.communicate()[0]
