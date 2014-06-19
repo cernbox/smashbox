@@ -248,7 +248,7 @@ if __name__ == "__main__":
 
        logdir,logfn = os.path.split(config.rundir)
        try:
-          fh = logging.FileHandler(os.path.join(logdir,'log-'+logfn+'.log'))
+          fh = logging.FileHandler(os.path.join(logdir,'log-'+logfn+'.log'),mode='w')
        except IOError:
           print 'File %s cannot be created (missing directory?) ' % (os.path.join(logdir,'log-'+logfn+'.log'))
           sys.exit(-1)
