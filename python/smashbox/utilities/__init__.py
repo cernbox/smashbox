@@ -114,7 +114,7 @@ def run_ocsync(local_folder,remote_folder="",N=None):
 
     ocsync_cnt.setdefault(current_step,0)
 
-    local_folder += '/' #FIXME: HACK - is a trailing slash really needed by 1.6 owncloudcmd client?
+    #local_folder += '/' #FIXME: HACK - is a trailing slash really needed by 1.6 owncloudcmd client?
 
     for i in range(N):
         t0 = datetime.datetime.now()
