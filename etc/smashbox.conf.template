@@ -24,6 +24,9 @@ oc_account_password=""
 # if left blank or "localhost" then the real hostname of the localhost will be set
 oc_server = ''
 
+# webdav endpoint URI within the oc_server
+oc_webdav_endpoint = 'remote.php/webdav' # standard owncloud server
+
 # should we use protocols with SSL (https, ownclouds)
 oc_ssl_enabled = True
 
@@ -54,7 +57,7 @@ oc_server_tools_path = "server-tools"
 # <smashbox>/dir where <smashbox> is the top-level of of the tree
 # containing THIS configuration file
 #
-oc_sync_cmd = "client/build/build-ocsync-0.82.0-ssl-patch/client/ocsync -d 100 -c "
+oc_sync_cmd = "client/build/mirall/bin/owncloudcmd --trust"
 
 # number of times to repeat ocsync run every time
 oc_sync_repeat = 1
