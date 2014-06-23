@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# Wrapper to start the correct owncloud binary with proper preinitializations.
+# This should be made available by owncloud in their RPM!
+
+source /opt/qt-4.8/bin/qt-4.8-env.sh
+source /opt/neon-0.30.0/oc-neon-env.sh
+
+exec /opt/qt-4.8/bin/owncloudcmd $*
+
+#end

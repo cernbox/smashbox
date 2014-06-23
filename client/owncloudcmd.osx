@@ -1,0 +1,8 @@
+#
+# this is a workaround for broken owncloudcmd packaging on MacOSX
+# https://github.com/owncloud/mirall/issues/1896
+#
+# owncloud is installed in the standard location
+
+function join { local IFS="$1"; shift; echo "$*"; }
+env DYLD_FALLBACK_LIBRARY_PATH=`join : /Applications/owncloud.app/Contents/Frameworks/*/Versions/5 /Applications/owncloud.app/Contents/MacOS/owncloudcmd`:/Applications/owncloud.app/Contents/MacOS /Applications/owncloud.app/Contents/MacOS/owncloudcmd $*
