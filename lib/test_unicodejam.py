@@ -46,7 +46,7 @@ def createunicodejam(localdir):
     raw = u""
     for i in range(nchar):
         j = int( 1 + random.triangular(0,10,100)*(1+random.uniform(0,1)))
-        j = int(random.uniform(97,122)) # small caps
+        #j = int(random.uniform(97,122)) # small caps
         cc = unichr(j)
         if cc in forbidden: continue
         raw+=cc
@@ -66,7 +66,7 @@ def createunicodejam(localdir):
 def worker0(step):    
 
     # do not cleanup server files from previous run
-###    reset_owncloud_account()
+    reset_owncloud_account()
 
     # cleanup all local files for the test
     reset_rundir()
