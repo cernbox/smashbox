@@ -160,7 +160,8 @@ class _smash_:
             try:
                 f(step)
             except Exception,x:
-                logger.fatal("Exception occured: %s", x)
+                import traceback
+                logger.fatal("Exception occured: %s \n %s", x,traceback.format_exc())
         finally:
             # worker finish
             step(_smash_.N_STEPS-1,None) # don't print any message
