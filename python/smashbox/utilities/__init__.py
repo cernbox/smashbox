@@ -91,7 +91,7 @@ def oc_webdav_url(protocol='http',remote_folder=""):
       
   remote_folder = remote_folder.lstrip('/') # strip-off any leading / characters to prevent 1) abspath result from the join below, 2) double // and alike...
 
-  remote_path = os.path.join(config.oc_webdav_endpoint,remote_folder)
+  remote_path = os.path.join(config.oc_webdav_endpoint,config.oc_server_folder,remote_folder)
 
   #remote_path = os.path.join('owncloud/remote.php/webdav',remote_folder)  # this is for standard owncloud 
 
@@ -220,24 +220,28 @@ def hexdump(fn):
     runcmd('hexdump %s'%fn)
 
 def list_versions_on_server(fn):
-    cmd = "%(oc_server_shell_cmd)s md5sum %(oc_server_datadirectory)s/%(oc_account_name)s/files_versions/%(filename)s.v*" % config._dict(filename=os.path.basename(fn)) #PENDING: bash -x 
+    cmd = "%(oc_server_shell_cmd)s md5sum %(oc_server_datadirectory)s/%(oc_account_name)s/files_versions/%(filename)s.v*" % config._dict(filename=os.path.join(config.oc_server_folder,os.path.basename(fn))) #PENDING: bash -x 
     runcmd(cmd)
 
 
 def hexdump_versions_on_server(fn):
-    cmd = "%(oc_server_shell_cmd)s hexdump %(oc_server_datadirectory)s/%(oc_account_name)s/files_versions/%(filename)s.v*" % config._dict(filename=os.path.basename(fn)) #PENDING: bash -x 
+    cmd = "%(oc_server_shell_cmd)s hexdump %(oc_server_datadirectory)s/%(oc_account_name)s/files_versions/%(filename)s.v*" % config._dict(filename=os.path.join(config.oc_server_folder,os.path.basename(fn))) #PENDING: bash -x 
     runcmd(cmd)    
 
 def get_md5_versions_on_server(fn):
 
-    cmd = "%(oc_server_shell_cmd)s md5sum %(oc_server_datadirectory)s/%(oc_account_name)s/files_versions/%(filename)s.v*" % config._dict(filename=os.path.basename(fn)) #PENDING: bash -x 
-    
+    cmd = "%(oc_server_shell_cmd)s md5sum %(oc_server_datadirectory)s/%(oc_account_name)s/files_versions/%(filename)s.v*" % config._dict(filename=os.path.join(config.oc_server_folder,os.path.basename(fn)))
+
+    logger.info('running %s',repr(cmd))
     process=subprocess.Popen(cmd, stdout=subprocess.PIPE,shell=True)
 
-    out=process.communicate()[0]
+    stdout=process.communicate()[0]
 
     result = []
-    for line in out.splitlines():
+    for line in stdout.splitlines():
+        line = line.strip()
+        if not line:
+            continue
         md,fn = line.split()
         result.append((md,os.path.basename(fn)))
         #log(result[-1])

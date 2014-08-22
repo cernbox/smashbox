@@ -27,6 +27,9 @@ oc_server = ''
 # webdav endpoint URI within the oc_server
 oc_webdav_endpoint = 'remote.php/webdav' # standard owncloud server
 
+# target folder on the server
+oc_server_folder = 'smashbox'
+
 # should we use protocols with SSL (https, ownclouds)
 oc_ssl_enabled = True
 
