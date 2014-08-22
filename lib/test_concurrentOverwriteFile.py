@@ -26,6 +26,8 @@ def worker0(step):
     
     reset_owncloud_account()
     reset_rundir()
+
+    #versions = get_md5_versions_on_server('test.BIG')    
     
     step(1,'create initial content and sync')
 
@@ -130,7 +132,7 @@ def checker(step):
 
     # verify the status
 
-    error_check(shared['w2d1'] in [shared['w0v1'],shared['w0v2'],shared['w1v1']], "file downloaded by the checked does not correspond to any file created locally by the workers")
+    error_check(shared['w2d1'] in [shared['w0v1'],shared['w0v2'],shared['w1v1']], "file downloaded by the checker does not correspond to any file created locally by the workers")
 
     # make sure that all versions stored on a server correpond to a version generated locally
     versions = get_md5_versions_on_server('test.BIG')
