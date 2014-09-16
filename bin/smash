@@ -58,7 +58,6 @@ def main():
        level = logging.INFO
 
    logger = smashbox.script.getLogger()
-   print "LEVEL",level
    logger.setLevel(level)
 
    # we will pass the loglevel to worker processes in the config
