@@ -6,6 +6,8 @@ import tempfile
 __doc__ = """ Each of nworkers (uploaders) creates nfiles and syncs them at the same time to the same account. The checker verifies integrity of files and completness of sync. 
 """
 
+from smashbox.utilities import *
+from smashbox.utilities.hash_files import *
 
 # Files created by each worker
 nfiles = int(config.get('storm_nfiles',5))
@@ -14,8 +16,7 @@ nworkers = int(config.get('storm_nworkers',10))
 # Verbose flag
 verbose = bool(config.get('storm_verbose',False))
 
-from smashbox.utilities import *
-from smashbox.utilities.hash_files import *
+
 
 def uploader(step):
     
