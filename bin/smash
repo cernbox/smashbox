@@ -27,8 +27,10 @@ del standardSetup
 
 def main():
    import os, os.path, sys
+   import glob
    import datetime
    import smashbox.script
+   import smashbox.no_engine
 
    parser=smashbox.script.arg_parser(description='Run the tests and smash the box')
 
@@ -36,6 +38,8 @@ def main():
                       help='single test (file) or test collection (directory)')
 
    parser.add_argument('--keep', action="store_true", help='incremental test on top of existing files: keep current state of the account both locally and on the server')
+   parser.add_argument('--all-testsets', '-a', dest="all_testsets", action="store_true", help='run all testsets defined within each test script file')
+   parser.add_argument('--testset', '-t', dest="testset", action="store", type=int, help='run just one testset specified by index, starting from 0')
 
    args = parser.parse_args()
 
@@ -69,8 +73,8 @@ def main():
       logger.error("The oc_account_password not set in smashbox.conf")
       sys.exit(0)
             
-   #tests = []
    test_mode = "single"
+   tests = []
 
    for t in args.tests:
       if not os.path.exists(t):
@@ -78,12 +82,13 @@ def main():
          sys.exit(1)
 
       if os.path.isdir(t):
-         logger.warning("Collections not supported yet... this test target will be ignored: %t",t)
-         continue #test_mode = "collection"
-
-      t = os.path.abspath(t)
-      logger.info("Test target: %s",t)
-      #tests.append(t)
+         test_mode = "collection"
+         for fn in glob.glob(os.path.join(t,'test_*.py')):
+            logger.info("Test target: %s",fn)
+            tests.append(fn)            
+      else:
+         #t = os.path.abspath(t)
+         tests.append(t)
 
    logger.info("Test mode: %s",test_mode)
 
@@ -128,7 +133,7 @@ def main():
       log_quiet('*** DRY RUN ***')
       smashbox.script.config_log(logging.INFO)
 
-   if not args.tests:
+   if not tests:
       logger.warning("No tests specified to run...")
       sys.exit(1)
 
@@ -144,7 +149,7 @@ def main():
    
    user_defined_oc_account_name = config.oc_account_name
 
-   for t in args.tests:
+   for t in tests:
 
       workdir = None
 
@@ -152,20 +157,42 @@ def main():
          return os.path.splitext(os.path.basename(t))[0]
       
       if test_mode == "single":
-         config.rundir = os.path.join(config.smashdir, barename(t))
-         if config.workdir_runid_enabled:
-            config.rundir += '-'+str(config.runid)
+         pass
 
-         if not user_defined_oc_account_name:
-            config.oc_account_name = barename(t)
+      config.rundir = os.path.join(config.smashdir, barename(t))
 
-         if config.oc_account_runid_enabled:
-            config.oc_account_name += '-'+str(config.runid)
+      if config.workdir_runid_enabled:
+         config.rundir += '-'+str(config.runid)
 
-      log_quiet('running %s in %s as %s',t,config.rundir,config.oc_account_name)
+      if not user_defined_oc_account_name:
+         config.oc_account_name = barename(t)
 
-      if not args.dry_run:
-         run_multiprocessing_engine(config,os.path.abspath(t))
+      if config.oc_account_runid_enabled:
+         config.oc_account_name += '-'+str(config.runid)
+
+
+      def run_test(ts,i=0):
+         if ts:
+            for opt,val in zip(ts.keys(),ts.values()):
+               setattr(config,opt,val)
+               
+         log_quiet('running %s in %s as %s testset #%d %s',t,config.rundir,config.oc_account_name,i,repr(ts))
+         if not args.dry_run:
+            run_multiprocessing_engine(config,os.path.abspath(t))
+
+      if args.all_testsets or args.testset:
+         smashbox.no_engine.testsets=[None]
+         execfile(os.path.abspath(t),smashbox.no_engine.__dict__)
+
+         if args.all_testsets:
+            for i,ts in enumerate(smashbox.no_engine.testsets):
+               run_test(ts,i)
+         else:
+            run_test(smashbox.no_engine.testsets[args.testset],args.testset)
+      else:
+         run_test(None)
+
+            
 
 
    if args.dry_run:
