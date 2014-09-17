@@ -20,47 +20,83 @@ def removeunicodejam(localdir):
 
 def checkunicodejam(localdir):
     import glob
-    fl = glob.glob(localdir+os.sep+'*')
+    fl = glob.glob(unicode(localdir+os.sep+'*'))
 
     ngood = 0 
     nbad = 0
 
     for f in fl:
-        #print 'Checking:',f
+        logger.debug('Checking: %s',f)
         fh = file(f)
         a = localdir+os.sep+fh.read()
+        a = a.decode("UTF-8")
+
         if a!=f: 
-            logger.error('%s',f)
-            logger.error('%s',a.decode("UTF-8"))
+            logger.error('FILELEN: %d',len(f))
+            logger.error('FILE   : %s',f)
+            logger.error('CONTENT: %s',a.decode("UTF-8"))
+            logger.error('CONTLEN: %d',len(a.decode("UTF-8")))
+            logger.error("FILE    BYTES: %s %d",repr(f),len(repr(f)))
+            logger.error("CONTENT BYTES: %s %d",repr(a),len(repr(a)))
             fh.close()
             nbad += 1
         else:
             ngood += 1
 
     return(ngood,nbad)
-    
+
+import sys
+
+##
+# various unicode random generators which probe subsets of unicode space
+# 
+# 
+import random
+
+def g_massimo():
+    return int( 1 + random.triangular(0,10,100)*(1+random.uniform(0,1)))  # this gives only ASCII ?
+
+def g_all_unicode():
+    return int(random.uniform(97,sys.maxunicode))   # with this I manage to "break" owncloud server 5.0.14a  --> I needed to manually delete entries from oc_filecache
+
+def g_plane0_unicode():
+    return int(random.uniform(0x80,0xffff)) # unicode plane0 only, non-ascii
+
+def g_plane0_unicode_degressive():
+    return int(random.triangular(0x80,0xffff,0x80))   # unicode plane0 only, non-ascii
+
+def g_plane0_reduced():
+    return int(random.uniform(0x80,0x1000))   # unicode plane0 only, non-ascii, first few pages only...
+
+##
+
+
 def createunicodejam(localdir):
-    import random
+
     forbidden = "/"
-    nchar = int(random.uniform(1,100))
+    nchar = int(random.uniform(1,50))
     raw = u""
     for i in range(nchar):
-        j = int( 1 + random.triangular(0,10,100)*(1+random.uniform(0,1)))
-        #j = int(random.uniform(97,122)) # small caps
+
+        j = g_plane0_reduced()
+
         cc = unichr(j)
         if cc in forbidden: continue
         raw+=cc
 
     filename = raw
 
-    if len(filename)>0:
-        ff = localdir+os.sep+filename
-        #print 'Preparing:',ff
+    assert( len(filename) > 0)
+
+    ff = localdir+os.sep+filename
+    #print 'Preparing:',ff
+    try:
         fh = file(ff,'w')
         fh.write(filename.encode("UTF-8"))
         fh.close
-    else:
-        'No file %s created (zero length)',ff
+    except Exception,x:
+        logger.warning('cannot create file: %s',x)
+
 
 @add_worker
 def worker0(step):    
