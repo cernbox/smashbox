@@ -28,6 +28,34 @@ filesizeKB = int(config.get('basicSync_filesizeKB',10000))
 rmLocalStateDB = bool(config.get('basicSync_rmLocalStateDB',False))
 
 
+testsets = [
+        { 'basicSync_filesizeKB': 1, 
+          'basicSync_rmLocalStateDB':False
+        },
+        { 'basicSync_filesizeKB': 5000, 
+          'basicSync_rmLocalStateDB':False
+        },
+        { 'basicSync_filesizeKB': 15000, 
+          'basicSync_rmLocalStateDB':False
+        },
+        { 'basicSync_filesizeKB': 50000, 
+          'basicSync_rmLocalStateDB':False
+        },
+
+        { 'basicSync_filesizeKB': 1, 
+          'basicSync_rmLocalStateDB':True
+        },
+        { 'basicSync_filesizeKB': 5000, 
+          'basicSync_rmLocalStateDB':True
+        },
+        { 'basicSync_filesizeKB': 15000, 
+          'basicSync_rmLocalStateDB':False
+        },
+        { 'basicSync_filesizeKB': 50000, 
+          'basicSync_rmLocalStateDB':True
+        }
+]
+
 def expect_content(fn,md5):
     actual_md5 = md5sum(fn)
     error_check(actual_md5 == md5, "inconsistent md5 of %s: expected %s, got %s"%(fn,md5,actual_md5))
