@@ -49,10 +49,13 @@ def size2nbytes(size):
     return nbytes
 
 
-def create_hashfile(wdir,filemask=None,size=None):
+def create_hashfile(wdir,filemask=None,size=None,bs=None,slow_write=None):
     """ Create a random file in wdir, md5 checksum is placed in the name according to filemask (by default the filename consists of only the checksum).
 
     The function will use max BLOCK_SIZE memory. Below BLOCK_SIZE the file is fully random. For larger files the BLOCK_SIZE bytes are replicated.
+
+    The default BLOCK_SIZE may be changed with the bs argument.
+    Optional slow_write may specify the delay in seconds between writing blocks.
     
     """
     import hashlib
@@ -62,14 +65,17 @@ def create_hashfile(wdir,filemask=None,size=None):
         size = config.hashfile_size
     
     nbytes = size2nbytes(size)
-    
-    nblocks = nbytes/BLOCK_SIZE
-    nr = nbytes%BLOCK_SIZE
 
-    assert nblocks*BLOCK_SIZE+nr==nbytes,'Chunking error!'
+    if not bs:
+        bs = BLOCK_SIZE
+
+    nblocks = nbytes/bs
+    nr = nbytes%bs
+
+    assert nblocks*bs+nr==nbytes,'Chunking error!'
 
     # Prepare the building blocks
-    block_data = str(os.urandom(BLOCK_SIZE)) # Repeated nblocks times
+    block_data = str(os.urandom(bs)) # Repeated nblocks times
     block_data_r = str(os.urandom(nr))       # Only once
     
     # Precompute the checksum - we do it separately before writing the file to avoid the file rename
@@ -88,6 +94,9 @@ def create_hashfile(wdir,filemask=None,size=None):
     # write data blocks
     f.write(block_data_r)
     for i in range(nblocks):
+        if slow_write:
+            logger.info('slow_write=%s %d %s',slow_write,i,fn)
+            time.sleep(slow_write)
         f.write(block_data)
     f.close()
     
