@@ -12,7 +12,7 @@ def arg_parser(**kwds):
     parser = argparse.ArgumentParser(**kwds)
     
     parser.add_argument('--option', '-o', metavar="key=val", dest="options", type=keyval_tuple, action='append', help='set config option')
-    parser.add_argument('--dry-run', action='store_true', help='show config options and print what tests would be run')
+    parser.add_argument('--dry-run', '-n', action='store_true', help='show config options and print what tests would be run')
     parser.add_argument('--quiet', '-q', action="store_true", help='produce minimal output')
     parser.add_argument('--verbose', '-v', action="store_true", help='produce maximal output')
     return parser
