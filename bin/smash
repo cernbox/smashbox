@@ -39,7 +39,7 @@ def main():
 
    parser.add_argument('--keep', action="store_true", help='incremental test on top of existing files: keep current state of the account both locally and on the server')
    parser.add_argument('--all-testsets', '-a', dest="all_testsets", action="store_true", help='run all testsets defined within each test script file')
-   parser.add_argument('--testset', '-t', dest="testset", action="store", type=int, help='run just one testset specified by index, starting from 0')
+   parser.add_argument('--testset', '-t', dest="testset", action="store", default=None, type=int, help='run just one testset specified by index, starting from 0')
 
    args = parser.parse_args()
 
@@ -180,7 +180,7 @@ def main():
          if not args.dry_run:
             run_multiprocessing_engine(config,os.path.abspath(t))
 
-      if args.all_testsets or args.testset:
+      if args.all_testsets or args.testset is not None:
          smashbox.no_engine.testsets=[None]
          execfile(os.path.abspath(t),smashbox.no_engine.__dict__)
 
