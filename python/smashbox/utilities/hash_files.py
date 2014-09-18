@@ -98,6 +98,8 @@ def create_hashfile(wdir,filemask=None,size=None,bs=None,slow_write=None):
             logger.info('slow_write=%s %d %s',slow_write,i,fn)
             time.sleep(slow_write)
         f.write(block_data)
+        if slow_write:
+            f.flush()
     f.close()
     
     return fn
