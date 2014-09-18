@@ -11,6 +11,8 @@ This is a testcase for:
 
 https://github.com/owncloud/mirall/issues/2210 (corrupted file upload if file modified during transfer)
 
+owncloudcmd will delay syncing of the file if the file is modified every 2 seconds or less (slowWrite < 2)
+
 """
 
 from smashbox.utilities import *
@@ -27,10 +29,20 @@ nfiles=1
 testsets = [
         { 'slowwrite_filesizeKB': 2, 
           'slowwrite_blockSize': 200,
-          'slowwrite_slowWrite':1
+          'slowwrite_slowWrite':1.5
         },
 
         { 'slowwrite_filesizeKB': 5000, 
+          'slowwrite_blockSize': MB,
+          'slowwrite_slowWrite':1
+        },
+
+        { 'slowwrite_filesizeKB': 11000, 
+          'slowwrite_blockSize': MB,
+          'slowwrite_slowWrite':1
+        },
+
+        { 'slowwrite_filesizeKB': 25000, 
           'slowwrite_blockSize': MB,
           'slowwrite_slowWrite':1
         },
@@ -65,7 +77,7 @@ def synchronizer(step):
 
     step(2,'Sync the file as it is being written by writer')
 
-    sleep(slowWrite)
+    sleep(slowWrite*2)
     d = make_workdir('writer') # bother writer and synchronizer share the same workdir
     run_ocsync(d)
 
