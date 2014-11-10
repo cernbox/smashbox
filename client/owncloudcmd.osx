@@ -4,5 +4,27 @@
 #
 # owncloud is installed in the standard location
 
+CMD=$1
+PKG=$1$OC_VERSION
+shift
+
+if [ x$CMD == x ]; then
+   echo missing command-name
+   echo syntax:  owncloudcmd.osx CMD
+   echo examples: 
+   echo   owncloudcmd.osx cernbox 
+   echo   owncloudcmd.osx owncloud 
+   echo   env OC_VERSION=-1.6.4 owncloudcmd.osx owncloud
+   exit 1
+fi
+
+#echo /Applications/${PKG}.app/Contents/MacOS/${CMD}cmd
+#echo /Applications/${PKG}.app/Contents/Frameworks/*/Versions/5
+
 function join { local IFS="$1"; shift; echo "$*"; }
-env DYLD_FALLBACK_LIBRARY_PATH=`join : /Applications/owncloud.app/Contents/Frameworks/*/Versions/5 /Applications/owncloud.app/Contents/MacOS/owncloudcmd`:/Applications/owncloud.app/Contents/MacOS /Applications/owncloud.app/Contents/MacOS/owncloudcmd $*
+
+export DYLD_FALLBACK_LIBRARY_PATH=`join : /Applications/${PKG}.app/Contents/Frameworks/*/Versions/5 /Applications/${PKG}.app/Contents/MacOS/${CMD}cmd`:/Applications/${PKG}.app/Contents/MacOS 
+
+#echo $DYLD_FALLBACK_LIBRARY_PATH
+
+/Applications/${PKG}.app/Contents/MacOS/${CMD}cmd $*
