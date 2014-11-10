@@ -32,7 +32,9 @@ def reset_owncloud_account(reset_procedure=None):
     if reset_procedure == 'webdav_delete':
         webdav_delete('/') # delete the complete webdav endpoint associated with the remote account
         webdav_delete('/') # FIXME: workaround current bug in EOS (https://savannah.cern.ch/bugs/index.php?104661) 
-        webdav_mkcol('/') # and recreate it...
+
+    # if create if does not exist (for keep or webdav_delete options)
+    webdav_mkcol('/') 
 
 def reset_rundir(reset_procedure=None):
     """ Prepare the run directory for the current test (local state). Run this once at the beginning of the test.
@@ -131,8 +133,11 @@ def webdav_propfind_ls(path):
 def webdav_delete(path):
     runcmd('curl -k -X DELETE %s '%oc_webdav_url(remote_folder=path))
 
-def webdav_mkcol(path):
-    runcmd('curl -k -X MKCOL %s '%oc_webdav_url(remote_folder=path))
+def webdav_mkcol(path,silent=False):
+    out=""
+    if silent: # a workaround for super-verbose errors in case directory on the server already exists
+        out = "> /dev/null 2>&1"
+    runcmd('curl -k -X MKCOL %s %s'%(oc_webdav_url(remote_folder=path),out))
                    
 
 ##### SHELL COMMANDS AND TIME FUNCTIONS
