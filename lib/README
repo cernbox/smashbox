@@ -7,6 +7,9 @@ Tests to add
  - Complex file write/update patterns (in place, MS Office-like writes, ...)
  - Raname an existing synced file into a directory with the same name...
  - distaster recovery: roll back database to previous version (old etag may reapper for a file modified on the server => what will happen to a client which has not yet synced and has the old etag locally?)
+ - FILEID client mapping: A and B fuly synced, go offline, server-side rename A/a.txt to B/b.txt, go online, mv b.txt to a.txt or elsewhere. Is the move propagated (file id cached or refreshed on the client)
+ - EOS: what happens to versions under such rename...
+
 
 
 
