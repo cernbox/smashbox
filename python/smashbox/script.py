@@ -15,6 +15,7 @@ def arg_parser(**kwds):
     parser.add_argument('--dry-run', '-n', action='store_true', help='show config options and print what tests would be run')
     parser.add_argument('--quiet', '-q', action="store_true", help='produce minimal output')
     parser.add_argument('--verbose', '-v', action="store_true", help='produce maximal output')
+    parser.add_argument('--config','-c',dest="configs",default=[],action="append",help='config files (one or more), added on to of default config file')
     return parser
 
 
@@ -51,7 +52,7 @@ def dump_config_to_blob():
     import pickle
     return pickle.dumps(config)
         
-def configure(cmdline_opts,*config_files):
+def configure(cmdline_opts,config_files=None):
    """ Initialize config object and return it.
 
    First exec the sequence of config_files (including the
@@ -66,9 +67,12 @@ def configure(cmdline_opts,*config_files):
  
    """
 
+   if config_files is None:
+      config_files = []
+
    logger = getLogger()
 
-   config_files = [main_config_file] + list(config_files)
+   config_files = [main_config_file] + config_files
 
    for cf in config_files:
       execfile(cf,{},config.__dict__)

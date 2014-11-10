@@ -43,7 +43,7 @@ def main():
 
    args = parser.parse_args()
 
-   config = smashbox.script.configure(args.options)
+   config = smashbox.script.configure(args.options,args.configs)
 
    import logging
    logging.addLevelName(35,"INFO")
@@ -126,6 +126,13 @@ def main():
       logger.critical('Malformed options oc_server_shell_cmd: %s %s'%(repr(config.oc_server_shell_cmd),repr(x)))
       sys.exit(1)
 
+
+   try:
+      config.oc_server_folder = string.Template(config.oc_server_folder).substitute({'runid':config.runid})
+   except ValueError,x:
+      logger.critical('Malformed options oc_server_shell_cmd: %s %s'%(repr(config.oc_server_shell_cmd),repr(x)))
+      sys.exit(1)
+
    #
    ###########
    
@@ -144,8 +151,9 @@ def main():
        p.communicate()
 
 
-   log_quiet('oc_server: %s',config.oc_server)
-   log_quiet('oc_ssl_enabled: %s',config.oc_ssl_enabled)
+   log_quiet('oc_server: %s',config.oc_server)  # log_quiet
+   log_quiet('oc_ssl_enabled: %s',config.oc_ssl_enabled) # log_quiet
+   log_quiet('runid: %s',config.runid) # log_quiet
    
    user_defined_oc_account_name = config.oc_account_name
 
@@ -176,7 +184,7 @@ def main():
             for opt,val in zip(ts.keys(),ts.values()):
                setattr(config,opt,val)
                
-         log_quiet('running %s in %s as %s testset #%d %s',t,config.rundir,config.oc_account_name,i,repr(ts))
+         logger.info('running %s in %s as %s testset #%d %s',t,config.rundir,config.oc_account_name,i,repr(ts)) # log_quiet
          if not args.dry_run:
             run_multiprocessing_engine(config,os.path.abspath(t))
 
