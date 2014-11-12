@@ -149,7 +149,13 @@ def main():
        cmd = ['python',os.path.join(os.path.dirname(os.path.dirname(__file__)),'python/smashbox/multiprocessing_engine.py'), t, pickle.dumps(config)]
        p = subprocess.Popen(cmd)
        p.communicate()
+       
+       assert(p.returncode is not None)
 
+       if p.returncode != 0:
+          logger.fatal('Aborting run -- non-zero exit code (%d)'%p.returncode)
+          sys.exit(p.returncode)
+          
 
    log_quiet('oc_server: %s',config.oc_server)  # log_quiet
    log_quiet('oc_ssl_enabled: %s',config.oc_ssl_enabled) # log_quiet
@@ -184,7 +190,7 @@ def main():
             for opt,val in zip(ts.keys(),ts.values()):
                setattr(config,opt,val)
                
-         logger.info('running %s in %s as %s testset #%d %s',t,config.rundir,config.oc_account_name,i,repr(ts)) # log_quiet
+         log_quiet('running %s in %s as %s testset #%d %s',t,config.rundir,config.oc_account_name,i,repr(ts)) # log_quiet
          if not args.dry_run:
             run_multiprocessing_engine(config,os.path.abspath(t))
 

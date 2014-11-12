@@ -162,6 +162,8 @@ class _smash_:
             except Exception,x:
                 import traceback
                 logger.fatal("Exception occured: %s \n %s", x,traceback.format_exc())
+                import sys
+                sys.exit(1)
         finally:
             # worker finish
             step(_smash_.N_STEPS-1,None) # don't print any message
@@ -203,6 +205,11 @@ class _smash_:
 
         for p in _smash_.all_procs:
             p.join()
+
+        for p in _smash_.all_procs:
+           if p.exitcode != 0:
+              import sys
+              sys.exit(p.exitcode)
 
 def add_worker(f,name=None):
     """ Decorator for worker functions in the user-defined test
