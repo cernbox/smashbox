@@ -48,20 +48,22 @@ def main():
    config = smashbox.script.configure(args.options,args.configs)
 
    import logging
-   logging.addLevelName(35,"INFO")
-   logging.QUIET = 35
+   logging.addLevelName(35,"SUMMARY")
+   logging.SUMMARY = 35
    
    # in the --quiet mode we do not log INFO
    # use log_quiet() to log in the --quiet mode
    def log_quiet(fmt,*args, **kwds):
-       logger.log(logging.QUIET,fmt,*args,**kwds)
+       logger.log(logging.SUMMARY,fmt,*args,**kwds)
    
+   level = logging.WARNING # log warnings, errors and quiet messages
+
    if args.quiet:
-       level = logging.WARNING
+       level = logging.ERROR
    elif args.verbose:
-       level = logging.DEBUG 
-   else:
        level = logging.INFO
+   elif args.debug:
+       level = logging.DEBUG
 
    logger = smashbox.script.getLogger()
    logger.setLevel(level)
