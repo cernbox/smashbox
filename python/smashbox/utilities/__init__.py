@@ -216,7 +216,21 @@ def createfile(fn,c,count,bs):
 def createfile_zero(fn,count,bs):
     createfile(fn,'\0',count,bs)
 
-def md5sum(fn):
+import platform
+
+if platform.system() == 'Darwin':
+
+ def md5sum(fn):
+    process=subprocess.Popen('md5 %s'%fn,shell=True,stdout=subprocess.PIPE)
+    out = process.communicate()[0]
+    try:
+        return out.split()[-1]
+    except IndexError:
+        return "NO_CHECKSUM_ERROR"
+
+else: #linux
+
+ def md5sum(fn):
     process=subprocess.Popen('md5sum %s'%fn,shell=True,stdout=subprocess.PIPE)
     out = process.communicate()[0]
     return out.split()[0]
