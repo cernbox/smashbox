@@ -37,7 +37,8 @@ def main():
    parser.add_argument('tests', metavar='test', type=str, nargs='*',
                       help='single test (file) or test collection (directory)')
 
-   parser.add_argument('--keep', action="store_true", help='incremental test on top of existing files: keep current state of the account both locally and on the server')
+   parser.add_argument('--keep-state', dest="keep_state",action="store_true", help='incremental test on top of existing files: keep current state of the account both locally and on the server')
+   parser.add_argument('--keep-going',dest="keep_going",action="store_true",default=False,help='do not abort the execution on the first failed testcase')
    parser.add_argument('--all-testsets', '-a', dest="all_testsets", action="store_true", help='run all testsets defined within each test script file')
    parser.add_argument('--testset', '-t', dest="testset", action="store", default=None, type=int, help='run just one testset specified by index, starting from 0')
 
@@ -71,7 +72,7 @@ def main():
    # check for mandatory configuration 
    if not config.oc_account_password:
       logger.error("The oc_account_password not set in smashbox.conf")
-      sys.exit(0)
+      sys.exit(1)
             
    test_mode = "single"
    tests = []
@@ -95,7 +96,7 @@ def main():
    ############
    # handle specific config options
 
-   if args.keep:
+   if args.keep_state:
       config.oc_account_reset_procedure = 'keep'
       config.rundir_reset_procedure = 'keep'
 
@@ -153,8 +154,11 @@ def main():
        assert(p.returncode is not None)
 
        if p.returncode != 0:
-          logger.fatal('Aborting run -- non-zero exit code (%d)'%p.returncode)
-          sys.exit(p.returncode)
+          if args.keep_going:
+             logger.error('Non-zero exit code (%s)'%p.returncode)
+          else:
+             logger.fatal('Aborting run -- non-zero exit code (%d)'%p.returncode)
+             sys.exit(p.returncode)
           
 
    log_quiet('oc_server: %s',config.oc_server)  # log_quiet
