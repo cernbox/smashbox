@@ -51,17 +51,18 @@ def worker0(step):
 
     run_ocsync(d)
 
-    analyse_hashfiles(d)
-
+    ncorrupt = analyse_hashfiles(d)[2]
+    
     k1 = count_files(d)
 
     error_check(k1-k0==nfiles,'Expecting to have %d files more: see k1=%d k0=%d'%(nfiles,k1,k0))
+
+    fatal_check(ncorrupt==0, 'Corrupted files (%s) found'%ncorrupt)
 
     logger.info('SUCCESS: %d files found',k1)
         
 @add_worker
 def worker1(step):
-
     step(1,'Preparation')
     d = make_workdir()
     run_ocsync(d)
@@ -71,10 +72,12 @@ def worker1(step):
 
     run_ocsync(d)
 
-    analyse_hashfiles(d)
+    ncorrupt = analyse_hashfiles(d)[2]
     k1 = count_files(d)
 
     error_check(k1-k0==nfiles,'Expecting to have %d files more: see k1=%d k0=%d'%(nfiles,k1,k0))
+
+    fatal_check(ncorrupt==0, 'Corrupted files (%s) found'%ncorrupt)
 
 
 
