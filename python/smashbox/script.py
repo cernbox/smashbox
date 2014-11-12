@@ -13,8 +13,9 @@ def arg_parser(**kwds):
     
     parser.add_argument('--option', '-o', metavar="key=val", dest="options", type=keyval_tuple, action='append', help='set config option')
     parser.add_argument('--dry-run', '-n', action='store_true', help='show config options and print what tests would be run')
-    parser.add_argument('--quiet', '-q', action="store_true", help='produce minimal output')
-    parser.add_argument('--verbose', '-v', action="store_true", help='produce maximal output')
+    parser.add_argument('--quiet', '-q', action="store_true", help='do not produce output (other than errors)')
+    parser.add_argument('--verbose', '-v', action="store_true", help='produce more output')
+    parser.add_argument('--debug', action="store_true", help='produce very verbose output')
     parser.add_argument('--config','-c',dest="configs",default=[],action="append",help='config files (one or more), added on to of default config file')
     return parser
 
