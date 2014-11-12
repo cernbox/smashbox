@@ -24,6 +24,7 @@ standardSetup()
 del standardSetup
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+global_exitcode_error = False
 
 def main():
    import os, os.path, sys
@@ -146,6 +147,7 @@ def main():
       sys.exit(1)
 
    def run_multiprocessing_engine(config,t):
+       global global_exitcode_error
        import subprocess, pickle
        cmd = ['python',os.path.join(os.path.dirname(os.path.dirname(__file__)),'python/smashbox/multiprocessing_engine.py'), t, pickle.dumps(config)]
        p = subprocess.Popen(cmd)
@@ -156,6 +158,7 @@ def main():
        if p.returncode != 0:
           if args.keep_going:
              logger.error('Non-zero exit code (%s)'%p.returncode)
+             global_exitcode_error = True
           else:
              logger.fatal('Aborting run -- non-zero exit code (%d)'%p.returncode)
              sys.exit(p.returncode)
@@ -212,9 +215,11 @@ def main():
 
             
 
-
    if args.dry_run:
       log_quiet('*** DRY RUN ***')
+
+   if global_exitcode_error:
+      sys.exit(global_exitcode_error)
 
 if __name__ == '__main__':
    main()
