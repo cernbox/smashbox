@@ -1,8 +1,13 @@
 __doc__ = """
 
 This test removes concurrently a directory ('remover' worker) while
-files are added to it ('adder' worker) . The expected outcome is that
-all added files are kept on the server.
+files are added to it ('adder' worker) . 
+
+According to Webdav specs, PUT into inexisting path does not create missing directories but returns 409 (Conflict). 
+
+Cernbox/EOS: Hence the expected outcome is that part of the files that was already uploaded gets deleted.
+
+OwnCloud7? : For PUT which creates the missing directories the expected outcome is that all added files are kept on the server.
 
 """
 
@@ -109,7 +114,9 @@ def final_check(d):
     all_files,analysed_files,bad_files = analyse_hashfiles(d2)
 
     error_check(bad_files == 0,'%s corrupted files in %s'%(bad_files,d2))
-    error_check(analysed_files == nfiles,"not all files are present (%d/%d)"%(nfiles,analysed_files)) # FIXME: well, there may be other files - we don't check that yet
+    
+    #it is hard to determine how many files should be present with 409 Conflict behaviour
+    #error_check(analysed_files == nfiles,"not all files are present (%d/%d)"%(analysed_files,nfiles)) # FIXME: well, there may be other files - we don't check that yet
 
 
     #runcmd('find %s'%d)
