@@ -1,4 +1,4 @@
-# Owncloud protocol extention: checksumming
+# Owncloud protocol extension: checksumming
 
 ## Scope and purpose
 
