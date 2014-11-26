@@ -47,6 +47,8 @@ This is to distinguish between different causes of 412 (the other common one is 
 
 Server may provide the X-OC-Checksum response header with the GET request. If X-OC-Checksum is provides then client may use it to verify the checksum on the final destination.
 
+In case of byte-range request the X-OC-Checksum response header is the checksum of the entire file (like for the GET of the entire file). 
+
 ## Chunked PUT
 
 X-OC-Checksum of the entire file content is sent with every chunk PUT request (and of course should not change during the upload). 
