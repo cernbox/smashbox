@@ -16,6 +16,9 @@ nworkers = int(config.get('storm_nworkers',10))
 # Verbose flag
 verbose = bool(config.get('storm_verbose',False))
 
+# File size. None = default size/distribution.
+filesize = bool(config.get('storm_filesize',None))
+
 
 
 def uploader(step):
@@ -30,7 +33,7 @@ def uploader(step):
     logger.info('Adding %d files',nfiles)
     for i in range(nfiles):
         if verbose: logger.info('Prepare file %d',i)
-        create_hashfile(d)
+        create_hashfile(d,size=filesize)
     run_ocsync(d)
     logger.info('Step 2 ends here...')
 
@@ -63,5 +66,4 @@ def checker(step):
 
     etot = k0 + nfiles * nworkers
     error_check(etot == ntot,'Missing files (files at start %d, expected %d, found %d)'%(k0,etot,ntot))
-
-
+    fatal_check(nbad == 0, 'Corrupted files found (%d)'%nbad)
