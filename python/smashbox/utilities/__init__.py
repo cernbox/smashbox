@@ -379,7 +379,7 @@ def shareFileWithUser (filename, sharer, sharee, **kwargs):
     logger.info('share id for file share is %s', str(shareInfo.share_id)) 
     return shareInfo.share_id
 
-def deleteShareWithUser (sharer, share_id):
+def deleteShare (sharer, share_id):
 
     logger.info('Deleting share %i from user %s', share_id, sharer) 
 
@@ -387,13 +387,16 @@ def deleteShareWithUser (sharer, share_id):
     ocApi.login (sharer, config.oc_account_password)
     ocApi.delete_share (share_id)
 
-def shareFileWithGroup (filename, sharer, group):
+def shareFileWithGroup (filename, sharer, group, **kwargs):
 
     logger.info('%s is sharing file %s with group %s', sharer, filename, group) 
 
     ocApi = get_oc_api()
     ocApi.login (sharer, config.oc_account_password)
-    ocApi.share_file_with_group (filename, group)
+    groupShareInfo = ocApi.share_file_with_group (filename, group, **kwargs)
+
+    logger.info('share id for file group share is %i', groupShareInfo.share_id)
+    return groupShareInfo.share_id
 
 def addUserToGroup (username, groupName):
 

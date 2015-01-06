@@ -25,11 +25,6 @@ def setup(step):
     reset_owncloud_account()
     check_users()
 
-    reset_owncloud_group()
-    check_groups()
-
-    addUserToGroup('user3', 'testgroup1')
-
     reset_rundir()
 
 @add_worker
@@ -43,19 +38,6 @@ def sharer(step):
     createfile(os.path.join(d,'TEST_FILE_USER_SHARE.dat'),'0',count=1000,bs=filesizeKB)
     createfile(os.path.join(d,'TEST_FILE_USER_RESHARE.dat'),'0',count=1000,bs=filesizeKB)
     createfile(os.path.join(d,'TEST_FILE_MODIFIED_USER_SHARE.dat'),'0',count=1000,bs=filesizeKB)
-
-    createfile(os.path.join(d,'TEST_FILE_GROUP_SHARE.dat'),'0',count=1000,bs=filesizeKB)
-    createfile(os.path.join(d,'TEST_FILE_GROUP_RESHARE.dat'),'0',count=1000,bs=filesizeKB)
-    createfile(os.path.join(d,'TEST_FILE_MODIFIED_GROUP_SHARE.dat'),'0',count=1000,bs=filesizeKB)
-
-    testDir = make_workdir('test_sync_dir')
-
-    createfile(os.path.join(testDir,'TEST_DIR_FILE_USER_SHARE.dat'),'0',count=1000,bs=filesizeKB)
-    createfile(os.path.join(testDir,'TEST_DIR_FILE_USER_RESHARE.dat'),'0',count=1000,bs=filesizeKB)
-    createfile(os.path.join(testDir,'TEST_DIR_FILE_MODIFIED_USER_SHARE.dat'),'0',count=1000,bs=filesizeKB)
-    createfile(os.path.join(testDir,'TEST_DIR_FILE_GROUP_SHARE.dat'),'0',count=1000,bs=filesizeKB)
-    createfile(os.path.join(testDir,'TEST_DIR_FILE_GROUP_RESHARE.dat'),'0',count=1000,bs=filesizeKB)
-    createfile(os.path.join(testDir,'TEST_DIR_FILE_MODIFIED_GROUP_SHARE.dat'),'0',count=1000,bs=filesizeKB)
 
     shared = reflection.getSharedObject()
     shared['md5_sharer'] = md5sum(os.path.join(d,'TEST_FILE_MODIFIED_USER_SHARE.dat'))
@@ -80,7 +62,7 @@ def sharer(step):
     expect_modified(os.path.join(d,'TEST_FILE_MODIFIED_USER_SHARE.dat'), shared['md5_sharer'])
 
     step (10, 'Sharer unshares a file')
-    deleteShareWithUser (user1, shared['TEST_FILE_USER_RESHARE'])
+    deleteShare (user1, shared['TEST_FILE_USER_RESHARE'])
 
     step(12,'Sharer deletes file')
 
