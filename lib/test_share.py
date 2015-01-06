@@ -4,7 +4,7 @@ __doc__ = """ Test basic sharing between two users """
 from smashbox.utilities import *
 import glob
 
-filesizeKB = int(config.get('share_filesizeKB',10000))
+filesizeKB = int(config.get('share_filesizeKB',10))
 
 def expect_modified (fn, md5):
 
@@ -34,15 +34,20 @@ def sharer(step):
     step (3,'Create initial test files and directories')
 
     createfile(os.path.join(d,'TEST_FILE_USER_SHARE.dat'),'0',count=1000,bs=filesizeKB)
+    createfile(os.path.join(d,'TEST_FILE_USER_RESHARE.dat'),'0',count=1000,bs=filesizeKB)
     createfile(os.path.join(d,'TEST_FILE_MODIFIED_USER_SHARE.dat'),'0',count=1000,bs=filesizeKB)
+
     createfile(os.path.join(d,'TEST_FILE_GROUP_SHARE.dat'),'0',count=1000,bs=filesizeKB)
+    createfile(os.path.join(d,'TEST_FILE_GROUP_RESHARE.dat'),'0',count=1000,bs=filesizeKB)
     createfile(os.path.join(d,'TEST_FILE_MODIFIED_GROUP_SHARE.dat'),'0',count=1000,bs=filesizeKB)
 
     testDir = make_workdir('test_sync_dir')
 
     createfile(os.path.join(testDir,'TEST_DIR_FILE_USER_SHARE.dat'),'0',count=1000,bs=filesizeKB)
+    createfile(os.path.join(testDir,'TEST_DIR_FILE_USER_RESHARE.dat'),'0',count=1000,bs=filesizeKB)
     createfile(os.path.join(testDir,'TEST_DIR_FILE_MODIFIED_USER_SHARE.dat'),'0',count=1000,bs=filesizeKB)
     createfile(os.path.join(testDir,'TEST_DIR_FILE_GROUP_SHARE.dat'),'0',count=1000,bs=filesizeKB)
+    createfile(os.path.join(testDir,'TEST_DIR_FILE_GROUP_RESHARE.dat'),'0',count=1000,bs=filesizeKB)
     createfile(os.path.join(testDir,'TEST_DIR_FILE_MODIFIED_GROUP_SHARE.dat'),'0',count=1000,bs=filesizeKB)
 
     shared = reflection.getSharedObject()
@@ -53,11 +58,12 @@ def sharer(step):
     run_ocsync(d)
     list_files(d)
 
-    step(4,'Sharer shares file TEST_FILE_USER_SHARE.dat')
+    step(4,'Sharer shares files')
 
     user1 = "%s%i"%(config.oc_account_name, 1)
     user2 = "%s%i"%(config.oc_account_name, 2)
     shareFileWithUser ('TEST_FILE_USER_SHARE.dat', user1, user2)
+    shareFileWithUser ('TEST_FILE_USER_RESHARE.dat', user1, user2)
     shareFileWithUser ('TEST_FILE_MODIFIED_USER_SHARE.dat', user1, user2)
 
     step(7, 'Sharer validates modified file')
@@ -94,7 +100,7 @@ def shareeOne(step):
     step (2, 'Sharee One creates workdir')
     d = make_workdir()
 
-    step(5,'Sharee One syncs and validate file exists')
+    step(5,'Sharee One syncs and validate files exist')
 
     run_ocsync(d,userNum=2)
     list_files(d)
@@ -103,11 +109,15 @@ def shareeOne(step):
     logger.info ('Checking that %s is present in local directory for Sharee One', sharedFile)
     error_check(os.path.exists(sharedFile), "File %s should exist" %sharedFile)
 
+    sharedFile = os.path.join(d,'TEST_FILE_USER_RESHARE.dat')
+    logger.info ('Checking that %s is present in local directory for Sharee One', sharedFile)
+    error_check(os.path.exists(sharedFile), "File %s should exist" %sharedFile)
+
     sharedFile = os.path.join(d,'TEST_FILE_MODIFIED_USER_SHARE.dat')
     logger.info ('Checking that %s is present in local directory for Sharee One', sharedFile)
     error_check(os.path.exists(sharedFile), "File %s should exist" %sharedFile)
 
-    step (6, 'Sharee One modified file')
+    step (6, 'Sharee One modifies TEST_FILE_MODIFIED_USER_SHARE.dat')
 
     modifyFile(os.path.join(d,'TEST_FILE_MODIFIED_USER_SHARE.dat'),'1',count=10,bs=filesizeKB)
     run_ocsync(d,userNum=2)
