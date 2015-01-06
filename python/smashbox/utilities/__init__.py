@@ -368,13 +368,24 @@ def get_oc_api ():
     ocApi = ownCloudWebDav.ownCloudWebDav(url)
     return ocApi
 
-def shareFileWithUser (filename, sharer, sharee):
+def shareFileWithUser (filename, sharer, sharee, **kwargs):
 
     logger.info('%s is sharing file %s with user %s', sharer, filename, sharee) 
 
     ocApi = get_oc_api()
     ocApi.login (sharer, config.oc_account_password)
-    ocApi.share_file_with_user (filename, sharee)
+    shareInfo = ocApi.share_file_with_user (filename, sharee, **kwargs)
+
+    logger.info('share id for file share is %s', str(shareInfo.share_id)) 
+    return shareInfo.share_id
+
+def deleteShareWithUser (sharer, share_id):
+
+    logger.info('Deleting share %i from user %s', share_id, sharer) 
+
+    ocApi = get_oc_api()
+    ocApi.login (sharer, config.oc_account_password)
+    ocApi.delete_share (share_id)
 
 def shareFileWithGroup (filename, sharer, group):
 

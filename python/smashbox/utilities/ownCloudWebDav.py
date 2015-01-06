@@ -680,8 +680,7 @@ class ownCloudWebDav():
             or False if the operation failed
         :raises: ResponseError in case an HTTP error status was returned
         """
-#        perms = kwargs.get('perms', self.OCS_PERMISSION_READ)
-        perms = kwargs.get('perms', self.OCS_PERMISSION_ALL)
+        perms = kwargs.get('perms', self.OCS_PERMISSION_READ)
         if (((not isinstance(perms, int)) or (perms > self.OCS_PERMISSION_ALL))
             or ((not isinstance(user, basestring)) or (user == ''))):
             return False
