@@ -568,7 +568,7 @@ class ownCloudWebDav():
         data = 'shares'
         if (path != ''):
             data += '?'
-            path = self.__normalize_path(path)
+#            path = self.__normalize_path(path)
             args = { 'path': path }
             reshares = kwargs.get('reshares', False)
             if (isinstance(reshares, bool) and reshares):
@@ -577,6 +577,10 @@ class ownCloudWebDav():
             if (isinstance(subfiles, bool) and subfiles):
                 args['subfiles'] = subfiles
             data += urllib.urlencode(args)
+
+        print('get_shares: path: %s ' %(path))
+        print('get_shares: reshares: %i ' %(reshares))
+        print('get_shares: subfiles: %i ' %(subfiles))
 
         res = self.__make_ocs_request(
                 'GET',

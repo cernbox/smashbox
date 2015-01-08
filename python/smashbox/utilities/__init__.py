@@ -69,6 +69,7 @@ def make_workdir(name=None):
     from smashbox.utilities import reflection
     if name is None:
         name = reflection.getProcessName()
+
     d = os.path.join(config.rundir,name)
     mkdir(d)
     logger.info('make_workdir %s',d)
@@ -275,6 +276,12 @@ def modifyFile(fn,c,count,bs):
         of.write(buf)
     of.close()
 
+def deleteFile(fn):
+
+    logger.info('deleteFile: deleting file %s ',fn)
+    if os.path.exists(fn):
+        os.remove(fn)
+
 def createfile_zero(fn,count,bs):
     createfile(fn,'\0',count,bs)
 
@@ -413,4 +420,16 @@ def removeUserFromGroup (username, groupName):
     ocApi = get_oc_api()
     ocApi.login (config.oc_admin_user, config.oc_admin_password)
     ocApi.remove_user_from_group (username, groupName)
+
+def getShareId (path, filename, **kwargs):
+
+    logger.info('Getting the share id for file %s from directory %s', filename, path) 
+
+    ocApi = get_oc_api()
+    ocApi.login (config.oc_admin_user, config.oc_admin_password)
+#    fullPath = "%s/%s"%(config.rundir, path)
+    shares = ocApi.get_shares (path, **kwargs)
+
+    for i in range(1, len(shares)):
+        logger.info ('jrmhere: share is %s', shares[i])
 
