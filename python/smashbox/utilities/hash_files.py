@@ -14,6 +14,9 @@ from smashbox.utilities import *
 config.hashfile_size = (3.5,1.37) # standard file distribution: 10^(3.5) Bytes
 config.hashfile_bigsize = (5,1.37) # big file distribution
 
+#if defined, the file size distribution will be cut off at hashfile_maxsize
+config.hashfile_maxsize = None
+
 # these are ignored files which are normally not synced
 
 config.ignored_files = ['.csync_journal.db']
@@ -45,6 +48,8 @@ def size2nbytes(size):
         xxx = random.gauss(size[0],size[1])
         nbytes = int(math.pow(10,xxx))
         if nbytes<10:nbytes=10
+        if config.hashfile_maxsize and nbytes>config.hashfile_maxsize:
+            nbutes=config.hashfile_maxsize
 
     return nbytes
 
@@ -63,7 +68,7 @@ def create_hashfile(wdir,filemask=None,size=None,bs=None,slow_write=None):
 
     if size is None:
         size = config.hashfile_size
-    
+
     nbytes = size2nbytes(size)
 
     if not bs:
@@ -169,7 +174,9 @@ def analyse_hashfiles(wdir,filemask=None):
         md5_data = md5sum(fn)
         
         if md5_data!=md5_name:
-            error_check(False, 'Corrupted file? %s:  md5 expected %s computed %s'%(fn,repr(md5_name),repr(md5_data)))
+            osize = os.path.getsize(fn)
+            error_check(False, 'Corrupted file? %s:  md5 expected %s computed %s (observed size=%s)'%(fn,repr(md5_name),repr(md5_data),osize))
+            
             ncorrupt += 1
 
     logger.info("Found %d files in %s: analysed %d, corrupted %d",nfiles,wdir,nanalysed,ncorrupt)
