@@ -1,0 +1,1 @@
+echo iter: `grep runid test_storm.log | wc -l` errors: `grep ERROR test_storm.log | grep Missing | wc -l`
