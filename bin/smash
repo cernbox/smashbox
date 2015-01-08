@@ -73,7 +73,7 @@ def main():
    config._loglevel = level
    
    # check for mandatory configuration 
-   if not config.oc_account_password:
+   if not hasattr(config,'oc_account_password') or not config.oc_account_password:
       logger.error("The oc_account_password not set in smashbox.conf")
       sys.exit(1)
             
