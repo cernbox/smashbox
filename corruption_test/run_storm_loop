@@ -8,7 +8,7 @@ smashdir=os.path.join(thisdir,'..')
 
 dirs = {'thisdir':thisdir,'smashdir':smashdir}
 
-os.environ['OWNCLOUD_MAX_PARALLEL'] = '10'
+os.environ['OWNCLOUD_MAX_PARALLEL'] = '3'
 
 try:
  N = int(sys.argv[1])
@@ -22,16 +22,18 @@ N is number of test repetitions, you may specify -1 for indefinite loop
 
  sys.exit(-1)
 i = 1
-dirs['options']="-o storm_filesize=1000"
+dirs['options']="-o storm_nfiles=10 -o storm_filesize=1000 -o storm_nfiles=10 -o storm_nuploaders=10 -o storm_ndownloaders=10"
 
-cmd = '%(smashdir)s/bin/smash -c %(thisdir)s/smashbox.conf %(options)s %(smashdir)s/lib/test_storm.py' % dirs
+cmd = '%(smashdir)s/bin/smash -c %(thisdir)s/smashbox.conf %(options)s %(smashdir)s/lib/test_storm.py >> ~/test_storm.log 2>&1' % dirs
+
+os.system('echo "new loop sequence started %s" >> ~/test_storm.log'%dirs['options'])
 
 #print cmd
 
 while N:
 
  #print "test number",i
- 
+
  rc = subprocess.call(cmd,shell=True)
  
  if rc != 0:
