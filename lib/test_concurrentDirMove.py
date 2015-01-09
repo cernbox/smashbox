@@ -6,22 +6,35 @@ all added files are kept on the server and are found in the final directory.
 
 """
 
-nfiles = int(config.get('concurrentMoveDir_nfiles',10))
-filesizeKB = int(config.get('concurrentMoveDir_filesizeKB',9000))
+
+
+nfiles = int(config.get('concurrentMoveDir_nfiles',100))
+filesize = int(config.get('concurrentMoveDir_filesize',10))
 delaySeconds = int(config.get('concurrentMoveDir_delaySeconds',3)) # if delaySeconds > 0 then remover waits; else the adder waits;
 
+def OWNCLOUD_CHUNK_SIZE(factor=1):
+    return int(20*1024*1024*factor) # 20MB as of client 1.7 
+
 testsets = [ 
+    {'concurrentMoveDir_nfiles':100,
+     'concurrentMoveDir_filesize':10,
+     'concurrentMoveDir_delaySeconds':10 },  # removing the directory while lots of tiny files are uploaded
+
     {'concurrentMoveDir_nfiles':3,
-     'concurrentMoveDir_filesizeKB':10000,
+     'concurrentMoveDir_filesize':OWNCLOUD_CHUNK_SIZE(1.1),
      'concurrentMoveDir_delaySeconds':5 },  # removing the directory while a large file is chunk-uploaded
 
-    {'concurrentMoveDir_nfiles':40,
-     'concurrentMoveDir_filesizeKB':9000,
-     'concurrentMoveDir_delaySeconds':5 }, # removing the directory while lots of smaller files are uploaded
+    {'concurrentMoveDir_nfiles':20,
+     'concurrentMoveDir_filesize':OWNCLOUD_CHUNK_SIZE(0.9),
+     'concurrentMoveDir_delaySeconds':10 }, # removing the directory more but smaller files are uploaded
 
     {'concurrentMoveDir_nfiles':5,
-     'concurrentMoveDir_filesizeKB':15000,
-     'concurrentMoveDir_delaySeconds':-5 } # removing the directory before files are uploaded
+     'concurrentMoveDir_filesize':OWNCLOUD_CHUNK_SIZE(0.1),
+     'concurrentMoveDir_delaySeconds':-5 }, # removing the directory before files are uploaded
+
+    {'concurrentMoveDir_nfiles':5,
+     'concurrentMoveDir_filesize':OWNCLOUD_CHUNK_SIZE(2.1),
+     'concurrentMoveDir_delaySeconds':-10 } # removing the directory before laarge files are chunk-uploaded
 
     ]
 
@@ -58,7 +71,7 @@ def adder(step):
     d2 = os.path.join(d,'subdir')
 
     for i in range(nfiles):
-        create_hashfile(d2, size=filesizeKB*1000) #createfile_zero(os.path.join(d2,"test.%02d"%i),count=filesizeKB, bs=1000)
+        create_hashfile(d2, size=filesize) #createfile_zero(os.path.join(d2,"test.%02d"%i),count=filesize, bs=1000)
 
     step(4,'sync the added files in parallel')
     if delaySeconds<0:
