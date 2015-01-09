@@ -67,8 +67,6 @@ def sharer(step):
     kwargs = {'perms': OCS_PERMISSION_ALL}
 
     shared['SHARE_LOCAL_DIR'] = shareFileWithUser ('localShareDir', user1, user2, **kwargs)
-#     shared['NUM_FILES'] = len(os.listdir('localShareDir'))
-#    logger.info ('Number of files in localShareDir is %i', shared['NUM_FILES'])
 
     step(7, 'Sharer validates modified file')
     run_ocsync(d)

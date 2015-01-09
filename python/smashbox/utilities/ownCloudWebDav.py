@@ -578,10 +578,6 @@ class ownCloudWebDav():
                 args['subfiles'] = subfiles
             data += urllib.urlencode(args)
 
-        print('get_shares: path: %s ' %(path))
-        print('get_shares: reshares: %i ' %(reshares))
-        print('get_shares: subfiles: %i ' %(subfiles))
-
         res = self.__make_ocs_request(
                 'GET',
                 self.OCS_SERVICE_SHARE,
@@ -620,7 +616,6 @@ class ownCloudWebDav():
 	  return res.text
         raise ResponseError(res)
 
-
     def create_user(self, user_name, initial_password):
         """Create a new user with an initial password via provisioning API.
 	   It is not an error, if the user already existed before.
@@ -642,6 +637,42 @@ class ownCloudWebDav():
 	    return "user '" + user_name + "' is alive"
         raise ResponseError(res)
 
+    def delete_user(self, user_name):
+        """Deletes a user via provisioning API.
+	   If you get back an error 999, then the provisioning API is not enabled.
+	"""
+        res = self.__make_ocs_request(
+                'DELETE',
+                self.OCS_SERVICE_CLOUD,
+                'users/'+user_name
+                )
+
+	# We get 200 when the user was deleted.
+        if res.status_code == 200:
+	    return "user '" + user_name + "' was deleted"
+
+        raise ResponseError(res)
+
+    def check_user(self, user_name):
+        """Checks a user via provisioning API.
+	   If you get back an error 999, then the provisioning API is not enabled.
+	"""
+        res = self.__make_ocs_request(
+                'GET',
+                self.OCS_SERVICE_CLOUD,
+                'users?search='+user_name
+                )
+
+        if res.status_code == 200:
+            tree = ET.fromstring(res.text)
+            code_el = tree.find('users/element')
+
+            if code_el is not None and code_el.text == user_name:
+                return True
+            else:
+                return False 
+
+        raise ResponseError(res)
     def add_user_to_group(self, user_name, group_name):
         res = self.__make_ocs_request(
                 'POST',
@@ -707,6 +738,63 @@ class ownCloudWebDav():
                 path,
                 perms
             )
+        raise ResponseError(res)
+
+    def create_group(self, group_name):
+        """Create a new group via provisioning API.
+	   If you get back an error 999, then the provisioning API is not enabled.
+	"""
+        res = self.__make_ocs_request(
+                'POST',
+                self.OCS_SERVICE_CLOUD,
+                'groups',
+                data = { 'groupid': group_name }
+                )
+
+	# We get 200 when the group was just created.
+        if res.status_code == 200:
+	    # We get an inner 102 although we have an outer 200 when the group already exists.
+            tree = ET.fromstring(res.text)
+            self.__check_ocs_status(tree, [100, 102])
+	    # return ET.tostring(tree)
+	    return "group '" + group_name + "' was created"
+        raise ResponseError(res)
+
+    def delete_group(self, group_name):
+        """Delete a group via provisioning API.
+	   If you get back an error 999, then the provisioning API is not enabled.
+	"""
+        res = self.__make_ocs_request(
+                'DELETE',
+                self.OCS_SERVICE_CLOUD,
+                'groups/' + group_name
+                )
+
+	# We get 200 when the group was just deleted.
+        if res.status_code == 200:
+	    return "group '" + group_name + "' was deleted"
+
+        raise ResponseError(res)
+
+    def check_group(self, group_name):
+        """Checks a group via provisioning API.
+	   If you get back an error 999, then the provisioning API is not enabled.
+	"""
+        res = self.__make_ocs_request(
+                'GET',
+                self.OCS_SERVICE_CLOUD,
+                'groups?search='+group_name
+                )
+
+        if res.status_code == 200:
+            tree = ET.fromstring(res.text)
+            code_el = tree.find('groups/element')
+
+            if code_el is not None and code_el.text == group_name:
+                return True
+            else:
+                return False 
+
         raise ResponseError(res)
 
     def share_file_with_group(self, path, group, **kwargs):

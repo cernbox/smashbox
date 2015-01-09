@@ -71,8 +71,6 @@ def sharer(step):
     run_ocsync(d)
     list_files(d)
 
-# continue numbering here
-
     step (14, 'Sharer Final step')
 
 @add_worker
@@ -129,8 +127,6 @@ def shareeOne(step):
     logger.info ('Checking that %s is not present in sharee local directory', sharedFile)
     error_check(not os.path.exists(sharedFile), "File %s should not exist" %sharedFile)
 
-# continue numbering here
-
     step (14, 'Sharee One final step')
 
 @add_worker
@@ -156,8 +152,6 @@ def shareeTwo(step):
     sharedFile = os.path.join(d,'TEST_FILE_USER_RESHARE.dat')
     logger.info ('Checking that %s is not present in sharee local directory', sharedFile)
     error_check(not os.path.exists(sharedFile), "File %s should not exist" %sharedFile)
-
-# continue numbering here
 
     step (14, 'Sharee Two final step')
 

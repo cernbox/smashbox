@@ -82,15 +82,15 @@ def create_owncloud_account(user=None,password=None):
         password = config.oc_account_password
 
     logger.info('create_owncloud_account: %s',user)    
-    runcmd('%s sudo -u %s php %s/create_user.php %s %s'%(config.oc_server_shell_cmd,config.web_user,config.oc_server_tools_path,user,password))
+    createUser (user, password)
 
 def delete_owncloud_account(user):
     logger.info('delete_owncloud_account: %s',user)    
-    runcmd('%s sudo -u %s php %s/delete_user.php %s'%(config.oc_server_shell_cmd,config.web_user,config.oc_server_tools_path,user))
+    deleteUser (user) 
 
 def check_owncloud_account(user):
     logger.info('check_owncloud_account: %s',user)    
-    runcmd('%s sudo -u %s php %s/check_user.php %s'%(config.oc_server_shell_cmd,config.web_user,config.oc_server_tools_path,user))
+    checkUser (user)
 
 def reset_owncloud_group(numGroups=None):
     logger.info('reset_owncloud_group for group: %s', config.oc_group_name)
@@ -105,15 +105,15 @@ def reset_owncloud_group(numGroups=None):
 
 def  check_owncloud_group(group):
     logger.info('check_owncloud_group for group: %s', group)
-    runcmd('%s sudo -u %s php %s/check_group.php %s'%(config.oc_server_shell_cmd,config.web_user,config.oc_server_tools_path,group))
+    checkGroup (group)
 
 def  delete_owncloud_group(group):
     logger.info('delete_owncloud_group for group: %s', group)
-    runcmd('%s sudo -u %s php %s/delete_group.php %s'%(config.oc_server_shell_cmd,config.web_user,config.oc_server_tools_path,group))
+    deleteGroup (group)
 
 def  create_owncloud_group(group):
     logger.info('create_owncloud_group for group: %s', group)
-    runcmd('%s sudo -u %s php %s/create_group.php %s'%(config.oc_server_shell_cmd,config.web_user,config.oc_server_tools_path,group))
+    createGroup (group)
 
 ######### WEBDAV AND SYNC UTILITIES #####################
 
@@ -157,7 +157,6 @@ def run_ocsync(local_folder,remote_folder="",N=None,userNum=1):
 
     for i in range(N):
         t0 = datetime.datetime.now()
-#        cmd = config.oc_sync_cmd+' '+local_folder+' '+oc_webdav_url('owncloud',remote_folder,userNum)+" >> "+ config.rundir+"/%s-ocsync.step%02d.cnt%03d.log 2>&1"%(reflection.getProcessName(),current_step,ocsync_cnt[current_step])
         cmd = config.oc_sync_cmd+' '+local_folder+' '+oc_webdav_url(config.oc_root,remote_folder,userNum)+" >> "+ config.rundir+"/%s-ocsync.step%02d.cnt%03d.log 2>&1"%(reflection.getProcessName(),current_step,ocsync_cnt[current_step])
         runcmd(cmd,ignore_exitcode=True) # exitcode of ocsync is not reliable
         logger.info('sync cmd is: %s',cmd)
@@ -361,7 +360,7 @@ def fatal_check(expr,message):
         raise AssertionError(message)
 
 
-####### Provisioning API Calls ############
+####### API Calls ############
 
 def get_oc_api ():
 
@@ -421,15 +420,57 @@ def removeUserFromGroup (username, groupName):
     ocApi.login (config.oc_admin_user, config.oc_admin_password)
     ocApi.remove_user_from_group (username, groupName)
 
-def getShareId (path, filename, **kwargs):
+def createUser (username, password):
 
-    logger.info('Getting the share id for file %s from directory %s', filename, path) 
+    logger.info('Creating user %s with password %s', username, password) 
 
     ocApi = get_oc_api()
     ocApi.login (config.oc_admin_user, config.oc_admin_password)
-#    fullPath = "%s/%s"%(config.rundir, path)
-    shares = ocApi.get_shares (path, **kwargs)
+    ocApi.create_user (username, password)
 
-    for i in range(1, len(shares)):
-        logger.info ('jrmhere: share is %s', shares[i])
+def deleteUser (username):
+
+    logger.info('Deleting user %s', username) 
+
+    ocApi = get_oc_api()
+    ocApi.login (config.oc_admin_user, config.oc_admin_password)
+    ocApi.delete_user (username)
+
+def checkUser (username):
+
+    logger.info('Checking if user %s exists', username) 
+
+    ocApi = get_oc_api()
+    ocApi.login (config.oc_admin_user, config.oc_admin_password)
+    exists = ocApi.check_user (username)
+
+    if not exists:
+        logger.info ('User %s does not exists', username)
+
+def createGroup (groupName):
+
+    logger.info('Creating group %s', groupName) 
+
+    ocApi = get_oc_api()
+    ocApi.login (config.oc_admin_user, config.oc_admin_password)
+    ocApi.create_group (groupName)
+
+def deleteGroup (groupName):
+
+    logger.info('Deleting group %s', groupName) 
+
+    ocApi = get_oc_api()
+    ocApi.login (config.oc_admin_user, config.oc_admin_password)
+    ocApi.delete_group (groupName)
+
+def checkGroup (groupName):
+
+    logger.info('Checking if group %s exists', groupName) 
+
+    ocApi = get_oc_api()
+    ocApi.login (config.oc_admin_user, config.oc_admin_password)
+    exists = ocApi.check_group (groupName)
+
+    if not exists:
+        logger.info ('Group %s does not exists', groupName)
 
