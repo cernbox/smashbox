@@ -11,7 +11,7 @@ try:
 except KeyError,x:
     LOOP=1
 
-possible_actions=['run_nplusone_loop','run_storm_loop','kill','show','stat']
+possible_actions=['run_nplusone_loop','run_storm_loop','kill','show','stat','reset_logs']
 try:
     N = int(sys.argv[1])
     action = sys.argv[2]
@@ -39,6 +39,8 @@ def action_cmd():
         return '%(smashdir)s/corruption_test/show-smash' % {'smashdir':smashdir}
     if action == 'stat':
         return '%(smashdir)s/corruption_test/stat-smash' % {'smashdir':smashdir}
+    if action == 'reset_logs':
+        return '%(smashdir)s/corruption_test/reset_logs-smash' % {'smashdir':smashdir}
 
 
 host_list="%s/corruption_test/host.list"%smashdir
