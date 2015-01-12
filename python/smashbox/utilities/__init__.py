@@ -7,6 +7,13 @@ import time
 
 # Utilities to be used in the test-cases.
 
+
+def OWNCLOUD_CHUNK_SIZE(factor=1):
+    """Calculate file size as a fraction of owncloud client's default chunk size.
+    """
+    return int(20*1024*1024*factor) # 20MB as of client 1.7 
+
+
 ######## TEST SETUP AND PREPARATION
 
 def reset_owncloud_account(reset_procedure=None):

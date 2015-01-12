@@ -12,8 +12,7 @@ nfiles = int(config.get('concurrentMoveDir_nfiles',100))
 filesize = int(config.get('concurrentMoveDir_filesize',10))
 delaySeconds = int(config.get('concurrentMoveDir_delaySeconds',3)) # if delaySeconds > 0 then remover waits; else the adder waits;
 
-def OWNCLOUD_CHUNK_SIZE(factor=1):
-    return int(20*1024*1024*factor) # 20MB as of client 1.7 
+from smashbox.utilities import *
 
 testsets = [ 
     {'concurrentMoveDir_nfiles':100,
@@ -41,7 +40,7 @@ testsets = [
 import time
 import tempfile
 
-from smashbox.utilities import *
+
 from smashbox.utilities.hash_files import *
 
 @add_worker
