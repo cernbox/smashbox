@@ -10,24 +10,32 @@ from smashbox.utilities import *
 from smashbox.utilities.hash_files import *
 
 nfiles = int(config.get('nplusone_nfiles',10))
-filesizeKB = int(config.get('nplusone_filesizeKB',10000))
+filesize = config.get('nplusone_filesize',1000)
+
+if type(filesize) is type(''):
+    filesize = eval(filesize)
 
 testsets = [
-        { 'nplusone_filesizeKB': 1, 
+        { 'nplusone_filesize': 1000, 
           'nplusone_nfiles':100
         },
 
-        { 'nplusone_filesizeKB': 5000, 
+        { 'nplusone_filesize': OWNCLOUD_CHUNK_SIZE(0.3), 
           'nplusone_nfiles':10
         },
 
-        { 'nplusone_filesizeKB': 50000, 
+        { 'nplusone_filesize': OWNCLOUD_CHUNK_SIZE(1.3), 
           'nplusone_nfiles':2
         },
 
-        { 'nplusone_filesizeKB': 500000, 
+        { 'nplusone_filesize': OWNCLOUD_CHUNK_SIZE(3.5), 
           'nplusone_nfiles':1
         },
+
+        { 'nplusone_filesize': (3.5,1.37), # standard file distribution: 10^(3.5) Bytes
+          'nplusone_nfiles':10
+        },
+
 ]
 
 @add_worker
@@ -47,7 +55,7 @@ def worker0(step):
     step(2,'Add %s files and check if we still have k1+nfiles after resync'%nfiles)
 
     for i in range(nfiles):
-        create_hashfile(d,size=filesizeKB*1000) #config.hashfile_size)
+        create_hashfile(d,size=filesize)
 
     run_ocsync(d)
 
