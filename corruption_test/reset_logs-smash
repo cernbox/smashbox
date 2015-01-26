@@ -1,0 +1,3 @@
+mkdir -p archive
+install --backup=numbered test_storm.log archive
+echo > test_storm.log

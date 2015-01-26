@@ -1,0 +1,59 @@
+#!/usr/bin/env python
+
+import os,sys
+
+thisdir = os.path.abspath(os.path.normpath(os.path.dirname(sys.argv[0])))
+smashdir=os.path.join(thisdir,'..')
+
+
+try:
+    LOOP=os.environ['LOOP']
+except KeyError,x:
+    LOOP=1
+
+possible_actions=['run_nplusone_loop','run_storm_loop','kill','show','stat','reset_logs']
+try:
+    N = int(sys.argv[1])
+    action = sys.argv[2]
+    assert(action in possible_actions)
+except Exception,x:
+    print """ ERROR: missing or invalid arguments (%s)
+
+syntax: %s N action 
+
+N - number of hosts (head of host.list)
+action - %s
+
+You may user environment variable LOOP to defined the number of time the test should loop on each client. By default the command will loop: %d time(s) /-1 means forever/
+
+""" % (repr(x),sys.argv[0],', '.join(possible_actions),LOOP)
+    sys.exit(-1)
+
+
+def action_cmd():
+    if action[0:3] == 'run':
+        return 'time %(smashdir)s/corruption_test/%(action)s %(k)s  &' % {'smashdir':smashdir,'k':LOOP,'action':action}
+    if action == 'kill':
+        return '%(smashdir)s/corruption_test/kill-smash' % {'smashdir':smashdir}
+    if action == 'show':
+        return '%(smashdir)s/corruption_test/show-smash' % {'smashdir':smashdir}
+    if action == 'stat':
+        return '%(smashdir)s/corruption_test/stat-smash' % {'smashdir':smashdir}
+    if action == 'reset_logs':
+        return '%(smashdir)s/corruption_test/reset_logs-smash' % {'smashdir':smashdir}
+
+
+host_list="%s/corruption_test/host.list"%smashdir
+
+for i,host in enumerate(file(host_list)):
+    if N and i>=N: 
+        break
+
+    host = host.strip()
+
+    cmd = "ssh root@%s -i /b/private/octest.pem %s "%(host,action_cmd())
+    #print repr(cmd)
+    os.system(cmd)
+
+
+

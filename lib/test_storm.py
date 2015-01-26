@@ -66,6 +66,8 @@ def downloader(step):
 
     step(3,'Download and check')
 
+    sleep(1) # avoid race condition reading the file which has yet not been properly closed after writing
+
     run_ocsync(d)
 
     (ntot,nana,nbad) = analyse_hashfiles(d)

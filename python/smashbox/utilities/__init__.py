@@ -135,16 +135,16 @@ def run_ocsync(local_folder,remote_folder="",N=None):
 
 
 def webdav_propfind_ls(path):
-    runcmd('curl -s -k -XPROPFIND %s | xmllint --format -'%oc_webdav_url(remote_folder=path))
+    runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format -'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path)))
 
 def webdav_delete(path):
-    runcmd('curl -k -X DELETE %s '%oc_webdav_url(remote_folder=path))
+    runcmd('curl -k %s -X DELETE %s '%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path)))
 
 def webdav_mkcol(path,silent=False):
     out=""
     if silent: # a workaround for super-verbose errors in case directory on the server already exists
         out = "> /dev/null 2>&1"
-    runcmd('curl -k -X MKCOL %s %s'%(oc_webdav_url(remote_folder=path),out))
+    runcmd('curl -k %s -X MKCOL %s %s'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path),out))
                    
 
 ##### SHELL COMMANDS AND TIME FUNCTIONS
@@ -166,9 +166,8 @@ def runcmd(cmd,ignore_exitcode=False,echo=True,allow_stderr=True,shell=True):
 
     if process.returncode != 0:
         msg = "Non-zero exit code %d from command %s" % (ignore_exitcode,repr(cmd))
-        if ignore_exitcode:
-            logger.warning(msg)
-        else:
+        logger.warning(msg)
+        if not ignore_exitcode:
             raise subprocess.CalledProcessError(process.returncode,cmd)
 
 def sleep(n):
