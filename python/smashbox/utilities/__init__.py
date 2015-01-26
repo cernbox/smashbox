@@ -240,7 +240,11 @@ else: #linux
  def md5sum(fn):
     process=subprocess.Popen('md5sum %s'%fn,shell=True,stdout=subprocess.PIPE)
     out = process.communicate()[0]
-    return out.split()[0]
+    try:
+        return out.split()[0]
+    except IndexError:
+        return "NO_CHECKSUM_ERROR"
+
 
 def hexdump(fn):
     runcmd('hexdump %s'%fn)
