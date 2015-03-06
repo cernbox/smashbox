@@ -286,17 +286,26 @@ def implies(p,q):
 
 reported_errors = []
 
-def error_check(expr,message):
+def error_check(expr,message=None):
     """ Assert expr is True. If not, then mark the test as failed but carry on the execution.
     """
-    if not expr:
+
+    if not expr: 
+        if not message:
+            import inspect
+            f=inspect.getouterframes(inspect.currentframe())[1]
+            message = "%s failed in %s() [\"%s\" at line %s]" %(''.join(f[4]).strip(),f[3],f[1],f[2])
         logger.error(message)
         reported_errors.append(message)
 
-def fatal_check(expr,message):
+def fatal_check(expr,message=None):
     """ Assert expr is True. If not, then mark the test as failed and stop immediately.
     """    
     if not expr:
+        if not message:
+            import inspect
+            f=inspect.getouterframes(inspect.currentframe())[1]
+            message = "%s failed in %s() [\"%s\" at line %s]" %(''.join(f[4]).strip(),f[3],f[1],f[2])
         logger.fatal(message)
         reported_errors.append(message)
         raise AssertionError(message)
