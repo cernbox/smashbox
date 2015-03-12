@@ -19,7 +19,7 @@ config.hashfile_maxsize = None
 
 # these are ignored files which are normally not synced
 
-config.ignored_files = ['.csync_journal.db']
+config.ignored_files = ['.csync_journal.db', '.csync_journal.db-wal', '.csync_journal.db-shm']
 
 # control memory usage of functions reading/generating files
 BLOCK_SIZE = 1024*1024
@@ -29,6 +29,7 @@ import fnmatch
 
 def count_files(wdir,filemask=None):
     fl = os.listdir(wdir)
+    print fl
     # if filemask defined then filter names out accordingly
     if filemask:
         fl = fnmatch.filter(fl,filemask.replace('{md5}','*'))
