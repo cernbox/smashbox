@@ -16,6 +16,9 @@ smashdir = "~/smashdir"
 # if None then account name is chosen automatically (based on the test name)
 oc_account_name=None
 
+# name of the group used for testing
+oc_group_name=None
+
 # password for test accounts: all test account will have the same password
 # if not set then it's an error
 oc_account_password=""
@@ -23,12 +26,13 @@ oc_account_password=""
 # owncloud test server
 # if left blank or "localhost" then the real hostname of the localhost will be set
 oc_server = ''
+oc_root = 'owncloud'
 
 # webdav endpoint URI within the oc_server
-oc_webdav_endpoint = 'remote.php/webdav' # standard owncloud server
+oc_webdav_endpoint = oc_root + '/remote.php/webdav' # standard owncloud server
 
-# target folder on the server
-oc_server_folder = 'smashbox'
+# target folder on the server (DO NOT USE, NOT COMPATIBLE WITH ALL TESTS)
+oc_server_folder = ''
 
 # should we use protocols with SSL (https, ownclouds)
 oc_ssl_enabled = True
@@ -42,7 +46,7 @@ oc_server_shell_cmd = ""
 
 # Data directory on the owncloud server.
 # 
-oc_server_datadirectory = "/var/www/html/owncloud/data"
+oc_server_datadirectory = '/var/www/html/' + oc_root + '/data'
 
 # a path to server side tools (create_user.php, ...)  
 #
@@ -94,4 +98,11 @@ oc_account_reset_procedure = "delete"
 #   - "keep": keep all files (from the previous run)
 rundir_reset_procedure = "delete"
 
+web_user = "www-data"
+
+oc_admin_user = "at_admin"
+oc_admin_password = "admin"
+
+oc_number_test_users=3
+oc_number_test_groups=1
 

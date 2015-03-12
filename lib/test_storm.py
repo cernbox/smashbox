@@ -19,11 +19,10 @@ nuploaders = int(config.get('storm_nuploaders',10))
 ndownloaders = int(config.get('storm_ndownloaders',10))
 
 # Verbose flag
-verbose = bool(config.get('storm_verbose',False))
+verbose = bool(config.get('storm_verbose',True))
 
 # File size. None = default size/distribution.
-filesize = config.get('storm_filesize',None)
-
+filesize = int(config.get('storm_filesize',10000))
 
 def uploader(step):
     
@@ -36,8 +35,9 @@ def uploader(step):
     step(2,'Add files')
     logger.info('Adding %d files',nfiles)
     for i in range(nfiles):
-        if verbose: logger.info('Prepare file %d',i)
+        if verbose: logger.info('Prepare file %d with filesize %d',i,filesize)
         create_hashfile(d,size=filesize)
+
     run_ocsync(d)
     logger.info('Step 2 ends here...')
 
