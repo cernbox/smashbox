@@ -50,7 +50,7 @@ filesizeKB = int(config.get('share_filesizeKB',10))
 def setup(step):
 
     step (1, 'create test users')
-    reset_owncloud_account(numTestUsers=config.oc_number_test_users)
+    reset_owncloud_account(num_test_users=config.oc_number_test_users)
     check_users(config.oc_number_test_users)
 
     reset_rundir()
@@ -85,7 +85,7 @@ def sharer(step):
     user2 = "%s%i"%(config.oc_account_name, 2)
 
     kwargs = {'perms': OCS_PERMISSION_ALL}
-    shared['SHARE_LOCAL_DIR'] = shareFileWithUser ('localShareDir', user1, user2, **kwargs)
+    shared['SHARE_LOCAL_DIR'] = share_file_with_user ('localShareDir', user1, user2, **kwargs)
 
     step (8, 'Sharer Final step')
 
@@ -97,7 +97,7 @@ def shareeOne(step):
 
     step (5, 'Sharee One syncs and validates directory exist')
 
-    run_ocsync(d,userNum=2)
+    run_ocsync(d,user_num=2)
     list_files(d)
 
     sharedDir = os.path.join(d,'localShareDir')
@@ -109,7 +109,7 @@ def shareeOne(step):
     user2 = "%s%i"%(config.oc_account_name, 2)
     user3 = "%s%i"%(config.oc_account_name, 3)
     kwargs = {'perms': OCS_PERMISSION_ALL}
-    shareFileWithUser ('localShareDir/TEST_FILE_USER_RESHARE.dat', user2, user3, **kwargs)
+    share_file_with_user ('localShareDir/TEST_FILE_USER_RESHARE.dat', user2, user3, **kwargs)
 
     step (8, 'Sharee One final step')
 
@@ -125,7 +125,7 @@ def shareeTwo(step):
 
     step (13, 'Sharee two validates share file')
 
-    run_ocsync(d,userNum=3)
+    run_ocsync(d,user_num=3)
     list_files(d)
 
     sharedFile = os.path.join(d,'TEST_FILE_USER_RESHARE.dat')

@@ -70,7 +70,7 @@ testsets = [
 def setup(step):
 
     step (1, 'create test users')
-    reset_owncloud_account(numTestUsers=config.oc_number_test_users)
+    reset_owncloud_account(num_test_users=config.oc_number_test_users)
     check_users(config.oc_number_test_users)
 
     reset_rundir()
@@ -100,8 +100,8 @@ def sharer(step):
     shared = reflection.getSharedObject()
 
     kwargs = {'perms': sharePermissions}
-    shared['SHARE_LOCAL_DIR_U2'] = shareFileWithUser ('localShareDir', user1, user2, **kwargs)
-    shared['SHARE_LOCAL_DIR_U3'] = shareFileWithUser ('localShareDir', user1, user3, **kwargs)
+    shared['SHARE_LOCAL_DIR_U2'] = share_file_with_user ('localShareDir', user1, user2, **kwargs)
+    shared['SHARE_LOCAL_DIR_U3'] = share_file_with_user ('localShareDir', user1, user3, **kwargs)
 
     step (7, 'Sharer validates newly added files')
 
@@ -120,7 +120,7 @@ def shareeOne(step):
 
     step (5,'Sharee One syncs and validates directory exist')
 
-    run_ocsync(d,userNum=2)
+    run_ocsync(d,user_num=2)
     list_files(d)
 
     sharedDir = os.path.join(d,'localShareDir')
@@ -137,7 +137,7 @@ def shareeOne(step):
         filename = "%s%i%s" % ('localShareDir/TEST_FILE_NEW_USER_SHARE_',i,'.dat')
         createfile(os.path.join(d,filename),'0',count=1000,bs=filesizeKB)
 
-    run_ocsync(d,userNum=2)
+    run_ocsync(d,user_num=2)
 
     list_files(d+'/localShareDir')
     checkFilesExist(d) 
@@ -156,7 +156,7 @@ def shareeTwo(step):
 
     step (5, 'Sharee two syncs and validates directory exists')
 
-    run_ocsync(d,userNum=3)
+    run_ocsync(d,user_num=3)
     list_files(d)
 
     sharedDir = os.path.join(d,'localShareDir')
@@ -165,7 +165,7 @@ def shareeTwo(step):
 
     step (7, 'Sharee two validates new files exist')
 
-    run_ocsync(d,userNum=3)
+    run_ocsync(d,user_num=3)
 
     list_files(d+'/localShareDir')
     checkFilesExist(d) 

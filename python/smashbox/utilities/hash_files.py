@@ -29,7 +29,6 @@ import fnmatch
 
 def count_files(wdir,filemask=None):
     fl = os.listdir(wdir)
-    print fl
     # if filemask defined then filter names out accordingly
     if filemask:
         fl = fnmatch.filter(fl,filemask.replace('{md5}','*'))

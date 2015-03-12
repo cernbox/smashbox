@@ -91,7 +91,7 @@ OCS_PERMISSION_ALL = 31
 def setup(step):
 
     step (1, 'create test users')
-    reset_owncloud_account(numTestUsers=config.oc_number_test_users)
+    reset_owncloud_account(num_test_users=config.oc_number_test_users)
     check_users(config.oc_number_test_users)
 
     reset_rundir()
@@ -127,7 +127,7 @@ def sharer(step):
 
     kwargs = {'perms': OCS_PERMISSION_ALL}
 
-    shared['SHARE_LOCAL_DIR'] = shareFileWithUser ('localShareDir', user1, user2, **kwargs)
+    shared['SHARE_LOCAL_DIR'] = share_file_with_user ('localShareDir', user1, user2, **kwargs)
 
     step (7, 'Sharer validates modified file')
     run_ocsync(d)
@@ -142,7 +142,7 @@ def sharer(step):
     expect_does_not_exist(os.path.join(localDir,'TEST_FILE_NEW_USER_SHARE.dat'))
 
     step (16, 'Sharer unshares the directory')
-    deleteShare (user1, shared['SHARE_LOCAL_DIR'])
+    delete_share (user1, shared['SHARE_LOCAL_DIR'])
 
     step (19, 'Sharer Final step')
 
@@ -154,7 +154,7 @@ def shareeOne(step):
 
     step (5, 'Sharee One syncs and validates directory exist')
 
-    run_ocsync(d,userNum=2)
+    run_ocsync(d,user_num=2)
     list_files(d)
 
     sharedDir = os.path.join(d,'localShareDir')
@@ -163,19 +163,19 @@ def shareeOne(step):
 
     step (6, 'Sharee One modifies TEST_FILE_MODIFIED_USER_SHARE.dat')
 
-    modifyFile(os.path.join(d,'localShareDir/TEST_FILE_MODIFIED_USER_SHARE.dat'),'1',count=10,bs=filesizeKB)
-    run_ocsync(d,userNum=2)
+    modify_file(os.path.join(d,'localShareDir/TEST_FILE_MODIFIED_USER_SHARE.dat'),'1',count=10,bs=filesizeKB)
+    run_ocsync(d,user_num=2)
     list_files(d)
 
     step (8, 'Sharee One adds a file to the directory')
     createfile(os.path.join(d,'localShareDir/TEST_FILE_NEW_USER_SHARE.dat'),'0',count=1000,bs=filesizeKB)
-    run_ocsync(d,userNum=2)
+    run_ocsync(d,user_num=2)
     list_files(d)
 
     step (10, 'Sharee One deletes a file from the directory')
     fileToDelete = os.path.join(d,'localShareDir/TEST_FILE_NEW_USER_SHARE.dat')
-    deleteFile (fileToDelete)
-    run_ocsync(d,userNum=2)
+    delete_file (fileToDelete)
+    run_ocsync(d,user_num=2)
     list_files(d)
 
     step (12, 'Sharee One share files with user 3')
@@ -183,18 +183,18 @@ def shareeOne(step):
     user2 = "%s%i"%(config.oc_account_name, 2)
     user3 = "%s%i"%(config.oc_account_name, 3)
     kwargs = {'perms': OCS_PERMISSION_ALL}
-    shareFileWithUser ('localShareDir/TEST_FILE_USER_RESHARE.dat', user2, user3, **kwargs)
+    share_file_with_user ('localShareDir/TEST_FILE_USER_RESHARE.dat', user2, user3, **kwargs)
 
     step (14, 'Sharee One share directory user 3')
 
     user2 = "%s%i"%(config.oc_account_name, 2)
     user3 = "%s%i"%(config.oc_account_name, 3)
     kwargs = {'perms': OCS_PERMISSION_ALL}
-    shareFileWithUser ('localShareDir', user2, user3, **kwargs)
+    share_file_with_user ('localShareDir', user2, user3, **kwargs)
 
     step (17, 'Sharee One syncs and validates directory does not exist')
 
-    run_ocsync(d,userNum=2)
+    run_ocsync(d,user_num=2)
     list_files(d)
 
     sharedFile = os.path.join(d,'localShareDir')
@@ -215,7 +215,7 @@ def shareeTwo(step):
 
     step (13, 'Sharee two validates share file')
 
-    run_ocsync(d,userNum=3)
+    run_ocsync(d,user_num=3)
     list_files(d)
 
     sharedFile = os.path.join(d,'TEST_FILE_USER_RESHARE.dat')
@@ -224,7 +224,7 @@ def shareeTwo(step):
 
     step (15, 'Sharee two validates directory re-share')
 
-    run_ocsync(d,userNum=3)
+    run_ocsync(d,user_num=3)
     list_files(d)
 
     sharedFile = os.path.join(d,'localShareDir')
@@ -233,7 +233,7 @@ def shareeTwo(step):
 
     step (18, 'Sharee two syncs and validates directory does not exist')
 
-    run_ocsync(d,userNum=3)
+    run_ocsync(d,user_num=3)
     list_files(d)
 
     sharedFile = os.path.join(d,'localShareDir')

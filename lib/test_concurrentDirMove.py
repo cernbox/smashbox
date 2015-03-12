@@ -76,7 +76,7 @@ def adder(step):
     step(4,'sync the added files in parallel')
     if delaySeconds<0:
         sleep(-delaySeconds)
-    run_ocsync(d,N=2)
+    run_ocsync(d,n=2)
 
     step(5,'final check')
     run_ocsync(d)
