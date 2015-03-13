@@ -82,7 +82,7 @@ def remover(step):
 
     step(3,'locally remove subdir')
     d2 = os.path.join(d,'subdir')
-    removeTree(d2)
+    remove_tree(d2)
 
     step(4,'sync the removed subdir in parallel')
     if delaySeconds>0:

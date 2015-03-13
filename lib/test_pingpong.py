@@ -67,14 +67,14 @@ def ping(step):
     # in the first one the files are uploaded in parallel -- note: no conflict created!
     # in the second one either ping or pong grabs and downloads the most recent version of the file
     step(2,'first sync')
-    run_ocsync(d,N=2)
+    run_ocsync(d,n=2)
     LAST_BALL = md5sum(os.path.join(d,'BALL'))
     logger.info('LAST_BALL: %s',LAST_BALL)
 
     for i in range(3,10):
         seen_files.add(LAST_BALL)
         step(i,'next sync')
-        run_ocsync(d,N=1)
+        run_ocsync(d,n=1)
         BALL = md5sum(os.path.join(d,'BALL'))
         logger.info('BALL: %s',BALL)
         error_check( BALL == LAST_BALL, "the file is ping-ponging between the clients")
@@ -109,14 +109,14 @@ def pong(step):
         logger.info('pong delay %0.3fs',pongdelay)
         time.sleep(pongdelay)
 
-    run_ocsync(d,N=2)
+    run_ocsync(d,n=2)
     LAST_BALL = md5sum(os.path.join(d,'BALL'))
     logger.info('LAST_BALL: %s',LAST_BALL)
 
     for i in range(3,10):
         seen_files.add(LAST_BALL)
         step(i,'next sync')
-        run_ocsync(d,N=1)
+        run_ocsync(d,n=1)
         BALL = md5sum(os.path.join(d,'BALL'))
         logger.info('BALL: %s',BALL)
         error_check( BALL == LAST_BALL, "the file is ping-ponging between the clients")
