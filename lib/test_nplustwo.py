@@ -10,16 +10,12 @@ from smashbox.utilities.hash_files import *
 
 nfiles = int(config.get('nplustwo_nfiles',10))
 
-def adder(step):
-
-    # if you don't want to  cleanup server files from previous run then set oc_account_reset_procedure=keep option
-    #
-    # smash  -o oc_account_reset_procedure=keep lib/test_nplustwo.py  (or in etc/smashbox.conf)
-
+@add_worker
+def setup(step):
     reset_owncloud_account()
-
-    # cleanup all local files for the test
     reset_rundir()
+
+def adder(step):
 
     step(1,'Preparation')
     d = make_workdir()
