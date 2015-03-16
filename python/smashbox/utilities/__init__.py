@@ -463,6 +463,16 @@ def fatal_check(expr, message):
 
 # ###### Server Log File Scraping ############
 
+def reset_server_log_file():
+    """ Deletes the existing server log file so that there is a clean
+        log file for the test run
+    """
+
+    cmd = '%s rm -rf %s/owncloud.log' % (config.oc_server_shell_cmd, config.oc_server_datadirectory)
+    logger.info ('Removing existing server log file with command %s' % cmd)
+    runcmd(cmd)
+
+
 def scrape_log_file(d):
     """ Copies over the server log file and searches it for specific strings
 
