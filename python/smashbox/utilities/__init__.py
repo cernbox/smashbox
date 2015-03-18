@@ -473,12 +473,14 @@ def reset_server_log_file():
     runcmd(cmd)
 
 
-def scrape_log_file(d):
+#def scrape_log_file(d):
+def scrape_log_file():
     """ Copies over the server log file and searches it for specific strings
 
     :param d: The directory where the server log file is to be copied to
 
     """
+    d = make_workdir()
     cmd = 'scp root@%s:%s/owncloud.log %s/.' % (config.oc_server, config.oc_server_datadirectory, d)
     rtn_code = runcmd(cmd)
 

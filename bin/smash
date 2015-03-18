@@ -195,13 +195,16 @@ def main():
 
 
       def run_test(ts,i=0):
+         import smashbox.utilities.oc_utils as oc
          if ts:
             for opt,val in zip(ts.keys(),ts.values()):
                setattr(config,opt,val)
                
          log_quiet('running %s in %s as %s testset #%d %s',t,config.rundir,config.oc_account_name,i,repr(ts)) # log_quiet
          if not args.dry_run:
+            oc.reset_server_log_file()
             run_multiprocessing_engine(config,os.path.abspath(t))
+            oc.scrape_log_file()
 
       if args.all_testsets or args.testset is not None:
          smashbox.no_engine.testsets=[None]
