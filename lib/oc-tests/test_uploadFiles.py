@@ -88,7 +88,7 @@ def sharer(step):
     localDir = make_workdir(dirName)
 
     list_files(d)
-    run_ocsync(d)
+    run_ocsync(d,user_num=1)
     list_files(d)
 
     step (4,'Sharer shares directory')
@@ -105,7 +105,7 @@ def sharer(step):
 
     step (7, 'Sharer validates newly added files')
 
-    run_ocsync(d)
+    run_ocsync(d,user_num=1)
 
     list_files(d+'/localShareDir')
     checkFilesExist(d) 
