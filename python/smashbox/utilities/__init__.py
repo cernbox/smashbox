@@ -200,7 +200,7 @@ def create_owncloud_group(group_name):
 
 ######### WEBDAV AND SYNC UTILITIES #####################
 
-def oc_webdav_url(protocol='http',remote_folder="",user_num=None):
+def oc_webdav_url(protocol='http',remote_folder="",user_num=None,webdav_endpoint=None):
     """ Protocol for sync client should be set to 'owncloud'. Protocol for generic webdav clients is http.
     """
 
@@ -210,7 +210,10 @@ def oc_webdav_url(protocol='http',remote_folder="",user_num=None):
     # strip-off any leading / characters to prevent 1) abspath result from the join below, 2) double // and alike...
     remote_folder = remote_folder.lstrip('/')
 
-    remote_path = os.path.join(config.oc_webdav_endpoint, config.oc_server_folder, remote_folder)
+    if webdav_endpoint is None:
+        webdav_endpoint = config.oc_webdav_endpoint
+
+    remote_path = os.path.join(webdav_endpoint, config.oc_server_folder, remote_folder)
 
     if user_num is None:
         username = "%s" % config.oc_account_name
@@ -439,26 +442,24 @@ def implies(p,q):
 
 reported_errors = []
 
-def error_check(expr,message=None):
+def error_check(expr,message=""):
     """ Assert expr is True. If not, then mark the test as failed but carry on the execution.
     """
 
     if not expr: 
-        if not message:
-            import inspect
-            f=inspect.getouterframes(inspect.currentframe())[1]
-            message = "%s failed in %s() [\"%s\" at line %s]" %(''.join(f[4]).strip(),f[3],f[1],f[2])
+        import inspect
+        f=inspect.getouterframes(inspect.currentframe())[1]
+        message=" ".join([message, "%s failed in %s() [\"%s\" at line %s]" %(''.join(f[4]).strip(),f[3],f[1],f[2])])
         logger.error(message)
         reported_errors.append(message)
 
-def fatal_check(expr,message=None):
+def fatal_check(expr,message=""):
     """ Assert expr is True. If not, then mark the test as failed and stop immediately.
     """
     if not expr:
-        if not message:
-            import inspect
-            f=inspect.getouterframes(inspect.currentframe())[1]
-            message = "%s failed in %s() [\"%s\" at line %s]" %(''.join(f[4]).strip(),f[3],f[1],f[2])
+        import inspect
+        f=inspect.getouterframes(inspect.currentframe())[1]
+        message=" ".join([message, "%s failed in %s() [\"%s\" at line %s]" %(''.join(f[4]).strip(),f[3],f[1],f[2])])
         logger.fatal(message)
         reported_errors.append(message)
         raise AssertionError(message)
