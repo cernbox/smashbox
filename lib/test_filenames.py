@@ -1,6 +1,8 @@
 from smashbox.utilities import * 
 from smashbox.utilities.hash_files import count_files
 
+import os
+
 __doc__ = """ Test various characters in the file names.
 
 bug #104648: add UTF-8 escaping in PROPFIND response body (https://savannah.cern.ch/bugs/?104648)
@@ -23,6 +25,33 @@ charsets_excluded_from_sync = {
                  'smaller' : '<',
                  'pipe'    : '|'
 }
+
+def is_excluded(name):
+    """
+    Returns true if the given file name matches an pattern
+    excluded from sync by the sync client.
+
+    :param name: file name to check
+    :returns: True if the file name must be excluded, False otherwise
+    """
+    if name == '.': # skip this
+        return True
+
+    # excluded pattern "*~"
+    if name[-1] == '~':
+        return True
+
+    # excluded pattern "._*"
+    if len(name) >= 2 and name[0:2] == '._':
+        return True
+
+    file_name, ext = os.path.splitext(name)
+
+    # excluded pattern "*.~*"
+    if len(ext) > 1 and ext[1] == '~':
+        return True
+
+    return False
 
 @add_worker
 def creator(step):
@@ -65,6 +94,7 @@ def creator(step):
     # generic charsets -- let's take a hammer and test (almost) all ANSI characters
     # we don't test for the foward slash
     char_range = range(32,47)+range(58,65)+range(91,97)+range(123,127)
+
     #char_range.remove(37) #to see the tests to complition temporarily remove this character as it crashes csync
     #char_range=[]
     for i in char_range:
@@ -108,6 +138,8 @@ def propagator(step):
 
     # take the original file list produced by creator and remove all file names containing characters excluded from sync
     expected_files = [fn for fn in files_1 if not any((c in charsets_excluded_from_sync.values()) for c in fn) ]
+    # also exclude file name patterns
+    expected_files = [fn for fn in expected_files if not is_excluded(fn)]
 
     logger.info("expected %d files to be propagated (excluding the ones with unsyncable characters %s)",len(expected_files),repr(charsets_excluded_from_sync.values()))
 
