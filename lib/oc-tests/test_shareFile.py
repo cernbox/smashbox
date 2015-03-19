@@ -90,17 +90,11 @@ def setup(step):
     check_users(config.oc_number_test_users)
 
     reset_rundir()
-#    reset_server_log_file()
-
-@add_worker
-def test_teardown(step):
-    """ Final steps to validate that the server log file is clean
-    """
+    reset_server_log_file()
 
     step (15, 'Validate server log file is clean') 
-
-#    d = make_workdir()
-#    scrape_log_file(d)
+    d = make_workdir()
+    scrape_log_file(d)
 
 @add_worker
 def sharer(step):

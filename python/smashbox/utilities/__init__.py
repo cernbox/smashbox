@@ -473,8 +473,7 @@ def reset_server_log_file():
     runcmd(cmd)
 
 
-#def scrape_log_file(d):
-def scrape_log_file():
+def scrape_log_file(d):
     """ Copies over the server log file and searches it for specific strings
 
     :param d: The directory where the server log file is to be copied to

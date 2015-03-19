@@ -56,11 +56,6 @@ def setup(step):
     reset_rundir()
     reset_server_log_file()
 
-@add_worker
-def test_teardown(step):
-    """ Final steps to validate that the server log file is clean
-    """
-
     step (9, 'Validate server log file is clean')
 
     d = make_workdir()
