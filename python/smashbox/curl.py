@@ -19,11 +19,18 @@ class Client:
         c.setopt(c.COOKIEFILE, '')
         c.setopt(c.FOLLOWLOCATION, 0) # by default owncloud sync client does not follow redirects
 
-        c.setopt(c.VERBOSE, 0) 
-        #c.setopt(c.VERBOSE, True) 
+        if config.get('pycurl_USERAGENT',None):
+            c.setopt(c.USERAGENT, config.pycurl_USERAGENT)
+
+        if config.get('pycurl_VERBOSE',None) is not None:
+            self.verbose = config.pycurl_VERBOSE
+        else:
+            from logging import DEBUG
+            self.verbose = config._loglevel <= DEBUG
+
+        c.setopt(c.VERBOSE, self.verbose) 
 
         self.c = c
-
 
     def PUT(self,fn,url,headers={},offset=0,size=0):
         logger.debug('PUT %s %s %s',fn,url,headers)
@@ -49,7 +56,12 @@ class Client:
         r.body_stream = cStringIO.StringIO()
         c.setopt(c.WRITEFUNCTION,r.body_stream.write)
 
-        return self._perform_request(url,headers)
+        x = self._perform_request(url,headers)
+
+        if self.verbose:
+            logger.info('PUT response body: %s',r.body_stream.getvalue())
+
+        return x
 
     def GET(self,url,fn,headers={}):
         logger.debug('GET %s %s %s',url,fn,headers)

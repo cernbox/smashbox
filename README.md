@@ -58,6 +58,10 @@ Clone git repository into your local ``smashbox`` directory.
 
 Copy the etc/smashbox.conf.template into etc/smashbox.conf
 
+Note: a helper shell script, makeconfig, has been added to the etc directory. 
+Edit this file to make some of the more common configuration changes and then run the script.  
+This will create a local smashbox.conf file.
+
 Set the oc_sync_cmd to the location of the owncloud command-line
 client (see client/compile-owncloud-sync-client if you don't have one
 yet compiled).
@@ -67,6 +71,18 @@ Set the oc_account_password.
 Otherwise the default configuration should work out-of-the-box if you
 run the smashbox tests locally on the owncloud server. You should try
 that first (on the TEST server instance).
+
+Support has been added for the provisioning API which creates a dependency on the pyocclient repo.
+
+To install the library, run the following after checking out your branch:
+
+pip install -r requirements.txt
+
+If you want to use a local copy of pyocclient, you can add the following to your shell environment:
+
+export PYTHONPATH=/local/path/to/pyocclient/repo/branch
+
+and clone git repository into your local ``pyocclient`` directory.
 
 First test runs
 ===============
@@ -97,6 +113,7 @@ You will need to set oc_server, oc_server_shell_cmd.
 
 If you don't keep the same path on the server and the client to the smashbox git repository clone then you will need to set oc_server_tools_path.
 
+As of version x.x, the provisioning API is used for user management on the server so this is no longer needed.
 
 Adding new tests
 ================
