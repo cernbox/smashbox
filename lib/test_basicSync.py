@@ -124,7 +124,7 @@ def creator(step):
     list_files(d)
 
     step(7,'download the repository')
-    run_ocsync(d,N=3)
+    run_ocsync(d,n=3)
 
     step(8,'final check')
 
@@ -142,8 +142,8 @@ def winner(step):
 
     list_files(d)
 
-    removeFile(os.path.join(d,'TEST_FILE_DELETED_WINNER.dat'))
-    removeFile(os.path.join(d,'TEST_FILE_DELETED_BOTH.dat'))
+    remove_file(os.path.join(d,'TEST_FILE_DELETED_WINNER.dat'))
+    remove_file(os.path.join(d,'TEST_FILE_DELETED_BOTH.dat'))
 
     createfile(os.path.join(d,'TEST_FILE_MODIFIED_WINNER.dat'),'1',count=1000,bs=filesizeKB)
     createfile(os.path.join(d,'TEST_FILE_MODIFIED_BOTH.dat'),'1',count=1000,bs=filesizeKB)
@@ -159,7 +159,7 @@ def winner(step):
 
     step(5,'final sync')
 
-    run_ocsync(d,N=3)
+    run_ocsync(d,n=3)
 
     step(8,'final check')
 
@@ -183,8 +183,8 @@ def loser(step):
 
     # now do the local changes
 
-    removeFile(os.path.join(d,'TEST_FILE_DELETED_LOSER.dat'))
-    removeFile(os.path.join(d,'TEST_FILE_DELETED_BOTH.dat'))
+    remove_file(os.path.join(d,'TEST_FILE_DELETED_LOSER.dat'))
+    remove_file(os.path.join(d,'TEST_FILE_DELETED_BOTH.dat'))
 
     createfile(os.path.join(d,'TEST_FILE_MODIFIED_LOSER.dat'),'2',count=1000,bs=filesizeKB)
     createfile(os.path.join(d,'TEST_FILE_MODIFIED_BOTH.dat'),'2',count=1000,bs=filesizeKB)
@@ -202,9 +202,9 @@ def loser(step):
 
     # remove the sync db
     if rmLocalStateDB:
-        removeFile(os.path.join(d,'.csync_journal.db'))
+        remove_file(os.path.join(d,'.csync_journal.db'))
 
-    run_ocsync(d,N=3) # conflict file will be synced to the server but it requires more than one sync run
+    run_ocsync(d,n=3) # conflict file will be synced to the server but it requires more than one sync run
 
     step(6,'final sync')
     run_ocsync(d)
@@ -226,7 +226,7 @@ def checker(step):
 
     step(7,'download the repository for final verification')
     d = make_workdir()
-    run_ocsync(d,N=3)
+    run_ocsync(d,n=3)
 
     step(8,'final check')
 

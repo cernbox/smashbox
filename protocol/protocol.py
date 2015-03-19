@@ -56,7 +56,7 @@ def chunk_file_upload(filename,dest_dir_url,chunk_size=None,header_if_match=None
         oc_rc_codes = [201] # NOTE: always 201, no difference if first or last chunk
         eos_rc_codes = [200]
 
-        fatal_check(r.rc in oc_rc_codes+eos_rc_codes)
+        fatal_check(r.rc in oc_rc_codes+eos_rc_codes, "rc=%s"%r.rc)
 
         if i < chunk_number-1: # not last chunk
 

@@ -19,7 +19,7 @@ config.hashfile_maxsize = 5*1000*1000*1000
 
 # these are ignored files which are normally not synced
 
-config.ignored_files = ['.csync_journal.db']
+config.ignored_files = ['.csync_journal.db', '.csync_journal.db-wal', '.csync_journal.db-shm']
 
 # control memory usage of functions reading/generating files
 BLOCK_SIZE = 1024*1024
