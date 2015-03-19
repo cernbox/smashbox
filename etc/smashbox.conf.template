@@ -118,3 +118,8 @@ oc_admin_password = "admin"
 # cleanup imported namespaces
 del os
 
+# Verbosity of curl client. 
+# If none then verbosity is on when smashbox run in --debug mode.
+# set it to True or False to override
+# 
+pycurl_verbose = None
