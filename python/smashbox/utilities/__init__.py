@@ -200,7 +200,7 @@ def create_owncloud_group(group_name):
 
 ######### WEBDAV AND SYNC UTILITIES #####################
 
-def oc_webdav_url(protocol='http',remote_folder="",user_num=None,webdav_endpoint=None):
+def oc_webdav_url(protocol='http',remote_folder="",user_num=None,webdav_endpoint=None,hide_password=False):
     """ Protocol for sync client should be set to 'owncloud'. Protocol for generic webdav clients is http.
     """
 
@@ -220,7 +220,12 @@ def oc_webdav_url(protocol='http',remote_folder="",user_num=None,webdav_endpoint
     else:
         username = "%s%i" % (config.oc_account_name, user_num)
 
-    return protocol + '://' + username + (':%(oc_account_password)s@%(oc_server)s/' % config) + remote_path
+    if hide_password:
+        password = "***"
+    else:
+        password = config.oc_account_password
+
+    return protocol + '://' + username + ':' + password + '@' + config.oc_server + '/' + remote_path
 
 
 # this is a local variable for each worker that keeps track of the repeat count for the current step

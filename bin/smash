@@ -166,9 +166,10 @@ def main():
              sys.exit(p.returncode)
           
 
-   log_quiet('oc_server: %s',config.oc_server)  # log_quiet
-   log_quiet('oc_ssl_enabled: %s',config.oc_ssl_enabled) # log_quiet
+   from smashbox.utilities import  oc_webdav_url
+
    log_quiet('runid: %s',config.runid) # log_quiet
+   log_quiet('URL: %s',oc_webdav_url(hide_password=True))  # log_quiet
    
    user_defined_oc_account_name = config.oc_account_name
 
