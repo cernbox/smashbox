@@ -8,7 +8,7 @@ smashdir=os.path.join(thisdir,'..')
 
 dirs = {'thisdir':thisdir,'smashdir':smashdir}
 
-os.environ['OWNCLOUD_MAX_PARALLEL'] = '3'
+os.environ['OWNCLOUD_MAX_PARALLEL'] = '5'
 
 try:
  N = int(sys.argv[1])
@@ -22,9 +22,21 @@ N is number of test repetitions, you may specify -1 for indefinite loop
 
  sys.exit(-1)
 i = 1
+
 dirs['options']="-o storm_nfiles=10 -o storm_filesize=1000 -o storm_nfiles=10 -o storm_nuploaders=10 -o storm_ndownloaders=10"
+#dirs['options']="-o storm_nfiles=5 -o storm_filesize=1000 -o storm_nfiles=10 -o storm_nuploaders=20 -o storm_ndownloaders=20"
+
+#dirs['options']="-o storm_filesize=1000 -o storm_nfiles=10 -o storm_nuploaders=5 -o storm_ndownloaders=5" # NO REDIRECT ERRORS IN THIS CONFIGURATION (9 client boxes)
 
 cmd = '%(smashdir)s/bin/smash -c %(thisdir)s/smashbox.conf %(options)s %(smashdir)s/lib/test_storm.py >> ~/test_storm.log 2>&1' % dirs
+
+#cmd = '%(smashdir)s/bin/smash -c %(thisdir)s/smashbox-eosdev.conf %(options)s %(smashdir)s/lib/test_storm.py >> ~/test_storm.log 2>&1' % dirs # THIS IS AGAINST EOSDEVSERVER
+
+#dirs['options']="-o storm_nfiles=10 -o storm_filesize=1000 -o storm_nfiles=10 -o storm_nuploaders=10 -o storm_ndownloaders=10"
+#cmd = '%(smashdir)s/bin/smash -c %(thisdir)s/smashbox-xrdcp-test.conf %(options)s %(smashdir)s/lib/test_storm_xrdcp.py >> ~/test_storm.log 2>&1' % dirs
+
+#dirs['options']="-o storm_nfiles=5 -o storm_filesize=1000 -o storm_nfiles=10 -o storm_nuploaders=20 -o storm_ndownloaders=20"
+#cmd = '%(smashdir)s/bin/smash -v -c %(thisdir)s/smashbox-curl-test.conf %(options)s %(smashdir)s/lib/test_storm_curl.py >> ~/test_storm.log 2>&1' % dirs
 
 os.system('echo "new loop sequence started %s" >> ~/test_storm.log'%dirs['options'])
 

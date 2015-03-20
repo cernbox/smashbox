@@ -7,8 +7,13 @@ import time
 
 # Utilities to be used in the test-cases.
 
-# ####### TEST SETUP AND PREPARATION
+def OWNCLOUD_CHUNK_SIZE(factor=1):
+    """Calculate file size as a fraction of owncloud client's default chunk size.
+    """
+    return int(20*1024*1024*factor) # 20MB as of client 1.7 
 
+
+######## TEST SETUP AND PREPARATION
 
 def reset_owncloud_account(reset_procedure=None, num_test_users=None):
     """ 
@@ -26,10 +31,10 @@ def reset_owncloud_account(reset_procedure=None, num_test_users=None):
         reset_procedure = config.oc_account_reset_procedure
 
     if num_test_users is None:
-        num_test_users = config.oc_number_test_users
-        logger.info('reset_owncloud_account (%s) for %i users', reset_procedure, num_test_users)
+        logger.info('reset_owncloud_account (%s)', reset_procedure)
+
     else:
-        logger.info('reset_owncloud_account (%s) for 1 user', reset_procedure)
+        logger.info('reset_owncloud_account (%s) for %d users', reset_procedure, num_test_users)
 
     if reset_procedure == 'delete':
         if num_test_users is None:
@@ -44,8 +49,8 @@ def reset_owncloud_account(reset_procedure=None, num_test_users=None):
         return
 
     if reset_procedure == 'webdav_delete':
-        webdav_delete('/')  # delete the complete webdav endpoint associated with the remote account
-        webdav_delete('/')  # FIXME: workaround current bug in EOS (https://savannah.cern.ch/bugs/index.php?104661) 
+        webdav_delete('/') # delete the complete webdav endpoint associated with the remote account
+        webdav_delete('/') # FIXME: workaround current bug in EOS (https://savannah.cern.ch/bugs/index.php?104661) 
 
     # if create if does not exist (for keep or webdav_delete options)
     webdav_mkcol('/')
@@ -69,7 +74,7 @@ def reset_rundir(reset_procedure=None):
     # that's a bit dangerous... so let's try to mitiage the risk
 
     if reset_procedure == 'delete':
-        assert (os.path.realpath(config.rundir).startswith(os.path.realpath(config.smashdir)))
+        assert(os.path.realpath(config.rundir).startswith(os.path.realpath(config.smashdir)))
         remove_tree(config.rundir)
 
 
@@ -82,9 +87,9 @@ def make_workdir(name=None):
     if name is None:
         name = reflection.getProcessName()
 
-    d = os.path.join(config.rundir, name)
+    d = os.path.join(config.rundir,name)
     mkdir(d)
-    logger.info('make_workdir %s', d)
+    logger.info('make_workdir %s',d)
     return d
 
 
@@ -193,9 +198,9 @@ def create_owncloud_group(group_name):
     oc_api.create_group(group_name)
 
 
-# ######## WEBDAV AND SYNC UTILITIES #####################
+######### WEBDAV AND SYNC UTILITIES #####################
 
-def oc_webdav_url(protocol='http', remote_folder="", user_num=None):
+def oc_webdav_url(protocol='http',remote_folder="",user_num=None,webdav_endpoint=None,hide_password=False):
     """ Protocol for sync client should be set to 'owncloud'. Protocol for generic webdav clients is http.
     """
 
@@ -205,23 +210,30 @@ def oc_webdav_url(protocol='http', remote_folder="", user_num=None):
     # strip-off any leading / characters to prevent 1) abspath result from the join below, 2) double // and alike...
     remote_folder = remote_folder.lstrip('/')
 
-    remote_path = os.path.join(config.oc_webdav_endpoint, config.oc_server_folder, remote_folder)
+    if webdav_endpoint is None:
+        webdav_endpoint = config.oc_webdav_endpoint
+
+    remote_path = os.path.join(webdav_endpoint, config.oc_server_folder, remote_folder)
 
     if user_num is None:
         username = "%s" % config.oc_account_name
     else:
         username = "%s%i" % (config.oc_account_name, user_num)
 
-    return protocol + '://' + username + (':%(oc_account_password)s@%(oc_server)s/' % config) + remote_path
+    if hide_password:
+        password = "***"
+    else:
+        password = config.oc_account_password
+
+    return protocol + '://' + username + ':' + password + '@' + config.oc_server + '/' + remote_path
 
 
 # this is a local variable for each worker that keeps track of the repeat count for the current step
 ocsync_cnt = {}
 
 
-def run_ocsync(local_folder, remote_folder="", n=None, user_num=1):
-    """ Run the ocsync for local_folder against remote_folder (or the main folder on the owncloud account if 
-    remote_folder is None).
+def run_ocsync(local_folder, remote_folder="", n=None, user_num=None):
+    """ Run the ocsync for local_folder against remote_folder (or the main folder on the owncloud account if remote_folder is None).
     Repeat the sync n times. If n given then n -> config.oc_sync_repeat (default 1).
     """
     global ocsync_cnt
@@ -232,86 +244,79 @@ def run_ocsync(local_folder, remote_folder="", n=None, user_num=1):
 
     current_step = reflection.getCurrentStep()
 
-    ocsync_cnt.setdefault(current_step, 0)
+    ocsync_cnt.setdefault(current_step,0)
 
-    local_folder += '/'  # FIXME: HACK - is a trailing slash really needed by 1.6 owncloudcmd client?
+    local_folder += '/' # FIXME: HACK - is a trailing slash really needed by 1.6 owncloudcmd client?
 
     for i in range(n):
         t0 = datetime.datetime.now()
-        cmd = config.oc_sync_cmd + ' ' + local_folder + ' ' + oc_webdav_url('owncloud', remote_folder,
-                                                                            user_num) + " >> " + config.rundir + "/%s-ocsync.step%02d.cnt%03d.log 2>&1" % (
-            reflection.getProcessName(), current_step, ocsync_cnt[current_step])
+        cmd = config.oc_sync_cmd+' '+local_folder+' '+oc_webdav_url('owncloud',remote_folder,user_num) + " >> "+config.rundir+"/%s-ocsync.step%02d.cnt%03d.log 2>&1"%(reflection.getProcessName(),current_step,ocsync_cnt[current_step])
         runcmd(cmd, ignore_exitcode=True)  # exitcode of ocsync is not reliable
-        logger.info('sync cmd is: %s', cmd)
-        logger.info('sync finished: %s', datetime.datetime.now() - t0)
-        ocsync_cnt[current_step] += 1
+        logger.info('sync cmd is: %s',cmd)
+        logger.info('sync finished: %s',datetime.datetime.now()-t0)
+        ocsync_cnt[current_step]+=1
 
 
 def webdav_propfind_ls(path):
-    runcmd('curl -s -k -XPROPFIND %s | xmllint --format -' % oc_webdav_url(remote_folder=path))
-
+    runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format -'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path)))
 
 def webdav_delete(path):
-    runcmd('curl -k -X DELETE %s ' % oc_webdav_url(remote_folder=path))
+    runcmd('curl -k %s -X DELETE %s '%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path)))
 
-
-def webdav_mkcol(path, silent=False):
-    out = ""
-    if silent:  # a workaround for super-verbose errors in case directory on the server already exists
+def webdav_mkcol(path,silent=False):
+    out=""
+    if silent: # a workaround for super-verbose errors in case directory on the server already exists
         out = "> /dev/null 2>&1"
-    runcmd('curl -k -X MKCOL %s %s' % (oc_webdav_url(remote_folder=path), out))
-
+    runcmd('curl -k %s -X MKCOL %s %s'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path),out))
 
 # #### SHELL COMMANDS AND TIME FUNCTIONS
 
-def runcmd(cmd, ignore_exitcode=False, echo=True, allow_stderr=True, shell=True, log_warning=True):
+def runcmd(cmd,ignore_exitcode=False,echo=True,allow_stderr=True,shell=True,log_warning=True):
     logger.info('running %s', repr(cmd))
 
-    process = subprocess.Popen(cmd, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = process.communicate()
+    process = subprocess.Popen(cmd, shell=shell,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    stdout,stderr = process.communicate()
 
     if echo:
         if stdout.strip():
-            logger.info("stdout: %s", stdout)
+            logger.info("stdout: %s",stdout)
         if stderr.strip():
             if allow_stderr:
-                logger.info("stderr: %s", stderr)
+                logger.info("stderr: %s",stderr)
             else:
-                logger.error("stderr: %s", stderr)
+                logger.error("stderr: %s",stderr)
 
     if process.returncode != 0:
-        msg = "Non-zero exit code %d from command %s" % (ignore_exitcode, repr(cmd))
-        if ignore_exitcode:
-            if log_warning:
-                logger.warning(msg)
-            return process.returncode
-        else:
-            raise subprocess.CalledProcessError(process.returncode, cmd)
+        msg = "Non-zero exit code %d from command %s" % (ignore_exitcode,repr(cmd))
+        if log_warning:
+            logger.warning(msg)
+        if not ignore_exitcode:
+            raise subprocess.CalledProcessError(process.returncode,cmd)
 
     return process.returncode
 
 
 def sleep(n):
-    logger.info('sleeping %s seconds', n)
+    logger.info('sleeping %s seconds',n)
     time.sleep(n)
 
 
-# ####### BASIC FILE AND DIRECTORY OPERATIONS
+######## BASIC FILE AND DIRECTORY OPERATIONS
 
 def mkdir(d):
-    runcmd('mkdir -p ' + d)
+    runcmd('mkdir -p '+d)
     return d
 
 
 def remove_tree(path):
-    runcmd('rm -rf ' + path)
+    runcmd('rm -rf '+path)
 
 
 def remove_file(path):
-    logger.info('remove file %s', path)
+    logger.info('remove file %s',path)
     try:
         os.remove(path)
-    except OSError, x:
+    except OSError,x:
         import errno
 
         if x.errno == errno.ENOENT:
@@ -319,33 +324,32 @@ def remove_file(path):
         else:
             raise
 
+def mv(a,b):
+    runcmd('mv %s %s'%(a,b))
 
-def mv(a, b):
-    runcmd('mv %s %s' % (a, b))
 
-
-def list_files(path, recursive=False):
+def list_files(path,recursive=False):
     if recursive:
-        runcmd('ls -lR %s' % path)
+        runcmd('ls -lR %s'%path)
     else:
-        runcmd('ls -lh %s' % path)
+        runcmd('ls -lh %s'%path)
 
 
 # ## DATA FILES AND VERSIONS
 
-def createfile(fn, c, count, bs):
+def createfile(fn,c,count,bs):
     # this replaces the dd as 1) more portable, 2) not prone to problems with escaping funny filenames in shell commands
-    logger.info('createfile %s character=%s count=%d bs=%d', fn, repr(c), count, bs)
-    buf = c * bs
-    of = file(fn, 'w')
+    logger.info('createfile %s character=%s count=%d bs=%d',fn,repr(c),count,bs)
+    buf = c*bs
+    of = file(fn,'w')
     for i in range(count):
         of.write(buf)
     of.close()
 
 
-def modify_file(fn, c, count, bs):
-    logger.info('modify_file %s character=%s count=%d bs=%d', fn, repr(c), count, bs)
-    buf = c * bs
+def modify_file(fn,c,count,bs):
+    logger.info('modify_file %s character=%s count=%d bs=%d',fn,repr(c),count,bs)
+    buf = c*bs
 
     if not os.path.exists(fn):
         message = fn + ' does not exist'
@@ -360,7 +364,7 @@ def modify_file(fn, c, count, bs):
         return
 
     of = open(fn, 'a')
-    of.seek(0, 2)
+    of.seek(0,2)
     for i in range(count):
         logger.info('modify_file: appending ')
         of.write(buf)
@@ -368,13 +372,13 @@ def modify_file(fn, c, count, bs):
 
 
 def delete_file(fn):
-    logger.info('delete_file: deleting file %s ', fn)
+    logger.info('delete_file: deleting file %s ',fn)
     if os.path.exists(fn):
         os.remove(fn)
 
 
-def createfile_zero(fn, count, bs):
-    createfile(fn, '\0', count, bs)
+def createfile_zero(fn,count,bs):
+    createfile(fn,'\0',count,bs)
 
 
 import platform
@@ -382,7 +386,7 @@ import platform
 if platform.system() == 'Darwin':
 
     def md5sum(fn):
-        process = subprocess.Popen('md5 %s' % fn, shell=True, stdout=subprocess.PIPE)
+        process = subprocess.Popen('md5 %s'%fn,shell=True,stdout=subprocess.PIPE)
         out = process.communicate()[0]
         try:
             return out.split()[-1]
@@ -392,70 +396,75 @@ if platform.system() == 'Darwin':
 else:  # linux
 
     def md5sum(fn):
-        process = subprocess.Popen('md5sum %s' % fn, shell=True, stdout=subprocess.PIPE)
+        process=subprocess.Popen('md5sum %s'%fn,shell=True,stdout=subprocess.PIPE)
         out = process.communicate()[0]
-        return out.split()[0]
+        try:
+            return out.split()[0]
+        except IndexError:
+            return "NO_CHECKSUM_ERROR"
 
 
 def hexdump(fn):
-    runcmd('hexdump %s' % fn)
+    runcmd('hexdump %s'%fn)
 
 
 def list_versions_on_server(fn):
-    cmd = "%(oc_server_shell_cmd)s md5sum %(oc_server_datadirectory)s/%(oc_account_name)s/files_versions/%(filename)s.v*" % config._dict(
-        filename=os.path.join(config.oc_server_folder, os.path.basename(fn)))  # PENDING: bash -x 
+    cmd = "%(oc_server_shell_cmd)s md5sum %(oc_server_datadirectory)s/%(oc_account_name)s/files_versions/%(filename)s.v*" % config._dict(filename=os.path.join(config.oc_server_folder, os.path.basename(fn)))  # PENDING: bash -x 
     runcmd(cmd)
 
 
 def hexdump_versions_on_server(fn):
-    cmd = "%(oc_server_shell_cmd)s hexdump %(oc_server_datadirectory)s/%(oc_account_name)s/files_versions/%(filename)s.v*" % config._dict(
-        filename=os.path.join(config.oc_server_folder, os.path.basename(fn)))  # PENDING: bash -x 
+    cmd = "%(oc_server_shell_cmd)s hexdump %(oc_server_datadirectory)s/%(oc_account_name)s/files_versions/%(filename)s.v*" % config._dict(filename=os.path.join(config.oc_server_folder, os.path.basename(fn)))  # PENDING: bash -x 
     runcmd(cmd)
 
 
 def get_md5_versions_on_server(fn):
-    cmd = "%(oc_server_shell_cmd)s md5sum %(oc_server_datadirectory)s/%(oc_account_name)s/files_versions/%(filename)s.v*" % config._dict(
-        filename=os.path.join(config.oc_server_folder, os.path.basename(fn)))
+    cmd = "%(oc_server_shell_cmd)s md5sum %(oc_server_datadirectory)s/%(oc_account_name)s/files_versions/%(filename)s.v*" % config._dict(filename=os.path.join(config.oc_server_folder, os.path.basename(fn)))
 
-    logger.info('running %s', repr(cmd))
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+    logger.info('running %s',repr(cmd))
+    process=subprocess.Popen(cmd,stdout=subprocess.PIPE,shell=True)
 
-    stdout = process.communicate()[0]
+    stdout=process.communicate()[0]
 
-    result = []
+    result=[]
     for line in stdout.splitlines():
         line = line.strip()
         if not line:
             continue
-        md, fn = line.split()
-        result.append((md, os.path.basename(fn)))
-        # log(result[-1])
+        md,fn = line.split()
+        result.append((md,os.path.basename(fn)))
+        #log(result[-1])
 
     return result
 
 
 # ###### LOGIC OPERANDS  ############
 
-def implies(p, q):
+def implies(p,q):
     return not p or q
 
 # ###### ERROR REPORTING ############
 
 reported_errors = []
 
-
-def error_check(expr, message):
+def error_check(expr,message=""):
     """ Assert expr is True. If not, then mark the test as failed but carry on the execution.
     """
-    if not expr:
+
+    if not expr: 
+        import inspect
+        f=inspect.getouterframes(inspect.currentframe())[1]
+        message=" ".join([message, "%s failed in %s() [\"%s\" at line %s]" %(''.join(f[4]).strip(),f[3],f[1],f[2])])
         logger.error(message)
         reported_errors.append(message)
 
-
-def fatal_check(expr, message):
+def fatal_check(expr,message=""):
     """ Assert expr is True. If not, then mark the test as failed and stop immediately.
     """
     if not expr:
+        import inspect
+        f=inspect.getouterframes(inspect.currentframe())[1]
+        message=" ".join([message, "%s failed in %s() [\"%s\" at line %s]" %(''.join(f[4]).strip(),f[3],f[1],f[2])])
         logger.fatal(message)
         reported_errors.append(message)
         raise AssertionError(message)

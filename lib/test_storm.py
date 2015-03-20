@@ -19,10 +19,10 @@ nuploaders = int(config.get('storm_nuploaders',10))
 ndownloaders = int(config.get('storm_ndownloaders',10))
 
 # Verbose flag
-verbose = bool(config.get('storm_verbose',True))
+verbose = bool(config.get('storm_verbose',False))
 
 # File size. None = default size/distribution.
-filesize = int(config.get('storm_filesize',10000))
+filesize = config.get('storm_filesize',None)
 
 def uploader(step):
     
@@ -65,6 +65,8 @@ def downloader(step):
     step(2,'Active clients are uploading files...')
 
     step(3,'Download and check')
+
+    sleep(1) # avoid race condition reading the file which has yet not been properly closed after writing
 
     run_ocsync(d)
 

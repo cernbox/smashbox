@@ -15,7 +15,7 @@ config.hashfile_size = (3.5,1.37) # standard file distribution: 10^(3.5) Bytes
 config.hashfile_bigsize = (5,1.37) # big file distribution
 
 #if defined, the file size distribution will be cut off at hashfile_maxsize
-config.hashfile_maxsize = None
+config.hashfile_maxsize = 5*1000*1000*1000
 
 # these are ignored files which are normally not synced
 
@@ -41,17 +41,22 @@ def size2nbytes(size):
     """
     
     import random, math
-    
-    try:
-        nbytes = int(size)
-    except TypeError:
+
+    def make_distrib(size):
         xxx = random.gauss(size[0],size[1])
         nbytes = int(math.pow(10,xxx))
         if nbytes<10:nbytes=10
         if config.hashfile_maxsize and nbytes>config.hashfile_maxsize:
-            nbutes=config.hashfile_maxsize
+            nbytes=config.hashfile_maxsize
+        return nbytes
 
-    return nbytes
+    try:
+        return int(size)
+    except TypeError:
+        return make_distrib(size)
+    except ValueError:
+        return make_distrib(size)        
+
 
 
 def create_hashfile(wdir,filemask=None,size=None,bs=None,slow_write=None):
@@ -117,6 +122,8 @@ def create_hashfile(wdir,filemask=None,size=None,bs=None,slow_write=None):
 
     f.write(block_data_r)
     f.close()
+
+    logger.info("Written hash file %s, nbytes=%d",fn,nbytes)
     
     return fn
 

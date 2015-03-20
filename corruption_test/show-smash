@@ -1,1 +1,1 @@
-ps aux | grep smas[h] | grep -v show-smash
+ps aux | grep smas[h] | grep -v show-smash | wc -l

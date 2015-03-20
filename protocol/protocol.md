@@ -242,6 +242,14 @@ Response body example:
 ### Upload file
 ### Upload files (chunked)
 
+## Upcoming changes
+
+Custom header: OC-Etag 
+
+See:
+ - https://github.com/owncloud/client/issues/1291#issuecomment-77165925)
+ - https://github.com/owncloud/client/search?utf8=%E2%9C%93&q=oc-etag
+
 
 
 # OC Sync semantics

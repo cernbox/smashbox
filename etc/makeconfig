@@ -1,6 +1,8 @@
-#!/bin/sh
+#!/usr/bin/env sh
 
-cp smashbox.conf.template smashbox.conf
+echo "generating smashbox.conf" $PWD
+
+cp -i smashbox.conf.template smashbox.conf
 
 sed -i 's/smashdir.*/smashdir = "\/home\/jennifer\/smashbox\/results"/' smashbox.conf
 sed -i 's/oc_account_name.*/oc_account_name = "user"/' smashbox.conf

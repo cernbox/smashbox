@@ -58,7 +58,7 @@ Clone git repository into your local ``smashbox`` directory.
 
 Copy the etc/smashbox.conf.template into etc/smashbox.conf
 
-Note: a helper shell script, runSed.sh, has been added to the etc directory. 
+Note: a helper shell script, makeconfig, has been added to the etc directory. 
 Edit this file to make some of the more common configuration changes and then run the script.  
 This will create a local smashbox.conf file.
 
