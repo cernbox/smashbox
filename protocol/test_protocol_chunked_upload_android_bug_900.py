@@ -11,7 +11,7 @@ def main(step):
     # we make client look like an Android client
     config.pycurl_USERAGENT = "Android-ownCloud"
 
-    # this test ust be run against the mobile endpoint of cernbox which may be convinently set in the config
+    # this test should be run against the mobile endpoint of cernbox which may be convinently set in the config
     # for vanilla owncloud server mobile endpoint is the same as generic webdav endpoint
     webdav_endpoint = config.get('oc_mobile_webdav_endpoint',None)
 
