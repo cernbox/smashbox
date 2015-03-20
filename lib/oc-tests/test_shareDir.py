@@ -117,7 +117,7 @@ def sharer(step):
     logger.info('md5_sharer: %s',shared['md5_sharer'])
 
     list_files(d)
-    run_ocsync(d)
+    run_ocsync(d,user_num=1)
     list_files(d)
 
     step (4, 'Sharer shares directory')
@@ -130,15 +130,15 @@ def sharer(step):
     shared['SHARE_LOCAL_DIR'] = share_file_with_user ('localShareDir', user1, user2, **kwargs)
 
     step (7, 'Sharer validates modified file')
-    run_ocsync(d)
+    run_ocsync(d,user_num=1)
     expect_modified(os.path.join(localDir,'TEST_FILE_MODIFIED_USER_SHARE.dat'), shared['md5_sharer'])
 
     step (9, 'Sharer validates newly added file')
-    run_ocsync(d)
+    run_ocsync(d,user_num=1)
     expect_exists(os.path.join(localDir,'TEST_FILE_NEW_USER_SHARE.dat'))
 
     step (11, 'Sharer validates deleted file')
-    run_ocsync(d)
+    run_ocsync(d,user_num=1)
     expect_does_not_exist(os.path.join(localDir,'TEST_FILE_NEW_USER_SHARE.dat'))
 
     step (16, 'Sharer unshares the directory')

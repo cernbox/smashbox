@@ -108,7 +108,7 @@ def sharer(step):
     logger.info('md5_sharer: %s',shared['md5_sharer'])
 
     list_files(d)
-    run_ocsync(d)
+    run_ocsync(d,user_num=1)
     list_files(d)
 
     step (4,'Sharer shares files')
@@ -122,7 +122,7 @@ def sharer(step):
     shared['TEST_FILE_MODIFIED_USER_SHARE'] = share_file_with_user ('TEST_FILE_MODIFIED_USER_SHARE.dat', user1, user2, **kwargs)
 
     step (7, 'Sharer validates modified file')
-    run_ocsync(d)
+    run_ocsync(d,user_num=1)
 
     if sharePermissions == (OCS_PERMISSION_READ | OCS_PERMISSION_SHARE):
       expect_not_modified(os.path.join(d,'TEST_FILE_MODIFIED_USER_SHARE.dat'), shared['md5_sharer'])
@@ -136,7 +136,7 @@ def sharer(step):
 
     list_files(d)
     remove_file(os.path.join(d,'TEST_FILE_USER_SHARE.dat'))
-    run_ocsync(d)
+    run_ocsync(d,user_num=1)
     list_files(d)
 
     step (14, 'Sharer final step')
