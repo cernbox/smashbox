@@ -34,7 +34,7 @@ def reset_owncloud_account(reset_procedure=None, num_test_users=None):
         logger.info('reset_owncloud_account (%s)', reset_procedure)
 
     else:
-        logger.info('reset_owncloud_account (%s) for %d users', reset_procedure, numTestUsers)
+        logger.info('reset_owncloud_account (%s) for %d users', reset_procedure, num_test_users)
 
     if reset_procedure == 'delete':
         if num_test_users is None:

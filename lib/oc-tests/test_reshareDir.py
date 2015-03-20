@@ -76,7 +76,7 @@ def sharer(step):
     logger.info('md5_sharer: %s',shared['md5_sharer'])
 
     list_files(d)
-    run_ocsync(d)
+    run_ocsync(d,user_num=1)
     list_files(d)
 
     step (4, 'Sharer shares directory')
