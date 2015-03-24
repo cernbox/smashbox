@@ -123,3 +123,8 @@ del os
 # set it to True or False to override
 # 
 pycurl_verbose = None
+
+# share_sets is the number of sharer/shareeOne/shareeTwo groupings to be
+# used in a test run to allow for more users sharing at time
+#
+share_sets = 1
