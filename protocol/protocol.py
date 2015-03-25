@@ -106,6 +106,7 @@ def file_upload(filename,dest_dir_url,header_if_match=None):
 
     return r
 
+
 def file_download(filename,src_dir_url,dest_dir):
     
     src_url = os.path.join(src_dir_url,filename)
@@ -116,6 +117,74 @@ def file_download(filename,src_dir_url,dest_dir):
     r = client.GET(src_url,dest_fn)
 
     return r
+
+def quota_check(url,depth=0):
+    query="""<?xml version="1.0" ?>
+  <d:propfind xmlns:d="DAV:"><d:prop>
+      <d:quota-available-bytes/>   
+      <d:quota-used-bytes/>  
+  </d:prop></d:propfind>
+"""
+
+    client = smashbox.curl.Client()
+
+    return client.PROPFIND(url,query,depth=depth)
+
+def stat_top_level(url,depth=0):
+
+    query="""
+<?xml version="1.0" ?>
+<d:propfind xmlns:d="DAV:">
+  <d:prop>
+    <d:getetag/>
+  </d:prop>
+</d:propfind>
+"""
+    client = smashbox.curl.Client()
+
+    # make sure etag is quoted
+    r = client.PROPFIND(url,query,depth=depth)
+
+    for x in r.propfind_response:
+        print x
+    return r
+   
+def all_prop_android(url,depth=0):
+    """ All prop request as issued by Owncloud Android Client
+    """
+    query="""<?xml version="1.0" encoding="UTF-8"?><D:propfind xmlns:D="DAV:"><D:allprop/></D:propfind>"""
+    client = smashbox.curl.Client()
+
+    # make sure etag is quoted
+    # make sure collection type has no spaces
+    # which properites to expect? compare with sabre-dav implementation
+    return client.PROPFIND(url,query,depth=depth)
+
+def ls_prop_desktop17(url,depth=0):
+    """ List directory: desktop sync client 1.7
+    """
+
+    query="""<?xml version="1.0" encoding="utf-8"?>
+<propfind xmlns="DAV:"><prop>
+<getlastmodified xmlns="DAV:"/>
+<getcontentlength xmlns="DAV:"/>
+<resourcetype xmlns="DAV:"/>
+<getetag xmlns="DAV:"/>
+<id xmlns="http://owncloud.org/ns"/>
+</prop></propfind>"""
+
+    client = smashbox.curl.Client()
+
+    # make sure etag is quoted
+
+    r=client.PROPFIND(url,query,depth=depth)
+
+    for x in r.propfind_response:
+        print x
+    return r
+   
+    
+    
 
 
 # TODO: another important test: 409 is required if trying to upload to non-existing directory
