@@ -116,7 +116,7 @@ Response: 207
 
 Reponse body example:
 
-    < HTTP/1.1 207 Multi Status
+    < PROPFIND
     
     <?xml version="1.0" encoding="utf-8"?>
      <d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns">
@@ -136,9 +136,9 @@ Reponse body example:
 
 Syntax:
 
-    PROPFIND /remote.php/webdav/ HTTP/1.1
+    > PROPFIND /remote.php/webdav/ HTTP/1.1
     Depth: 0
-
+    
     <?xml version="1.0"?>
      <d:propfind xmlns:d="DAV:"><d:prop>
        <d:getlastmodified />
@@ -147,7 +147,9 @@ Syntax:
 Reponse: 207
 
 Response body example:
-
+	 
+	< PROPFIND
+	
 	<?xml version="1.0" encoding="utf-8"?>
 	<d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns">
 	  <d:response>
@@ -173,17 +175,17 @@ List directory _path_ and return mtime, size, type, etag and file id.
 
 Syntax:
 
-    PROPFIND /remote.php/webdav/path HTTP/1.1
+    > PROPFIND /remote.php/webdav/path HTTP/1.1
     Depth: 1
     
     <?xml version="1.0" encoding="utf-8"?>
-	 <propfind xmlns="DAV:"><prop>
-	  <getlastmodified xmlns="DAV:"/>
-	  <getcontentlength xmlns="DAV:"/>
-	  <resourcetype xmlns="DAV:"/>
-	  <getetag xmlns="DAV:"/>
-	  <id xmlns="http://owncloud.org/ns"/>
-	</prop></propfind>
+         <propfind xmlns="DAV:"><prop>
+          <getlastmodified xmlns="DAV:"/>
+          <getcontentlength xmlns="DAV:"/>
+          <resourcetype xmlns="DAV:"/>
+          <getetag xmlns="DAV:"/>
+          <id xmlns="http://owncloud.org/ns"/>
+        </prop></propfind>
 
 Non-standard property: id (FileId)
 
@@ -193,42 +195,42 @@ Response body: see restrictions and limitations paragraph
 
 Response body example:
 
-    PROPFIND /remote.php/webdav/New%20folder HTTP/1.1
+    < PROPFIND /remote.php/webdav/New%20folder HTTP/1.1
     
     <?xml version="1.0" encoding="utf-8"?>
-	<d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:oc="http://owncloud.org/ns">
-	  <d:response>
-	    <d:href>/remote.php/webdav/New%20folder/</d:href>
-	    <d:propstat>
-	      <d:prop>
-	        <oc:id>00000287ocee55caa1e4</oc:id>
-	        <d:getetag>"5391c8e1e4cf0"</d:getetag>
-	        <d:getlastmodified>Fri, 06 Jun 2014 13:57:53 GMT</d:getlastmodified>
-	        <d:resourcetype><d:collection/></d:resourcetype>
-	      </d:prop>
-	      <d:status>HTTP/1.1 200 OK</d:status>
-	    </d:propstat>
-	    <d:propstat>
-	      <d:prop>
-	        <d:getcontentlength/>
-	      </d:prop>
-	      <d:status>HTTP/1.1 404 Not Found</d:status>
-	    </d:propstat>
-	  </d:response>
-	  <d:response>
-	    <d:href>/remote.php/webdav/New%20folder/file.txt</d:href>
-	    <d:propstat>
-	      <d:prop>
-	        <oc:id>00000292ocee55caa1e4</oc:id>
-	        <d:getetag>"5391c8e19e24f"</d:getetag>
-	        <d:getlastmodified>Fri, 06 Jun 2014 13:57:53 GMT</d:getlastmodified>
-	        <d:getcontentlength>55</d:getcontentlength>
-	        <d:resourcetype/>
-	      </d:prop>
-	      <d:status>HTTP/1.1 200 OK</d:status>
-	    </d:propstat>
-	  </d:response>
-	</d:multistatus>  
+        <d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:oc="http://owncloud.org/ns">
+          <d:response>
+            <d:href>/remote.php/webdav/New%20folder/</d:href>
+            <d:propstat>
+              <d:prop>
+                <oc:id>00000287ocee55caa1e4</oc:id>
+                <d:getetag>"5391c8e1e4cf0"</d:getetag>
+                <d:getlastmodified>Fri, 06 Jun 2014 13:57:53 GMT</d:getlastmodified>
+                <d:resourcetype><d:collection/></d:resourcetype>
+              </d:prop>
+              <d:status>HTTP/1.1 200 OK</d:status>
+            </d:propstat>
+            <d:propstat>
+              <d:prop>
+                <d:getcontentlength/>
+              </d:prop>
+              <d:status>HTTP/1.1 404 Not Found</d:status>
+            </d:propstat>
+          </d:response>
+          <d:response>
+            <d:href>/remote.php/webdav/New%20folder/file.txt</d:href>
+            <d:propstat>
+              <d:prop>
+                <oc:id>00000292ocee55caa1e4</oc:id>
+                <d:getetag>"5391c8e19e24f"</d:getetag>
+                <d:getlastmodified>Fri, 06 Jun 2014 13:57:53 GMT</d:getlastmodified>
+                <d:getcontentlength>55</d:getcontentlength>
+                <d:resourcetype/>
+              </d:prop>
+              <d:status>HTTP/1.1 200 OK</d:status>
+            </d:propstat>
+          </d:response>
+        </d:multistatus>  
 
 
 ### Create directory

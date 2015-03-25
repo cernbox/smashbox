@@ -27,3 +27,8 @@ def getSharedObject():
 
 def getNumberOfWorkers():
     return len(_smash_.workers)
+
+def getTestcaseFilename():
+    """ The absolute path to the file containing current testcase.
+    """
+    return _smash_.args.test_target
