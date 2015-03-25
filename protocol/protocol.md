@@ -103,7 +103,7 @@ PROPFIND Depth:infinity is not supported: client will try this for compatibility
 
 Syntax:
 	    
-	PROPFIND /remote.php/webdav/ HTTP/1.1
+	> PROPFIND /remote.php/webdav/ HTTP/1.1
 	Depth: 0
 	
 	<?xml version="1.0" ?>
@@ -116,6 +116,8 @@ Response: 207
 
 Reponse body example:
 
+    < HTTP/1.1 207 Multi Status
+    
     <?xml version="1.0" encoding="utf-8"?>
      <d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns">
       <d:response>
