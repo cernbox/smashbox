@@ -531,7 +531,7 @@ def get_oc_api():
         protocol += 's'
 
     url = protocol + '://' + config.oc_server + '/' + config.oc_root
-    oc_api = owncloud.Client(url, debug=True)
+    oc_api = owncloud.Client(url)
     return oc_api
 
 
