@@ -123,3 +123,7 @@ del os
 # set it to True or False to override
 # 
 pycurl_verbose = None
+
+# Trigger server log file copy based on this property
+#
+reset_server_log = False
