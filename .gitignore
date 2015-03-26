@@ -1,6 +1,6 @@
 *.py[cod]
-etc/smashbox.conf
-src/
+/etc/smashbox.conf
+/src/
 
 # C extensions
 *.so
