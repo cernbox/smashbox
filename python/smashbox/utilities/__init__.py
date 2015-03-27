@@ -477,6 +477,9 @@ def reset_server_log_file():
         log file for the test run
     """
 
+    if not config.reset_server_log:
+        return
+
     cmd = '%s rm -rf %s/owncloud.log' % (config.oc_server_shell_cmd, config.oc_server_datadirectory)
     logger.info ('Removing existing server log file with command %s' % cmd)
     runcmd(cmd)
@@ -488,6 +491,10 @@ def scrape_log_file(d):
     :param d: The directory where the server log file is to be copied to
 
     """
+
+    if not config.reset_server_log:
+        return
+
     d = make_workdir()
     cmd = 'scp root@%s:%s/owncloud.log %s/.' % (config.oc_server, config.oc_server_datadirectory, d)
     rtn_code = runcmd(cmd)
