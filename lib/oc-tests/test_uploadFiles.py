@@ -36,6 +36,7 @@ Data Providers:
 
 from smashbox.utilities import *
 import glob
+import re
 
 OCS_PERMISSION_READ = 1
 OCS_PERMISSION_UPDATE = 2
@@ -46,23 +47,24 @@ OCS_PERMISSION_ALL = 31
 
 filesizeKB = int(config.get('test_filesizeKB',10))
 sharePermissions = config.get('test_sharePermissions', OCS_PERMISSION_ALL)
-numFilesToCreate = config.get('test_numFilesToCreate', 1)
+numFilesToCreate = config.get('test_numFilesToCreate', 10)
+share_sets = config.get('share_sets',1)
 
 testsets = [
     {
         'test_sharePermissions':OCS_PERMISSION_ALL,
         'test_numFilesToCreate':50,
-        'test_filesizeKB':20000
+        'test_filesizeKB':20000,
     },
     {
         'test_sharePermissions':OCS_PERMISSION_ALL,
         'test_numFilesToCreate':500,
-        'test_filesizeKB':2000
+        'test_filesizeKB':2000,
     },
     {
         'test_sharePermissions':OCS_PERMISSION_READ | OCS_PERMISSION_CREATE | OCS_PERMISSION_UPDATE,
         'test_numFilesToCreate':50,
-        'test_filesizeKB':20000
+        'test_filesizeKB':20000,
     },
 ]
 
@@ -70,57 +72,73 @@ testsets = [
 def setup(step):
 
     step (1, 'create test users')
-    reset_owncloud_account(num_test_users=config.oc_number_test_users)
-    check_users(config.oc_number_test_users)
+    num_users = 3 * share_sets
+    print ('creating %d users' % num_users)
+    reset_owncloud_account(num_test_users=num_users)
+    check_users(num_users)
 
     reset_rundir()
+    reset_server_log_file()
 
-@add_worker
+    step (9, 'Validate server log file is clean')
+
+    d = make_workdir()
+    scrape_log_file(d)
+
+
 def sharer(step):
 
     step (2,'Create workdir')
     d = make_workdir()
+    sharer_num = int(re.search(r'\d+', d).group())
 
     step (3,'Create initial test directory')
 
     procName = reflection.getProcessName()
     dirName = "%s/%s"%(procName, 'localShareDir')
     localDir = make_workdir(dirName)
+    max_user_num = sharer_num * 3
 
     list_files(d)
-    run_ocsync(d,user_num=1)
+    run_ocsync(d,user_num=max_user_num-2)
     list_files(d)
 
     step (4,'Sharer shares directory')
 
-    user1 = "%s%i"%(config.oc_account_name, 1)
-    user2 = "%s%i"%(config.oc_account_name, 2)
-    user3 = "%s%i"%(config.oc_account_name, 3)
+    user1 = "%s%i"%(config.oc_account_name, max_user_num-2)
+    user2 = "%s%i"%(config.oc_account_name, max_user_num-1)
+    user3 = "%s%i"%(config.oc_account_name, max_user_num)
 
     shared = reflection.getSharedObject()
 
     kwargs = {'perms': sharePermissions}
-    shared['SHARE_LOCAL_DIR_U2'] = share_file_with_user ('localShareDir', user1, user2, **kwargs)
-    shared['SHARE_LOCAL_DIR_U3'] = share_file_with_user ('localShareDir', user1, user3, **kwargs)
+    index1 = "%s%i"%('SHARE_LOCAL_DIR_U2_', sharer_num)
+    index2 = "%s%i"%('SHARE_LOCAL_DIR_U3_', sharer_num)
+    shared[index1] = share_file_with_user ('localShareDir', user1, user2, **kwargs)
+    shared[index2] = share_file_with_user ('localShareDir', user1, user3, **kwargs)
 
     step (7, 'Sharer validates newly added files')
 
-    run_ocsync(d,user_num=1)
+    run_ocsync(d,user_num=max_user_num-2)
 
     list_files(d+'/localShareDir')
     checkFilesExist(d) 
 
     step (8, 'Sharer final step')
 
-@add_worker
+for i in range(share_sets):
+    add_worker (sharer,name="sharer%02d"%(i+1))
+
 def shareeOne(step):
 
     step (2, 'Sharee One creates workdir')
     d = make_workdir()
+    shareeOne_num = int(re.search(r'\d+', d).group())
+    max_user_num = shareeOne_num * 3
 
     step (5,'Sharee One syncs and validates directory exist')
 
-    run_ocsync(d,user_num=2)
+    run_ocsync(d,user_num=max_user_num-1)
     list_files(d)
 
     sharedDir = os.path.join(d,'localShareDir')
@@ -137,18 +155,22 @@ def shareeOne(step):
         filename = "%s%i%s" % ('localShareDir/TEST_FILE_NEW_USER_SHARE_',i,'.dat')
         createfile(os.path.join(d,filename),'0',count=1000,bs=filesizeKB)
 
-    run_ocsync(d,user_num=2)
+    run_ocsync(d,user_num=max_user_num-1)
 
     list_files(d+'/localShareDir')
     checkFilesExist(d) 
 
     step (8, 'Sharee One final step')
 
-@add_worker
+for i in range(share_sets):
+    add_worker (shareeOne,name="shareeOne%02d"%(i+1))
+
 def shareeTwo(step):
   
     step (2, 'Sharee Two creates workdir')
     d = make_workdir()
+    shareeTwo_num = int(re.search(r'\d+', d).group())
+    max_user_num = shareeTwo_num * 3
 
     procName = reflection.getProcessName()
     dirName = "%s/%s"%(procName, 'localShareDir')
@@ -156,7 +178,7 @@ def shareeTwo(step):
 
     step (5, 'Sharee two syncs and validates directory exists')
 
-    run_ocsync(d,user_num=3)
+    run_ocsync(d,user_num=max_user_num)
     list_files(d)
 
     sharedDir = os.path.join(d,'localShareDir')
@@ -165,12 +187,15 @@ def shareeTwo(step):
 
     step (7, 'Sharee two validates new files exist')
 
-    run_ocsync(d,user_num=3)
+    run_ocsync(d,user_num=max_user_num)
 
     list_files(d+'/localShareDir')
     checkFilesExist(d) 
 
     step (8, 'Sharee Two final step')
+
+for i in range(share_sets):
+    add_worker (shareeTwo,name="shareeTwo%02d"%(i+1))
 
 def checkFilesExist (tmpDir):
 

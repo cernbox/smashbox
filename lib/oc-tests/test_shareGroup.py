@@ -91,6 +91,13 @@ def setup(step):
     add_user_to_group('user3', 'testgroup1')
 
     reset_rundir()
+    reset_server_log_file()
+
+    step (17, 'Validate server log file is clean')
+
+    d = make_workdir()
+    scrape_log_file(d)
+
 
 @add_worker
 def sharer(step):

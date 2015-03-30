@@ -79,6 +79,7 @@ def adder(step):
 
     step(5,'final check')
     run_ocsync(d)
+    final_check(d)
 
 
 @add_worker

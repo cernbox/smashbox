@@ -123,3 +123,12 @@ del os
 # set it to True or False to override
 # 
 pycurl_verbose = None
+
+# Trigger server log file copy based on this property
+#
+reset_server_log = False
+
+# share_sets is the number of sharer/shareeOne/shareeTwo groupings to be
+# used in a test run to allow for more users sharing at time
+#
+share_sets = 1
