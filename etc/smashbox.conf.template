@@ -132,3 +132,9 @@ reset_server_log = False
 # used in a test run to allow for more users sharing at time
 #
 share_sets = 1
+
+# properties for defining directory depth and directory layout
+#
+dir_depth = 5
+dir_depth_style = flat
+file_row_count = 100

@@ -269,6 +269,10 @@ def webdav_mkcol(path,silent=False):
         out = "> /dev/null 2>&1"
     runcmd('curl -k %s -X MKCOL %s %s'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path),out))
 
+def webdav_upload (file_to_upload, remote_dir):
+    url = "%s/%s" % (oc_webdav_url(remote_folder=path), remote_dir)
+    runcmd('curl -k %s -T %s %s ' % (config.get('curl_opts',''),file_to_upload, url))
+
 # #### SHELL COMMANDS AND TIME FUNCTIONS
 
 def runcmd(cmd,ignore_exitcode=False,echo=True,allow_stderr=True,shell=True,log_warning=True):
