@@ -10,7 +10,7 @@ This document is part of cernbox project (AGPL license).
 
 This is an attempt to describe the protocol used by owncloud desktop client for syncing files.
 
-Applies to owncloud client 1.6 and owncloud server 6 and 7. We are deliberately omitting older implementation which require obsolete methods (such as PROPPATCH to set mtime after PUT).
+Applies to owncloud client 1.7 and owncloud server 6 and 7. We are deliberately omitting older implementation which require obsolete methods (such as PROPPATCH to set mtime after PUT).
 
 Owncloud desktop client uses a mix of HTTP REST calls and WEBDAV with few header extentions and conventions.
 
@@ -247,6 +247,8 @@ Response body example:
 ### Upload files (chunked)
 
 ## Upcoming changes
+
+Client 1.8: no implicit namespaces anymore in PROPFIND requests (client library change from neon to Qt).
 
 Custom header: OC-Etag 
 
