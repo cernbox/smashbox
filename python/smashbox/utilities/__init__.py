@@ -523,6 +523,10 @@ def scrape_log_file(d):
     rtn_code = runcmd(cmd, ignore_exitcode=True, log_warning=False)
     error_check(rtn_code > 0, "\"Stat Failed\" message found in server log file")
 
+    cmd = "grep -i \"go away\" %s/owncloud.log" % d
+    rtn_code = runcmd(cmd, ignore_exitcode=True, log_warning=False)
+    error_check(rtn_code > 0, "\"go away\" message found in server log file")
+
 
 # ###### API Calls ############
 
