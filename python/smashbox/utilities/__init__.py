@@ -214,7 +214,6 @@ def oc_webdav_url(protocol='http',remote_folder="",user_num=None,webdav_endpoint
         webdav_endpoint = config.oc_webdav_endpoint
 
     remote_path = os.path.join(webdav_endpoint, config.oc_server_folder, remote_folder)
-
     if user_num is None:
         username = "%s" % config.oc_account_name
     else:
@@ -263,14 +262,15 @@ def webdav_propfind_ls(path):
 def webdav_delete(path):
     runcmd('curl -k %s -X DELETE %s '%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path)))
 
-def webdav_mkcol(path,silent=False):
+def webdav_mkcol(path,silent=False,user_num=None):
     out=""
     if silent: # a workaround for super-verbose errors in case directory on the server already exists
         out = "> /dev/null 2>&1"
-    runcmd('curl -k %s -X MKCOL %s %s'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path),out))
+    runcmd('curl -k %s -X MKCOL %s %s'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path,user_num=user_num),out))
 
-def webdav_upload (file_to_upload, remote_dir):
-    url = "%s/%s" % (oc_webdav_url(remote_folder=path), remote_dir)
+def webdav_upload (file_to_upload, remote_dir, remote_filename, user_number):
+
+    url = "%s/%s" % (oc_webdav_url(remote_folder=remote_dir, user_num=user_number),remote_filename)
     runcmd('curl -k %s -T %s %s ' % (config.get('curl_opts',''),file_to_upload, url))
 
 # #### SHELL COMMANDS AND TIME FUNCTIONS

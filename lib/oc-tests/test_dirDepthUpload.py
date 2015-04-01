@@ -53,7 +53,7 @@ testsets = [
         'dir_depth':5,
         'test_numFilesToCreate':50,
         'test_filesizeKB':200,
-        'style': 'fluffy',
+        'style': 'complex',
     },
     {
         'num_file_rows':1000,
@@ -69,7 +69,7 @@ testsets = [
         'dir_depth':10,
         'test_numFilesToCreate':50,
         'test_filesizeKB':2000,
-        'sytle': 'fluffy'
+        'sytle': 'complex'
     },
 ]
 
@@ -103,7 +103,7 @@ def uploader (step):
         for i in range(dir_depth):
             dir_name = "%s/%s_%d"%(procName, 'upload_dir', i)
             upload_dir = make_workdir(dir_name)
-            for j in range(1, numFilesToCreate):
+            for j in range(0, numFilesToCreate):
                 filename = "%s%s%i%s" % (upload_dir,'/TEST_FILE_NEW_USER_SHARE_',j,'.dat')
                 createfile(os.path.join(d,filename),'0',count=1000,bs=filesizeKB)
     else:
@@ -111,7 +111,7 @@ def uploader (step):
         for i in range(dir_depth):
             dir_name = "%s/%s_%d"%(dir_name, 'upload_dir', i)
             upload_dir = make_workdir(dir_name)
-            for j in range(1, numFilesToCreate):
+            for j in range(0, numFilesToCreate):
                 filename = "%s%s%i%s" % (upload_dir,'/TEST_FILE_NEW_USER_SHARE_',j,'.dat')
                 createfile(os.path.join(d,filename),'0',count=1000,bs=filesizeKB)
 
@@ -132,7 +132,7 @@ def checkFilesExist (work_dir):
     if style is 'flat':
         for i in range(dir_depth):
             dir_name = "%s/%s_%d"%(work_dir, 'upload_dir', i)
-            for j in range(1, numFilesToCreate):
+            for j in range(0, numFilesToCreate):
                 filename = "%s%s%i%s" % (dir_name, '/TEST_FILE_NEW_USER_SHARE_',j,'.dat')
                 full_name = os.path.join(work_dir, filename)
                 logger.info ('Checking that %s is present ', full_name)
@@ -140,7 +140,7 @@ def checkFilesExist (work_dir):
         dir_name = work_dir
         for i in range(dir_depth):
             dir_name = "%s/%s_%d"%(dir_name, 'upload_dir', i)
-            for j in range(1, numFilesToCreate):
+            for j in range(0, numFilesToCreate):
                 filename = "%s%s%i%s" % (dir_name, '/TEST_FILE_NEW_USER_SHARE_',j,'.dat')
                 full_name = os.path.join(work_dir, filename)
                 logger.info ('Checking that %s is present ', full_name)

@@ -36,7 +36,7 @@ numFilesToCreate = config.get('test_numFilesToCreate', 10)
 dir_depth = config.get ('dir_depth',5)
 num_users = config.get ('oc_number_test_users', 3)
 num_file_rows = config.get ('file_row_count', 100)
-style = config.get ('dir_depth_style', 'flat')
+style = config.get ('dir_depth_style', 'complex')
 
 testsets = [
     {
@@ -53,7 +53,7 @@ testsets = [
         'dir_depth':5,
         'test_numFilesToCreate':50,
         'test_filesizeKB':200,
-        'style': 'fluffy',
+        'style': 'complex',
     },
     {
         'num_file_rows':1000,
@@ -69,7 +69,7 @@ testsets = [
         'dir_depth':10,
         'test_numFilesToCreate':50,
         'test_filesizeKB':2000,
-        'sytle': 'fluffy'
+        'sytle': 'complex'
     },
 ]
 
@@ -99,23 +99,28 @@ def uploader (step):
 
     filename = "%s%s" % (d,'/TEST_FILE_NEW_USER_SHARE.dat')
     createfile(filename,'0',count=1000,bs=filesizeKB)
+    upload_dir = "%s%d" % ('uploader', uploader_num)
 
     procName = reflection.getProcessName()
 
     if style is 'flat':
         for i in range(dir_depth):
-            dir_name = "%s/%s_%d"%(procName, 'upload_dir', i)
-            for j in range(1, numFilesToCreate):
-                upload_name = "%s/%s_%d" % (dir_name, filename, j)
-                webdav_upload(filename, upload_name)
+            upload_dir = "%s_%d"%('upload_dir', i) 
+            webdav_mkcol (upload_dir, user_num = uploader_num)
+            for j in range(0, numFilesToCreate):
+                upload_name = "%s_%d.dat" % ('TEST_FILE_NEW_USER_SHARE', j)
+                webdav_upload(filename, upload_dir, upload_name, uploader_num)
     else:
-        dir_name = procName
+        upload_dir = procName
+        webdav_mkcol (upload_dir, user_num = uploader_num)
         for i in range(dir_depth):
-            dir_name = "%s/%s_%d"%(dir_name, 'upload_dir', i)
-            upload_dir = make_workdir(dir_name)
-            for j in range(1, numFilesToCreate):
-                filename = "%s%s%i%s" % (upload_dir,'/TEST_FILE_NEW_USER_SHARE_',j,'.dat')
-                createfile(os.path.join(d,filename),'0',count=1000,bs=filesizeKB)
+            upload_dir = "%s/%s_%d"%(upload_dir, 'upload_dir', i)
+            webdav_mkcol (upload_dir, user_num = uploader_num)
+            for j in range(0, numFilesToCreate):
+                upload_name = "%s_%d.dat" % ('TEST_FILE_NEW_USER_SHARE', j)
+                webdav_upload(filename, upload_dir, upload_name, uploader_num)
+
+    delete_file (filename)
 
     run_ocsync(d,user_num=uploader_num)
 
@@ -134,7 +139,7 @@ def checkFilesExist (work_dir):
     if style is 'flat':
         for i in range(dir_depth):
             dir_name = "%s/%s_%d"%(work_dir, 'upload_dir', i)
-            for j in range(1, numFilesToCreate):
+            for j in range(0, numFilesToCreate):
                 filename = "%s%s%i%s" % (dir_name, '/TEST_FILE_NEW_USER_SHARE_',j,'.dat')
                 full_name = os.path.join(work_dir, filename)
                 logger.info ('Checking that %s is present ', full_name)
@@ -142,7 +147,7 @@ def checkFilesExist (work_dir):
         dir_name = work_dir
         for i in range(dir_depth):
             dir_name = "%s/%s_%d"%(dir_name, 'upload_dir', i)
-            for j in range(1, numFilesToCreate):
+            for j in range(0, numFilesToCreate):
                 filename = "%s%s%i%s" % (dir_name, '/TEST_FILE_NEW_USER_SHARE_',j,'.dat')
                 full_name = os.path.join(work_dir, filename)
                 logger.info ('Checking that %s is present ', full_name)
