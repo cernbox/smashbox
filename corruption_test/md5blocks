@@ -1,0 +1,113 @@
+#!/usr/bin/env python
+
+import hashlib
+
+def md5sum(filename,BLOCK_SIZE,BLOCK_LIMIT):
+  blocks=[]
+  cnt=0
+  with open(filename, mode='rb') as f:
+    d = hashlib.md5()
+    while True:
+      buf = f.read(BLOCK_SIZE) # 128 is smaller than the typical filesystem block
+      if not buf:
+        break
+      #print
+      #print cnt
+      #print buf
+
+      dd = hashlib.md5()
+      dd.update(buf)
+      blocks.append(dd.hexdigest())
+      d.update(buf)
+      cnt+=1
+      if BLOCK_LIMIT and cnt>=BLOCK_LIMIT:
+        break
+    return (d.hexdigest(),blocks)
+
+import sys
+import argparse
+
+def main():
+  parser = argparse.ArgumentParser()
+
+  parser.add_argument('--block-size', '-b', action='store', dest="BLOCK_SIZE", type=int, default=16384, help='block size')
+  parser.add_argument('--block-limit', '-n', action='store', dest="BLOCK_LIMIT", type=int, default=0, help='block limit')
+  parser.add_argument('--check', '-c', action='store_true', dest="check", default=False, help='check if block 1 repeats somewhere else')
+  parser.add_argument('file1', help='file1')
+  parser.add_argument('file2', nargs='?', default="", help='file2')
+
+  args = parser.parse_args()
+
+  m1,blocks1 = md5sum(args.file1,args.BLOCK_SIZE,args.BLOCK_LIMIT)
+  if args.file2:
+    m2,blocks2 = md5sum(args.file2,args.BLOCK_SIZE,args.BLOCK_LIMIT)
+    
+
+  if args.check:
+    print args.file1
+    b0s = [i for i,b in enumerate(blocks1) if b == blocks1[0]]
+    if len(b0s) > 1:
+      print args.file1,': ERROR block 0 found repeated at the positions:',b0s
+      sys.exit(2)
+    sys.exit(0)
+      
+
+  print "File block analyzer"
+  for a in sorted(vars(args).keys()):
+    print a,vars(args)[a]
+
+  print
+
+  diff1 = []
+  diff2 = []
+
+  def print_header():
+
+    print "    offset   i file1",
+    if args.file2:
+      print "                            file2                            mod j"
+    else:
+      print
+
+  print_header()
+  for i in range(len(blocks1)):
+     b1 = blocks1[i]
+     if args.file2:
+       b2 = blocks2[i]
+     else:
+       b2 = ''
+
+     print "%10d %3d %s %s"%(args.BLOCK_SIZE*i,i,b1,b2),
+     if b1 != b2:
+       print '***',
+       diff1 = b1
+       diff2 = b2
+       repeats=[]
+       rcnt=0
+       for j,bb in enumerate(blocks1):
+         if bb == b2:
+           if rcnt<5: # limit the number of repeats to 5
+             repeats.append(str(j))
+           if rcnt==5:
+             repeats.append('...')
+           rcnt+=1
+       print " ".join(repeats)
+     else:
+       print
+
+  mod=""
+
+  if args.file2:
+    if m1!=m2:
+      mod="***"
+      assert(diff1 or diff2)
+  else:
+    m2=''
+
+  print_header()
+
+  print
+  print "   total   --- %s %s %s"%(m1,m2,mod)
+
+
+main()
