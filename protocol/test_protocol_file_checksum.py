@@ -26,7 +26,7 @@ def main(step):
 
     analyse_hashfiles(d) # make sure that files uploaded without a checksum are not corrupted
 
-    print r.headers['OC-Checksum']
+    logger.info('Got checksum from the server: %s', r.headers['OC-Checksum'])
 
     try:
         active_server_checksum_type = r.headers['OC-Checksum'].strip().split(':')[0]
@@ -54,8 +54,7 @@ def main(step):
     # the puts should be failing
 
     def corrupted_checksum(fn):
-        print '^^^^^^^',fn,smashbox.protocol.CHECKSUM_ENABLED
-        c = smashbox.protocol.compute_checksum(filename1)
+        c = smashbox.protocol.compute_checksum(fn)
         c = c[:-1]+chr(ord(c[-1])+1)
         return c
 

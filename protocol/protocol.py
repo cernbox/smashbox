@@ -15,7 +15,6 @@ def enable_checksum(cstype):
     CHECKSUM_ENABLED=cstype
 
 def compute_checksum(fn):
-    print "COMPUTE_CHECKSUM",CHECKSUM_ENABLED
     if CHECKSUM_ENABLED:
         if CHECKSUM_ENABLED == "Adler32":
             return "Adler32:"+adler32(fn)
