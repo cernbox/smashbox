@@ -205,6 +205,20 @@ def md5sum(fn):
         
     return md5.hexdigest()
 
+def adler32(fn):
+    import zlib
+    v = 1L
+    f = file(fn,'rb')
+
+    while True:
+        chunk = f.read(BLOCK_SIZE)
+        if not chunk: break
+        v = zlib.adler32(chunk,v)
+            
+    f.close()
+
+    return '%x' % (v & 0xffffffffL)
+
 # TO BE REVIEWED...
 
 def create_hashfile_big(wdir,size=None):

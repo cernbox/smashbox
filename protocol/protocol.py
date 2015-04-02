@@ -5,9 +5,30 @@ import smashbox.curl
 
 import sys,os,os.path,random
 
-def chunk_file_upload(filename,dest_dir_url,chunk_size=None,header_if_match=None,android_client_bug_900=False):
+# Enable the checksuming functionality test as described in checksum.md
+# The type may be: Adler32 or MD5
+CHECKSUM_ENABLED=None
 
+def enable_checksum(cstype):
+    global CHECKSUM_ENABLED
+    #assert(cstype in known_checksum_types)
+    CHECKSUM_ENABLED=cstype
 
+def compute_checksum(fn):
+    print "COMPUTE_CHECKSUM",CHECKSUM_ENABLED
+    if CHECKSUM_ENABLED:
+        if CHECKSUM_ENABLED == "Adler32":
+            return "Adler32:"+adler32(fn)
+        if CHECKSUM_ENABLED == 'MD5':
+            return "MD5:"+md5sum(fn)
+    return None
+        
+known_checksum_types = ['MD5','Adler32']
+
+def chunk_file_upload(filename,dest_dir_url,chunk_size=None,header_if_match=None,android_client_bug_900=False,checksum=None):
+    """ Use the checksum if provided, if not calculate automatically.
+    """
+    
     logger.info('chunk_file_upload: %s %s %s %s %s',filename,dest_dir_url,chunk_size,header_if_match,android_client_bug_900)
 
     if chunk_size is None:
@@ -36,6 +57,12 @@ def chunk_file_upload(filename,dest_dir_url,chunk_size=None,header_if_match=None
     if header_if_match:
         headers['If-Match'] = header_if_match
 
+    if CHECKSUM_ENABLED:
+        if checksum is None:
+            headers['OC-Checksum'] = compute_checksum(filename)
+        else:
+            headers['OC-Checksum'] = checksum
+
     client = smashbox.curl.Client()
 
     for i in range(chunk_number):
@@ -50,7 +77,11 @@ def chunk_file_upload(filename,dest_dir_url,chunk_size=None,header_if_match=None
 
         r = client.PUT(filename,os.path.join(dest_dir_url,chunked_fn),headers,offset=chunk_size*i,size=size)
 
+        # allow for testing failures
         if header_if_match and r.rc == 412: # allow precondition failed
+            return r
+
+        if checksum is not None and r.rc == 412: # allow precondition failed if checksum was provided
             return r
 
         oc_rc_codes = [201] # NOTE: always 201, no difference if first or last chunk
@@ -76,7 +107,7 @@ def chunk_file_upload(filename,dest_dir_url,chunk_size=None,header_if_match=None
 
     return r
 
-def file_upload(filename,dest_dir_url,header_if_match=None):
+def file_upload(filename,dest_dir_url,header_if_match=None,checksum=None):
 
     logger.info('file_upload: %s %s %s',filename,dest_dir_url,header_if_match)
     
@@ -93,9 +124,18 @@ def file_upload(filename,dest_dir_url,header_if_match=None):
     if header_if_match:
         headers['If-Match'] = header_if_match
 
+    if CHECKSUM_ENABLED:
+        if checksum is None:
+            headers['OC-Checksum'] = compute_checksum(filename)
+        else:
+            headers['OC-Checksum'] = checksum
+
     r = client.PUT(filename,os.path.join(dest_dir_url,os.path.basename(filename)),headers)
 
     if header_if_match and r.rc == 412: # allow precondition failed
+        return r
+
+    if checksum is not None and r.rc == 412: # allow precondition failed if checksum was provided
         return r
 
     fatal_check(r.rc in [200,201,204]) # NOTE: 201 for new files, 204 for existing files, 200 is returned by EOS
