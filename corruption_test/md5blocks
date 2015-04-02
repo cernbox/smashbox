@@ -2,7 +2,7 @@
 
 import hashlib
 
-def md5sum(filename,BLOCK_SIZE,BLOCK_LIMIT):
+def md5sum(filename,BLOCK_SIZE,BLOCK_LIMIT,BLOCK_OFFSET):
   blocks=[]
   cnt=0
   with open(filename, mode='rb') as f:
@@ -15,6 +15,10 @@ def md5sum(filename,BLOCK_SIZE,BLOCK_LIMIT):
       #print cnt
       #print buf
 
+      if BLOCK_OFFSET>0:
+        BLOCK_OFFSET-=1
+        continue
+      
       dd = hashlib.md5()
       dd.update(buf)
       blocks.append(dd.hexdigest())
@@ -32,15 +36,17 @@ def main():
 
   parser.add_argument('--block-size', '-b', action='store', dest="BLOCK_SIZE", type=int, default=16384, help='block size')
   parser.add_argument('--block-limit', '-n', action='store', dest="BLOCK_LIMIT", type=int, default=0, help='block limit')
-  parser.add_argument('--check', '-c', action='store_true', dest="check", default=False, help='check if block 1 repeats somewhere else')
+  parser.add_argument('--block-offset', '-s', action='store', dest="BLOCK_OFFSET", type=int, default=0, help='block limit')
+  parser.add_argument('--check', action='store_true', dest="check", default=False, help='check if block 0 repeats somewhere else')
+  #parser.add_argument('--check-shift', action='store', dest="check_shift", type=int, default=0, help='check if shifted blocks are found (the argument specifies the length of shifted sequence)')
   parser.add_argument('file1', help='file1')
   parser.add_argument('file2', nargs='?', default="", help='file2')
 
   args = parser.parse_args()
 
-  m1,blocks1 = md5sum(args.file1,args.BLOCK_SIZE,args.BLOCK_LIMIT)
+  m1,blocks1 = md5sum(args.file1,args.BLOCK_SIZE,args.BLOCK_LIMIT,args.BLOCK_OFFSET)
   if args.file2:
-    m2,blocks2 = md5sum(args.file2,args.BLOCK_SIZE,args.BLOCK_LIMIT)
+    m2,blocks2 = md5sum(args.file2,args.BLOCK_SIZE,args.BLOCK_LIMIT,args.BLOCK_OFFSET)
     
 
   if args.check:
@@ -50,7 +56,25 @@ def main():
       print args.file1,': ERROR block 0 found repeated at the positions:',b0s
       sys.exit(2)
     sys.exit(0)
-      
+
+
+#   if args.check_shift:
+#     print args.file1
+#     streak=0
+#     for i in range(len(blocks1)-1):
+#       if blocks1[i] == blocks1[i+1]:
+#         streak+=1
+#       else:
+#         streak=0
+# 
+#       print streak, blocks1[i], blocks1[i+1]
+#         
+#       if streak>args.check_shift:
+#         print args.file1,': ERROR %s shifted blocks found at byte offset:',args.BLOCK_OFFSET+i*args.BLOCK_SIZE
+#         sys.exit(2)
+# 
+#     sys.exit(0)
+#       
 
   print "File block analyzer"
   for a in sorted(vars(args).keys()):
@@ -77,7 +101,7 @@ def main():
      else:
        b2 = ''
 
-     print "%10d %3d %s %s"%(args.BLOCK_SIZE*i,i,b1,b2),
+     print "%10d %3d %s %s"%(args.BLOCK_SIZE*(i+args.BLOCK_OFFSET),args.BLOCK_OFFSET+i,b1,b2),
      if b1 != b2:
        print '***',
        diff1 = b1
@@ -91,7 +115,7 @@ def main():
            if rcnt==5:
              repeats.append('...')
            rcnt+=1
-       print " ".join(repeats)
+       print " ".join([str(int(v)+args.BLOCK_OFFSET) for v in repeats])
      else:
        print
 
