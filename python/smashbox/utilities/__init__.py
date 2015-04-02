@@ -341,9 +341,10 @@ def list_files(path,recursive=False):
 
 # ## DATA FILES AND VERSIONS
 
-def createfile(fn,c,count,bs):
+def createfile(fn,c,count,bs,log_info=True):
     # this replaces the dd as 1) more portable, 2) not prone to problems with escaping funny filenames in shell commands
-    logger.info('createfile %s character=%s count=%d bs=%d',fn,repr(c),count,bs)
+    if log_info:
+        logger.info('createfile %s character=%s count=%d bs=%d',fn,repr(c),count,bs)
     buf = c*bs
     of = file(fn,'w')
     for i in range(count):

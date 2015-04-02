@@ -9,10 +9,11 @@ Test uploading a large number of files to a directory and then syncing
 +===========+=====================================================+
 |  2        | Create work dir                                     |
 +-----------+-----------------------------------------------------+
-|  3        | Create directories and files locally and then       |
-|           | sync them to the server and validate                |
+|  3        | Create directories and files locally                |
 +-----------+-----------------------------------------------------+
-|  4        | final step                                          |
+|  4        | Sync files to the server and validate               |
++-----------+-----------------------------------------------------+
+|  5        | Final step                                          |
 +-----------+-----------------------------------------------------+
 
 Data Providers:
@@ -30,6 +31,8 @@ Data Providers:
 from smashbox.utilities import *
 import glob
 import re
+import time
+import random
 
 filesizeKB = int(config.get('test_filesizeKB',10))
 numFilesToCreate = config.get('test_numFilesToCreate', 10)
@@ -37,14 +40,15 @@ dir_depth = config.get ('dir_depth',5)
 num_users = config.get ('oc_number_test_users', 3)
 num_file_rows = config.get ('file_row_count', 100)
 style = config.get ('dir_depth_style', 'flat')
+test_with_mover = True
 
 testsets = [
     {
         'num_file_rows':1000,
         'num_users':10,
         'dir_depth':5,
-        'test_numFilesToCreate':50,
-        'test_filesizeKB':20,
+        'test_numFilesToCreate':500,
+        'test_filesizeKB':2,
         'style': 'flat',
     },
     {
@@ -83,7 +87,7 @@ def setup(step):
     reset_rundir()
     reset_server_log_file()
 
-    step (5, 'Validate server log file is clean')
+    step (6, 'Validate server log file is clean')
 
     d = make_workdir()
     scrape_log_file(d)
@@ -105,7 +109,7 @@ def uploader (step):
             upload_dir = make_workdir(dir_name)
             for j in range(0, numFilesToCreate):
                 filename = "%s%s%i%s" % (upload_dir,'/TEST_FILE_NEW_USER_SHARE_',j,'.dat')
-                createfile(os.path.join(d,filename),'0',count=1000,bs=filesizeKB)
+                createfile(os.path.join(d,filename),'0',count=1000,bs=filesizeKB,log_info=False)
     else:
         dir_name = procName
         for i in range(dir_depth):
@@ -113,17 +117,46 @@ def uploader (step):
             upload_dir = make_workdir(dir_name)
             for j in range(0, numFilesToCreate):
                 filename = "%s%s%i%s" % (upload_dir,'/TEST_FILE_NEW_USER_SHARE_',j,'.dat')
-                createfile(os.path.join(d,filename),'0',count=1000,bs=filesizeKB)
+                createfile(os.path.join(d,filename),'0',count=1000,bs=filesizeKB,log_info=False)
+
+    step (4, 'Sync and validate files')
+
+    time_string = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
+    logger.info ('time before sync start is %s' % time_string)
 
     run_ocsync(d,user_num=uploader_num)
 
-    list_files(d, recursive=True)
+    time_string = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
+    logger.info ('time after sync start is %s' % time_string)
+
     checkFilesExist(d) 
 
-    step (4, 'Uploader final step')
+    step (5, 'Uploader final step')
 
 for i in range(num_users):
     add_worker (uploader,name="uploader%02d"%(i+1))
+
+def mover (step):
+
+    step (2,'Create workdir')
+    d = make_workdir()
+    mover_num = int(re.search(r'\d+', d).group())
+
+    step (4, 'Mover modifying during sync')
+
+    sleep_seconds = random.randint(0,5)
+    logger.info ("Mover sleeping %d seconds" % sleep_seconds)
+    time.sleep (sleep_seconds)
+
+#    rename directory
+#    rename file
+
+    step (5, 'Mover final step')
+
+
+if test_with_mover:
+    for i in range(num_users):
+        add_worker (mover,name="mover%02d"%(i+1))
 
 def checkFilesExist (work_dir):
 
@@ -135,7 +168,6 @@ def checkFilesExist (work_dir):
             for j in range(0, numFilesToCreate):
                 filename = "%s%s%i%s" % (dir_name, '/TEST_FILE_NEW_USER_SHARE_',j,'.dat')
                 full_name = os.path.join(work_dir, filename)
-                logger.info ('Checking that %s is present ', full_name)
     else:
         dir_name = work_dir
         for i in range(dir_depth):
@@ -143,6 +175,5 @@ def checkFilesExist (work_dir):
             for j in range(0, numFilesToCreate):
                 filename = "%s%s%i%s" % (dir_name, '/TEST_FILE_NEW_USER_SHARE_',j,'.dat')
                 full_name = os.path.join(work_dir, filename)
-                logger.info ('Checking that %s is present ', full_name)
 
 
