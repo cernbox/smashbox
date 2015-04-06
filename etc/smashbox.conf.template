@@ -123,3 +123,7 @@ del os
 # set it to True or False to override
 # 
 pycurl_verbose = None
+
+#
+# scp port to be used in scp commands, used primarily when copying over the server log file
+scp_port=22
