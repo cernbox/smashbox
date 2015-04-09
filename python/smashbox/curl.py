@@ -99,7 +99,9 @@ class Client:
 
         f = open(fn,'w')
         c.setopt(c.WRITEFUNCTION,f.write)
-        return self._perform_request(url,headers)
+        r = self._perform_request(url,headers)
+        f.close()
+        return r
 
 
     def _perform_request(self,url,headers,response_obj=None):
