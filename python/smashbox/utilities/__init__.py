@@ -508,7 +508,7 @@ def scrape_log_file(d):
 
 # ###### API Calls ############
 
-def get_oc_api():
+def get_oc_api(**kwargs):
     """ Returns an instance of the Client class
 
     :returns: Client instance
@@ -520,7 +520,7 @@ def get_oc_api():
         protocol += 's'
 
     url = protocol + '://' + config.oc_server + '/' + config.oc_root
-    oc_api = owncloud.Client(url)
+    oc_api = owncloud.Client(url, **kwargs)
     return oc_api
 
 
@@ -553,6 +553,28 @@ def share_file_with_user(filename, sharer, sharee, **kwargs):
         else:
             return -2
 
+def share_file_with_link(filename,**kwargs):
+    """ Shares a file by link
+
+    :param filename: name of the file being shared
+    :param kwargs: key words args to be passed into the api, usually for share permissions
+    :returns: PublicShare instance
+
+    """
+    oc_api = get_oc_api(**kwargs)
+    oc_api.login(config.oc_account_name, config.oc_account_password)
+    try:
+        share_info = oc_api.share_file_with_link(filename)
+        return share_info
+    except Exception as err:
+
+        # TODO: this code is not the best - the goal is to trap a share not allowed error and return that error code
+
+        logger.info('Share failed with %s', str(err))
+        if "not allowed to share" in str(err):
+            return -1
+        else:
+            return -2
 
 def delete_share(sharer, share_id):
     """ Deletes a share

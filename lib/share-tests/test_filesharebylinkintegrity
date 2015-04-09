@@ -1,0 +1,89 @@
+
+__doc__ = """
+
+Test public file sharing after updating file.
+With this test we want to check that after updating a file we still get the lastest version via the shared link and not a previous one.  
+
+Steps:
+- 1) Create workdir
+- 2) Upload file
+- 3) Share file by link
+- 4) Download file shared via the link and check ifit has the same contents as the original
+- 5) Upload new version of a file (the fileid changes)
+- 6) Re-download file shared and check that the contents are the same as the updated file and not to the original (now a version)
+
+"""
+
+from smashbox.utilities import *
+import smashbox.curl
+import time
+import os
+import owncloud
+
+# The name of the file to upload
+filename = "shared_file.txt"
+
+# The contents of the file
+file_data = "some data"
+
+# The contents to update the file, please be sure this is different from file_data
+file_data_updated = "other data"
+
+# The name of the local file created after download the file via the shared link
+filename_step4 = filename + "_step4"
+
+# The name of the local file created after re-download the file via shared link
+filename_step6 = filename + "_step6"
+
+# The block size to generate random file
+filesizeKB = int(config.get('share_filesizeKB',10))
+
+
+
+@add_worker
+def checker(step):
+    
+    # Create workdir
+    step(1)
+    d = make_workdir()
+    fullpath = os.path.join(d,filename)
+    createfile(fullpath, file_data, count=1000, bs=filesizeKB)
+    original_sum = md5sum(fullpath)
+    logger.info(original_sum)
+
+    # Upload file
+    
+    step(2)
+    client = smashbox.curl.Client()
+    r = client.PUT(fullpath, os.path.join(oc_webdav_url(), filename))
+    fatal_check(r.rc == 201, "we shoudl get 201 uploading the file")
+    
+
+    # Share file by link
+    step(3)
+    share_info = share_file_with_link(filename, verify_certs = False)
+    shared_link = share_info.link + '&download'
+    logger.info("You can access the shared file via this link: " + shared_link)
+
+    # Download file shared via the link and check ifit has the same contents as the original
+    step(4)
+    client = smashbox.curl.Client()
+    r = client.GET(shared_link, os.path.join(d,filename_step4))
+    sum = md5sum(os.path.join(d,filename_step4))
+    fatal_check(sum == original_sum, "the file download by link is corrupted")
+
+    # Upload new version of a file (the fileid changes)
+    step(5)
+    createfile(fullpath, file_data_updated, count=1000, bs=filesizeKB)
+    updated_sum = md5sum(fullpath)
+    client = smashbox.curl.Client()
+    r = client.PUT(fullpath, os.path.join(oc_webdav_url(), filename))
+    fatal_check(r.rc == 201, "we shoudl get 201 uploading the file")
+
+    # Re-download file shared and check that the contents are the same as the updated file and not to the original (now a version)
+    step(6)
+    client = smashbox.curl.Client()
+    r = client.GET(shared_link, os.path.join(d,filename_step6))
+    sum = md5sum(os.path.join(d,filename_step6))
+    fatal_check(sum == updated_sum, "the shared link is pointing to a previous version")
+    logger.info('SUCCESS')
