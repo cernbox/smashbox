@@ -49,20 +49,18 @@ def checker(step):
     fullpath = os.path.join(d,filename)
     createfile(fullpath, file_data, count=1000, bs=filesizeKB)
     original_sum = md5sum(fullpath)
-    logger.info(original_sum)
 
     # Upload file
-    
     step(2)
     client = smashbox.curl.Client()
     r = client.PUT(fullpath, os.path.join(oc_webdav_url(), filename))
-    fatal_check(r.rc == 201, "we shoudl get 201 uploading the file")
+    fatal_check(r.rc == 201, "we should get 201 uploading the file")
     
 
     # Share file by link
     step(3)
     share_info = share_file_with_link(filename, verify_certs = False)
-    shared_link = share_info.link + '&download'
+    shared_link = share_info.link + '&download' # the download query params is to go directly to the file and not to the webpage showing the file
     logger.info("You can access the shared file via this link: " + shared_link)
 
     # Download file shared via the link and check ifit has the same contents as the original
@@ -70,7 +68,7 @@ def checker(step):
     client = smashbox.curl.Client()
     r = client.GET(shared_link, os.path.join(d,filename_step4))
     sum = md5sum(os.path.join(d,filename_step4))
-    fatal_check(sum == original_sum, "the file download by link is corrupted")
+    fatal_check(sum == original_sum, "the file downloaded by link is corrupted")
 
     # Upload new version of a file (the fileid changes)
     step(5)
