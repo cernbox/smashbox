@@ -44,7 +44,8 @@ Examples:
 
 
 If the checksum does not match the content on the server then the server returns 412 (Precondition Failed).
-   Response: 412
+
+    Response: 412
    
 BITS NOT YET IMPLEMENTED/UNDER DISCUSSION: [see comments in the source of this file]
 <!--
