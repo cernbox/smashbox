@@ -57,17 +57,24 @@ def size2nbytes(size):
     except ValueError:
         return make_distrib(size)        
 
-
-
 def create_hashfile(wdir,filemask=None,size=None,bs=None,slow_write=None):
-    """ Create a random file in wdir, md5 checksum is placed in the name according to filemask (by default the filename consists of only the checksum).
+    """ Create a random file in wdir.The md5 checksum is placed in the filname name according to filemask: {md5} string in the filemask is replaced by the file checksum.
+    By default the filemask == {md5} so the filename consists of only the checksum.
 
     The function will use max BLOCK_SIZE memory. Below BLOCK_SIZE the file is fully random. For larger files the BLOCK_SIZE bytes are replicated.
 
     The default BLOCK_SIZE may be changed with the bs argument.
     Optional slow_write may specify the delay in seconds between writing blocks.
-    
+
+    Return name of the create file.
+
     """
+    return create_hashfile2(wdir,filemask,size,bs,slow_write)[0]
+
+def create_hashfile2(wdir,filemask=None,size=None,bs=None,slow_write=None):
+    """ Same as create_hashfile but return (filename,md5sum).
+    """
+
     import hashlib
     import random
 
@@ -125,7 +132,7 @@ def create_hashfile(wdir,filemask=None,size=None,bs=None,slow_write=None):
 
     logger.info("Written hash file %s, nbytes=%d",fn,nbytes)
     
-    return fn
+    return fn,md5.hexdigest()
 
 def analyse_hashfiles(wdir,filemask=None):
 
