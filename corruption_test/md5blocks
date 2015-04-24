@@ -111,11 +111,11 @@ def main():
        for j,bb in enumerate(blocks1):
          if bb == b2:
            if rcnt<5: # limit the number of repeats to 5
-             repeats.append(str(j))
+             repeats.append(j+args.BLOCK_OFFSET)
            if rcnt==5:
              repeats.append('...')
            rcnt+=1
-       print " ".join([str(int(v)+args.BLOCK_OFFSET) for v in repeats])
+       print " ".join([str(v) for v in repeats])
      else:
        print
 
