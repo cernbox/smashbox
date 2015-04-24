@@ -8,6 +8,13 @@ NOT in scope: using checksums as ETAG
 
 ## Enabling transfer checksums in the client
 
+As of version 1.7.2-cernbox and port to 1.8(.2) the type of the checksum is defined in the main config file as:
+   
+    [General]
+    tranmissionChecksum=Adler32
+    
+BITS NOT YET IMPLEMENTED/UNDER DISCUSSION: [see comments in the source of this file]
+<!---
 Client discovers from the server if server supports this capability.
 
 Checksum functionality in the client is enabled by the respose to status.php:
@@ -21,6 +28,7 @@ Response body examples:
     {...., "transfer_checksum":"MD5"}
 
 In the future "transfer_checksum" may be enabled on per-folder basis as a PROPFIND property on the remote folder.
+-->
 
 ## Simple PUT (not-chunked)
 
@@ -34,14 +42,21 @@ Examples:
     PUT /file HTTP/1.1
     OC-Checksum: MD5:xxxxxxxxxxxxxxxxxx
 
-If the checksum does not match the content on the server then the server returns 412 (Precondition Failed) indicating the checksum header as the source of the error:
+
+If the checksum does not match the content on the server then the server returns 412 (Precondition Failed).
+
+    Response: 412
+   
+BITS NOT YET IMPLEMENTED/UNDER DISCUSSION: [see comments in the source of this file]
+<!--
+indicating the checksum header as the source of the error:
 
     Response: 412
     Response headers:
         OC-PRECONDITION-FAILED: OC-Checksum
 
 This is to distinguish between different causes of 412 (the other common one is ETAG mismatch).
-
+-->
 
 ## GET
 
@@ -57,9 +72,16 @@ OC-Checksum of the entire file content is sent with the last chunk PUT request (
 
 The checksumming feature is optional. Client may decide NOT to provide
 OC-Checksum header for PUT request and ignore OC-Checksum header
-in the GET reponse. For example, checksumming may be only performed by
+in the GET reponse. If the type of the checksum is not understood or supported by the client or by the server then
+the checksum should be ignored.
+
+Transfers should fail if the checksum type is understood and supported but the checksum value does not match.
+
+BITS NOT YET IMPLEMENTED/UNDER DISCUSSION: [see comments in the source of this file]
+<!---
+For example, checksumming may be only performed by
 the client if file size is smaller than OWNCLOUD_CHECKSUM_FILE_SIZE
 environment variable.
-
+-->
 
 
