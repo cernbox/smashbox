@@ -3,7 +3,7 @@ import time
 import tempfile
 
 
-__doc__ = """ Add nfiles to a directory and check consistency.
+__doc__ = """ Create/modify a file locally while a file with the same name gets downloaded from the server.
 """
 
 from smashbox.utilities import *
