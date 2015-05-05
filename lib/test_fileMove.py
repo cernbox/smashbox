@@ -17,6 +17,12 @@ nfiles = int(config.get('dirMove_nfiles',10))
 
 TEST_FILES = ['test%02d.dat'%i for i in range(nfiles)]
 
+def check_files_exist(files,d):
+    for fn in files:
+        f = os.path.join(d,fn)
+        logger.info("checking %s",f)
+        error_check(os.path.isfile(f), "path %s should be a file"%f)    
+
 @add_worker
 def workerA(step):
 
@@ -38,7 +44,7 @@ def workerA(step):
 
     run_ocsync(syncdir)
 
-    step(2,'move the folder and sync')
+    step(2,'move the files in the folder and sync')
 
     d2 = mkdir(os.path.join(syncdir,DIRB))
 
@@ -51,7 +57,20 @@ def workerA(step):
     #createfile(os.path.join(syncdir,'touch'),'0',count=1,bs=1)
 
     run_ocsync(syncdir)
-    
+
+    step(4,'move the files back to the original folder and sync ')
+
+    for f in TEST_FILES:
+        fn = os.path.join(d2,f)
+        mv(fn,d1)
+
+    run_ocsync(syncdir)
+
+    step(5,'check if the files are OK after being moved back')
+
+    check_files_exist(TEST_FILES,d1)
+
+
 @add_worker 
 def workerB(step):
 
@@ -71,15 +90,17 @@ def workerB(step):
     d2 = os.path.join(syncdir,DIRB)
 
     logger.info('checking %s',d1)
-    error_check(os.path.exists(d1), "path %s should exist"%d1)
+    error_check(os.path.isdir(d1), "path %s should be a directory"%d1)
 
     logger.info('checking %s',d2)
     error_check(os.path.isdir(d2), "path %s should be a directory"%d2)
 
-    for fn in TEST_FILES:
-        f = os.path.join(d2,fn)
-        logger.info("checking %s",f)
-        error_check(os.path.isfile(f), "path %s should be a file"%f)
+    check_files_exist(TEST_FILES,d2)
 
+    step(5,'sync again and check if the files were moved back')
+
+    run_ocsync(syncdir)
+
+    check_files_exist(TEST_FILES,d1)
     
     
