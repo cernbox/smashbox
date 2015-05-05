@@ -34,8 +34,9 @@ def checkunicodejam(localdir):
         if a!=f: 
             logger.error('FILELEN: %d',len(f))
             logger.error('FILE   : %s',f)
-            logger.error('CONTENT: %s',a.decode("UTF-8"))
-            logger.error('CONTLEN: %d',len(a.decode("UTF-8")))
+            logger.error('CONTENT: %s',a)
+            logger.error('CONTLEN: %d',len(a))
+
             logger.error("FILE    BYTES: %s %d",repr(f),len(repr(f)))
             logger.error("CONTENT BYTES: %s %d",repr(a),len(repr(a)))
             fh.close()
