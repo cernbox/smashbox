@@ -88,7 +88,9 @@ def setup(step):
     reset_owncloud_group(num_groups=config.oc_number_test_groups)
     check_groups(config.oc_number_test_groups)
 
-    add_user_to_group('user3', 'testgroup1')
+    user3 = "%s%i"%(config.oc_account_name, 3)
+    group1 = "%s%i"%(config.oc_group_name, 1)
+    add_user_to_group(user3, group1)
 
     reset_rundir()
 
@@ -258,7 +260,10 @@ def admin(step):
 
 
     step (14, 'Admin user removes user from group')
-    remove_user_from_group('user3', 'testgroup1')
+
+    user3 = "%s%i"%(config.oc_account_name, 3)
+    group1 = "%s%i"%(config.oc_group_name, 1)
+    add_user_to_group(user3, group1)
 
     step (16, 'Admin final step')
 
