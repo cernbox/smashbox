@@ -263,7 +263,7 @@ def admin(step):
 
     user3 = "%s%i"%(config.oc_account_name, 3)
     group1 = "%s%i"%(config.oc_group_name, 1)
-    add_user_to_group(user3, group1)
+    remove_user_from_group(user3, group1)
 
     step (16, 'Admin final step')
 
