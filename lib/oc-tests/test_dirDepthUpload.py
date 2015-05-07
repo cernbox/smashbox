@@ -109,7 +109,7 @@ def uploader (step):
             upload_dir = make_workdir(dir_name)
             for j in range(0, numFilesToCreate):
                 filename = "%s%s%i%s" % (upload_dir,'/TEST_FILE_NEW_USER_SHARE_',j,'.dat')
-                createfile(os.path.join(d,filename),'0',count=1000,bs=filesizeKB)
+                createfile(os.path.join(d,filename),'0',count=1000,bs=filesizeKB,log_info=False)
     else:
         dir_name = procName
         for i in range(dir_depth):
@@ -117,7 +117,12 @@ def uploader (step):
             upload_dir = make_workdir(dir_name)
             for j in range(0, numFilesToCreate):
                 filename = "%s%s%i%s" % (upload_dir,'/TEST_FILE_NEW_USER_SHARE_',j,'.dat')
-                createfile(os.path.join(d,filename),'0',count=1000,bs=filesizeKB)
+                createfile(os.path.join(d,filename),'0',count=1000,bs=filesizeKB,log_info=False)
+
+    step (4, 'Sync and validate files')
+
+    time_string = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
+    logger.info ('time before sync start is %s' % time_string)
 
     step (4, 'Sync and validate files')
 
