@@ -62,6 +62,7 @@ def creator(step):
     step(1,'create initial content and sync')
 
     d = make_workdir()
+    run_ocsync(d)
 
     namepatterns = [
         "space1 testfile.dat",
