@@ -120,6 +120,7 @@ def sharer(step):
     shared['TEST_FILE_USER_SHARE'] = share_file_with_user ('TEST_FILE_USER_SHARE.dat', user1, user2, **kwargs)
     shared['TEST_FILE_USER_RESHARE'] = share_file_with_user ('TEST_FILE_USER_RESHARE.dat', user1, user2, **kwargs)
     shared['TEST_FILE_MODIFIED_USER_SHARE'] = share_file_with_user ('TEST_FILE_MODIFIED_USER_SHARE.dat', user1, user2, **kwargs)
+    shared['sharer.TEST_FILE_MODIFIED_USER_SHARE'] = os.path.join(d,'TEST_FILE_MODIFIED_USER_SHARE.dat')
 
     step (7, 'Sharer validates modified file')
     run_ocsync(d,user_num=1)
@@ -172,7 +173,10 @@ def shareeOne(step):
 
     shared = reflection.getSharedObject()
     if not sharePermissions & OCS_PERMISSION_UPDATE:
-      expect_not_modified(os.path.join(d,'TEST_FILE_MODIFIED_USER_SHARE.dat'), shared['md5_sharer'])
+        # local file is modified, but not synced so the owner still has the right file
+        list_files(d)
+        expect_modified(os.path.join(d,'TEST_FILE_MODIFIED_USER_SHARE.dat'), shared['md5_sharer'])
+        expect_not_modified(shared['sharer.TEST_FILE_MODIFIED_USER_SHARE'], shared['md5_sharer'])
 
     step (8, 'Sharee One share files with user 3')
 
