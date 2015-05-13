@@ -124,7 +124,7 @@ def sharer(step):
     step (7, 'Sharer validates modified file')
     run_ocsync(d,user_num=1)
 
-    if sharePermissions == (OCS_PERMISSION_READ | OCS_PERMISSION_SHARE):
+    if not sharePermissions & OCS_PERMISSION_UPDATE:
       expect_not_modified(os.path.join(d,'TEST_FILE_MODIFIED_USER_SHARE.dat'), shared['md5_sharer'])
     else:
       expect_modified(os.path.join(d,'TEST_FILE_MODIFIED_USER_SHARE.dat'), shared['md5_sharer'])
@@ -171,7 +171,7 @@ def shareeOne(step):
     list_files(d)
 
     shared = reflection.getSharedObject()
-    if sharePermissions == (OCS_PERMISSION_READ | OCS_PERMISSION_SHARE):
+    if not sharePermissions & OCS_PERMISSION_UPDATE:
       expect_not_modified(os.path.join(d,'TEST_FILE_MODIFIED_USER_SHARE.dat'), shared['md5_sharer'])
 
     step (8, 'Sharee One share files with user 3')
@@ -181,7 +181,7 @@ def shareeOne(step):
     kwargs = {'perms': sharePermissions}
     result = share_file_with_user ('TEST_FILE_USER_RESHARE.dat', user2, user3, **kwargs)
 
-    if sharePermissions == (OCS_PERMISSION_READ | OCS_PERMISSION_UPDATE):
+    if not sharePermissions & OCS_PERMISSION_SHARE:
       error_check (result == -1, "shared and shouldn't have")
 
     step (11, 'Sharee one validates file does not exist after unsharing')
@@ -217,7 +217,7 @@ def shareeTwo(step):
 
     sharedFile = os.path.join(d,'TEST_FILE_USER_RESHARE.dat')
 
-    if sharePermissions == (OCS_PERMISSION_READ | OCS_PERMISSION_UPDATE):
+    if not sharePermissions & OCS_PERMISSION_SHARE:
       logger.info ('Checking that %s is not present in local directory for Sharee Two', sharedFile)
       error_check(not os.path.exists(sharedFile), "File %s should not exist" %sharedFile)
     else:
