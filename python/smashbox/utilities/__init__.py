@@ -563,6 +563,8 @@ def share_file_with_user(filename, sharer, sharee, **kwargs):
     :returns: share id of the created share
 
     """
+    from owncloud import ResponseError
+
     logger.info('%s is sharing file %s with user %s', sharer, filename, sharee)
 
     oc_api = get_oc_api()
@@ -572,12 +574,9 @@ def share_file_with_user(filename, sharer, sharee, **kwargs):
         share_info = oc_api.share_file_with_user(filename, sharee, **kwargs)
         logger.info('share id for file share is %s', str(share_info.share_id))
         return share_info.share_id
-    except Exception as err:
-
-        # TODO: this code is not the best - the goal is to trap a share not allowed error and return that error code
-
+    except ResponseError as err:
         logger.info('Share failed with %s', str(err))
-        if "not allowed to share" in str(err):
+        if "not allowed to share" in str(err.get_resource_body()):
             return -1
         else:
             return -2
@@ -678,7 +677,7 @@ def expect_modified(fn, md5):
 
 
 def expect_not_modified(fn, md5):
-    """ Compares tha tthe checksum of two files is the same
+    """ Compares that the checksum of two files is the same
     """
     actual_md5 = md5sum(fn)
     error_check(actual_md5 == md5,
