@@ -184,10 +184,16 @@ def main():
       if test_mode == "single":
          pass
 
-      config.rundir = os.path.join(config.smashdir, barename(t))
+      def set_rundir_name(test_name, runid, loop=None, test_set=None):
+         config.rundir = os.path.join(config.smashdir, barename(test_name))
+         if config.workdir_runid_enabled:
+            config.rundir += '-' + str(runid)
+            if loop != None and args.loop > 1:
+               config.rundir += '-loop' + str(loop)
+            if test_set != None:
+               config.rundir += '-testset' + str(test_set)
 
-      if config.workdir_runid_enabled:
-         config.rundir += '-'+str(config.runid)
+      set_rundir_name(t, config.runid)
 
       if not user_defined_oc_account_name:
          config.oc_account_name = barename(t)
@@ -200,7 +206,7 @@ def main():
          if ts:
             for opt,val in zip(ts.keys(),ts.values()):
                setattr(config,opt,val)
-               
+
          log_quiet('running %s in %s as %s testset #%d %s',t,config.rundir,config.oc_account_name,i,repr(ts)) # log_quiet
          if not args.dry_run:
             run_multiprocessing_engine(config,os.path.abspath(t))
@@ -213,10 +219,13 @@ def main():
 
             if args.all_testsets:
                for i,ts in enumerate(smashbox.no_engine.testsets):
+                  set_rundir_name(t, config.runid, j, i)
                   run_test(ts,i)
             else:
+               set_rundir_name(t, config.runid, j)
                run_test(smashbox.no_engine.testsets[args.testset],args.testset)
          else:
+            set_rundir_name(t, config.runid, j)
             run_test(None)
 
             
