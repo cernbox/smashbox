@@ -1,1 +1,1 @@
--e git+git@github.com:owncloud/pyocclient.git@master#egg=pyocclient
+-e git+https://github.com/owncloud/pyocclient.git@master#egg=pyocclient
