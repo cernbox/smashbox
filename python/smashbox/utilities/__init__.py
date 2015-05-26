@@ -40,11 +40,13 @@ def reset_owncloud_account(reset_procedure=None, num_test_users=None):
         if num_test_users is None:
             delete_owncloud_account(config.oc_account_name)
             create_owncloud_account(config.oc_account_name, config.oc_account_password)
+            login_owncloud_account(config.oc_account_name, config.oc_account_password)
         else:
             for i in range(1, num_test_users + 1):
                 username = "%s%i" % (config.oc_account_name, i)
                 delete_owncloud_account(username)
                 create_owncloud_account(username, config.oc_account_password)
+                login_owncloud_account(username, config.oc_account_password)
 
         return
 
@@ -96,7 +98,7 @@ def make_workdir(name=None):
 def create_owncloud_account(username=None, password=None):
     """ Creates a user account on the server
 
-    :param user: name of the user to be created, if None then the username is retrieved from the config file
+    :param username: name of the user to be created, if None then the username is retrieved from the config file
     :param password: password for the user, if None then the password is retrieved from the config file
 
     """
@@ -112,10 +114,27 @@ def create_owncloud_account(username=None, password=None):
     oc_api.create_user(username, password)
 
 
+def login_owncloud_account(username=None, password=None):
+    """ Login as user on the server (to generate the encryption keys)
+
+    :param username: name of the user to be logged in
+    :param password: password for the user
+
+    """
+    if username is None:
+        username = config.oc_account_name
+    if password is None:
+        password = config.oc_account_password
+
+    logger.info('Logging in user %s with password %s', username, password)
+
+    oc_api = get_oc_api()
+    oc_api.login(username, password)
+
 def delete_owncloud_account(username):
     """ Deletes a user account on the server
 
-    :param user: name of the user to be created
+    :param username: name of the user to be created
 
     """
     logger.info('Deleting user %s', username)
