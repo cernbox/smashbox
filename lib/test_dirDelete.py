@@ -1,22 +1,9 @@
 from smashbox.utilities import *
 
-__doc__ = """ This test moves a DIRA folder to DIRB folder.
+__doc__ = """ This test creates a deeply nested directory structure and then removes it
 
-By default, the top-level DIRA folder is moved to DIRB/DIRA
 """
 
-# testsets = [ {'dirMove_DIRA':'DIRA', 
-#               'dirMove_DIRB':'DIRB' },
-# 
-#              {'dirMove_DIRA':'A/A/A/DIRA', 
-#               'dirMove_DIRB':'DIRB'},
-# 
-#              {'dirMove_DIRA':'DIRA',
-#               'dirMove_DIRB':'B/B/B/DIRB'},
-# 
-#              {'dirMove_DIRA':'A/A/A/A/DIRA',
-#               'dirMove_DIRB':'B/B/B/B/B/B/DIRB'}
-#              ]
 
 import os.path
 
@@ -64,35 +51,4 @@ def workerA(step):
     
     expect_does_not_exist(d2)
     expect_webdav_does_not_exist(topLevelDir)
-    
-# @add_worker 
-# def workerB(step):
-# 
-#     step(1,'sync the initial content')
-# 
-#     syncdir = make_workdir()
-#     run_ocsync(syncdir)
-# 
-#     step(3,'sync again to check if the change is there')
-# 
-#     run_ocsync(syncdir)
-# 
-#     # we expect to find DIRB and all test files in it
-#     # we expect DIRA is deleted
-# 
-#     d1 = os.path.join(syncdir,DIRA)
-#     d2 = os.path.join(syncdir,DIRB)
-# 
-#     logger.info('checking %s',d1)
-#     error_check(not os.path.exists(d1), "path %s should not exist"%d1)
-# 
-#     logger.info('checking %s',d2)
-#     error_check(os.path.isdir(d2), "path %s should be a directory"%d2)
-# 
-#     for fn in TEST_FILES:
-#         f = os.path.join(d2,os.path.basename(d1),fn)
-#         logger.info("checking %s",f)
-#         error_check(os.path.isfile(f), "path %s should be a file"%f)
-
-    
     
