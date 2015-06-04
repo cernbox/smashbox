@@ -279,6 +279,16 @@ def run_ocsync(local_folder, remote_folder="", n=None, user_num=None):
 def webdav_propfind_ls(path):
     runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format -'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path)))
 
+def expect_webdav_does_not_exist(path):
+    exitcode,stdout,stderr = runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format - | grep NotFound | wc -l'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path)))
+    exists = stdout.rstrip() == "1"
+    error_check(exists, "Remote path does not %s exist but should" % path)
+
+def expect_webdav_exist(path):
+    exitcode,stdout,stderr = runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format - | grep NotFound | wc -l'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path)))
+    exists = stdout.rstrip() == "0"
+    error_check(exists, "Remote path %s exists but should not" % path)
+
 def webdav_delete(path):
     runcmd('curl -k %s -X DELETE %s '%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path)))
 
@@ -312,7 +322,7 @@ def runcmd(cmd,ignore_exitcode=False,echo=True,allow_stderr=True,shell=True,log_
         if not ignore_exitcode:
             raise subprocess.CalledProcessError(process.returncode,cmd)
 
-    return process.returncode
+    return (process.returncode, stdout, stderr)
 
 
 def sleep(n):
