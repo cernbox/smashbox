@@ -56,6 +56,8 @@ class Client:
             logger.info('PROPFIND response body: %s',r.body_stream.getvalue())
 
         if parse_check:
+            #TODO: multiple Content-Type response headers will confuse the client as well
+            fatal_check('application/xml; charset=utf-8' in r.headers['Content-Type'],'Wrong response header "Content-Type:%s"'%r.headers['Content-Type']) # as of client 1.7 and 1.8
             r.propfind_response=_parse_propfind_response(r.body_stream.getvalue(),depth=depth)
       
         return r
