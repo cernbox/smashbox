@@ -120,7 +120,7 @@ As of version x.x, the provisioning API is used for user management on the serve
 Adding new tests
 ================
 
-Simply add new tests to smashbox/lib.
+Simply add new tests to smashbox/lib. If you have specific tests which are not generally applicable or which belong to the same functional category it is best to store them in a subdirectory, e.g. smashbox/lib/oc-tests.
 
 If you need to add new utilities then add a module in smashbox/python/smashbox/utilities.
 
