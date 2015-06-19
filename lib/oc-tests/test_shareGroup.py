@@ -82,7 +82,7 @@ OCS_PERMISSION_ALL = 31
 def setup(step):
 
     step (1, 'create test users')
-    reset_owncloud_account(config.oc_number_test_users)
+    reset_owncloud_account(num_test_users=config.oc_number_test_users)
     check_users(num_test_users=config.oc_number_test_users)
 
     reset_owncloud_group(num_groups=config.oc_number_test_groups)
