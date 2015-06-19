@@ -171,6 +171,8 @@ class _smash_:
             import smashbox.utilities
             if smashbox.utilities.reported_errors:
                logger.error('%s error(s) reported',len(smashbox.utilities.reported_errors))
+               import sys
+               sys.exit(2)
                   
 
     @staticmethod
