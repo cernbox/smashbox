@@ -508,30 +508,30 @@ def scrape_log_file(d):
 
     """
     cmd = 'scp -P %d root@%s:%s/owncloud.log %s/.' % (config.scp_port, config.oc_server, config.oc_server_datadirectory, d)
-    rtn_code = runcmd(cmd)
+    rtn_code,stdout,stderr = runcmd(cmd)
 
     logger.info('copy command returned %s', rtn_code)
 
     # search logfile for string (1 == not found; 0 == found):
 
     cmd = "grep -i \"integrity constraint violation\" %s/owncloud.log" % d
-    rtn_code = runcmd(cmd, ignore_exitcode=True, log_warning=False)
+    rtn_code,stdout,stderr = runcmd(cmd, ignore_exitcode=True, log_warning=False)
     error_check(rtn_code > 0, "\"Integrity Constraint Violation\" message found in server log file")
 
     cmd = "grep -i \"Exception\" %s/owncloud.log" % d
-    rtn_code = runcmd(cmd, ignore_exitcode=True, log_warning=False)
+    rtn_code,stdout,stderr = runcmd(cmd, ignore_exitcode=True, log_warning=False)
     error_check(rtn_code > 0, "\"Exception\" message found in server log file")
 
     cmd = "grep -i \"could not obtain lock\" %s/owncloud.log" % d
-    rtn_code = runcmd(cmd, ignore_exitcode=True, log_warning=False)
+    rtn_code,stdout,stderr = runcmd(cmd, ignore_exitcode=True, log_warning=False)
     error_check(rtn_code > 0, "\"Could Not Obtain Lock\" message found in server log file")
 
     cmd = "grep -i \"db error\" %s/owncloud.log" % d
-    rtn_code = runcmd(cmd, ignore_exitcode=True, log_warning=False)
+    rtn_code,stdout,stderr = runcmd(cmd, ignore_exitcode=True, log_warning=False)
     error_check(rtn_code > 0, "\"DB Error\" message found in server log file")
 
     cmd = "grep -i \"stat failed\" %s/owncloud.log" % d
-    rtn_code = runcmd(cmd, ignore_exitcode=True, log_warning=False)
+    rtn_code,stdout,stderr = runcmd(cmd, ignore_exitcode=True, log_warning=False)
     error_check(rtn_code > 0, "\"Stat Failed\" message found in server log file")
 
 
