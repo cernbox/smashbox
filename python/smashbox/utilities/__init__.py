@@ -37,11 +37,11 @@ def reset_owncloud_account(reset_procedure=None, num_test_users=None):
         logger.info('reset_owncloud_account (%s) for %d users', reset_procedure, num_test_users)
 
     if reset_procedure == 'delete':
-        if num_test_users is None:
-            delete_owncloud_account(config.oc_account_name)
-            create_owncloud_account(config.oc_account_name, config.oc_account_password)
-            login_owncloud_account(config.oc_account_name, config.oc_account_password)
-        else:
+        delete_owncloud_account(config.oc_account_name)
+        create_owncloud_account(config.oc_account_name, config.oc_account_password)
+        login_owncloud_account(config.oc_account_name, config.oc_account_password)
+
+        if num_test_users is not None:
             for i in range(1, num_test_users + 1):
                 username = "%s%i" % (config.oc_account_name, i)
                 delete_owncloud_account(username)
