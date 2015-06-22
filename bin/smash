@@ -135,7 +135,7 @@ def main():
    try:
       config.oc_server_folder = string.Template(config.oc_server_folder).substitute({'runid':config.runid})
    except ValueError,x:
-      logger.critical('Malformed options oc_server_shell_cmd: %s %s'%(repr(config.oc_server_shell_cmd),repr(x)))
+      logger.critical('Malformed options oc_server_folder: %s %s'%(repr(config.oc_server_folder),repr(x)))
       sys.exit(1)
 
    #
