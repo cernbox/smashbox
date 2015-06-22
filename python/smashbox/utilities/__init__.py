@@ -276,27 +276,27 @@ def run_ocsync(local_folder, remote_folder="", n=None, user_num=None):
         ocsync_cnt[current_step]+=1
 
 
-def webdav_propfind_ls(path):
-    runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format -'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path)))
+def webdav_propfind_ls(path, user_num=None):
+    runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format -'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)))
 
-def expect_webdav_does_not_exist(path):
-    exitcode,stdout,stderr = runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format - | grep NotFound | wc -l'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path)))
+def expect_webdav_does_not_exist(path, user_num=None):
+    exitcode,stdout,stderr = runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format - | grep NotFound | wc -l'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)))
     exists = stdout.rstrip() == "1"
     error_check(exists, "Remote path does not %s exist but should" % path)
 
-def expect_webdav_exist(path):
-    exitcode,stdout,stderr = runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format - | grep NotFound | wc -l'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path)))
+def expect_webdav_exist(path, user_num=None):
+    exitcode,stdout,stderr = runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format - | grep NotFound | wc -l'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)))
     exists = stdout.rstrip() == "0"
     error_check(exists, "Remote path %s exists but should not" % path)
 
-def webdav_delete(path):
-    runcmd('curl -k %s -X DELETE %s '%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path)))
+def webdav_delete(path, user_num=None):
+    runcmd('curl -k %s -X DELETE %s '%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)))
 
-def webdav_mkcol(path,silent=False):
+def webdav_mkcol(path, silent=False, user_num=None):
     out=""
     if silent: # a workaround for super-verbose errors in case directory on the server already exists
         out = "> /dev/null 2>&1"
-    runcmd('curl -k %s -X MKCOL %s %s'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path),out))
+    runcmd('curl -k %s -X MKCOL %s %s'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num),out))
 
 # #### SHELL COMMANDS AND TIME FUNCTIONS
 
