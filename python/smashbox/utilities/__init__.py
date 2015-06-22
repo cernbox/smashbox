@@ -281,8 +281,8 @@ def webdav_propfind_ls(path, user_num=None):
 
 def expect_webdav_does_not_exist(path, user_num=None):
     exitcode,stdout,stderr = runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format - | grep NotFound | wc -l'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)))
-    exists = stdout.rstrip() == "1"
-    error_check(exists, "Remote path does not %s exist but should" % path)
+    not_exists = stdout.rstrip() == "1"
+    error_check(not_exists, "Remote path does not %s exist but should" % path)
 
 def expect_webdav_exist(path, user_num=None):
     exitcode,stdout,stderr = runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format - | grep NotFound | wc -l'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)))
