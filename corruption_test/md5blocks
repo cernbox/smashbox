@@ -38,43 +38,41 @@ def main():
   parser.add_argument('--block-limit', '-n', action='store', dest="BLOCK_LIMIT", type=int, default=0, help='block limit')
   parser.add_argument('--block-offset', '-s', action='store', dest="BLOCK_OFFSET", type=int, default=0, help='block limit')
   parser.add_argument('--check', action='store_true', dest="check", default=False, help='check if block 0 repeats somewhere else')
-  #parser.add_argument('--check-shift', action='store', dest="check_shift", type=int, default=0, help='check if shifted blocks are found (the argument specifies the length of shifted sequence)')
+  parser.add_argument('--scan-offsets', action='store_true', dest="scan_offsets", default=False, help='run the --check for all offsets which correspond to chunk uploads: i x 10*1024*1024')
   parser.add_argument('file1', help='file1')
   parser.add_argument('file2', nargs='?', default="", help='file2')
 
   args = parser.parse_args()
 
+  if args.check:
+    import os
+
+    CHUNK_SIZE = 10*1024*1024 # bytes, this is the minimal chunk size used in the analyzed population of files (the other was 20*MB)
+    SKIP_BLOCKS = CHUNK_SIZE/args.BLOCK_SIZE # the number of BLOCK_SIZE blocks contained in one CHUNK_SIZE, these two number should divide without a remainder
+    
+    if args.scan_offsets:
+      N_OFFSETS = os.path.getsize(args.file1)/CHUNK_SIZE + 1
+    else:
+      N_OFFSETS = 1
+  
+    for i in range(N_OFFSETS):
+      offset = i*SKIP_BLOCKS + args.BLOCK_OFFSET
+
+      m,blocks = md5sum(args.file1,args.BLOCK_SIZE,args.BLOCK_LIMIT,offset)
+
+      b0s = [i for i,b in enumerate(blocks) if b == blocks[0]]
+      
+      if len(b0s) > 1:
+        print args.file1,': ERROR block at %d repeated %d times (%s)'%(offset*args.BLOCK_SIZE, len(b0s)-1, b0s)
+        sys.exit(2)
+
+    print args.file1
+
+    sys.exit(0)
+
   m1,blocks1 = md5sum(args.file1,args.BLOCK_SIZE,args.BLOCK_LIMIT,args.BLOCK_OFFSET)
   if args.file2:
     m2,blocks2 = md5sum(args.file2,args.BLOCK_SIZE,args.BLOCK_LIMIT,args.BLOCK_OFFSET)
-    
-
-  if args.check:
-    print args.file1
-    b0s = [i for i,b in enumerate(blocks1) if b == blocks1[0]]
-    if len(b0s) > 1:
-      print args.file1,': ERROR block 0 found repeated at the positions:',b0s
-      sys.exit(2)
-    sys.exit(0)
-
-
-#   if args.check_shift:
-#     print args.file1
-#     streak=0
-#     for i in range(len(blocks1)-1):
-#       if blocks1[i] == blocks1[i+1]:
-#         streak+=1
-#       else:
-#         streak=0
-# 
-#       print streak, blocks1[i], blocks1[i+1]
-#         
-#       if streak>args.check_shift:
-#         print args.file1,': ERROR %s shifted blocks found at byte offset:',args.BLOCK_OFFSET+i*args.BLOCK_SIZE
-#         sys.exit(2)
-# 
-#     sys.exit(0)
-#       
 
   print "File block analyzer"
   for a in sorted(vars(args).keys()):
