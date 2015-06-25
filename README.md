@@ -1,12 +1,14 @@
 Overview
 ========
 
-This is a framework for testing the core storage functionality of your
-owncloud installation from the end-user perspective. What we (want to)
-check:
-   * sync clients in various scenarios (partially implemented)
-   * trashbin and versioning (partially implemented)
-   * sharing of files and folders (not-yet-there)
+This is a framework for end-to-end testing the core storage functionality of 
+owncloud-based service installation. This test framework may be run interactively from a command line, perform continous testing via cron jobs or stress/load testing. It may be easily integrated in testing and QA process.
+
+What we check:
+   * sync clients in various scenarios
+   * trashbin and versioning
+   * sharing of files and folders
+   * basic protocol checks and documentation
 
 The goal of this is to:
    * make sure that behaviour of the system is understood and not 
@@ -19,10 +21,7 @@ The goal of this is to:
 If you think you see a bug - write a test-case and let others
 reproduce it on their systems.
 
-This is work in progress. In the future we would like to include
-web-based file manipulations (e.g. remove or upload file equivalent to
-the action done at the web interface). We also need to add more tests
-with direct webdav access.
+This is work in progress. 
 
 Project tree
 ============
@@ -39,6 +38,7 @@ General layout:
    ├── lib/                                     : main collection of test-cases
    │   ├── test_nplusone.py			
    │   └── ...  			        
+   ├── protocol/                                : sync protocol tests and documentation
    ├── python/                                  : implementation of tools and API library for tests
    │   └── smashbox/utilities                   : here is the utilities used directly in the test-cases
    ├── server/                                  : server-side procedures used in the tests
@@ -51,8 +51,7 @@ General layout:
 Installation
 ============
 
-Note: Currently this framework works on Unix-like systems only. In the
-future we will make it Windows-compatible.
+Note: Currently this framework works on Unix-like systems only. Windows port is needed.
 
 Clone git repository into your local ``smashbox`` directory.
 
@@ -93,6 +92,9 @@ scenario. The test-case specifies which actions happen simultaneously.
 
 Examples:
 
+    # help on all available options
+    bin/smash --help
+
     # basic test
     bin/smash lib/test_basicSync.py
     
@@ -118,15 +120,13 @@ As of version x.x, the provisioning API is used for user management on the serve
 Adding new tests
 ================
 
-Simply add new tests to smashbox/lib.
+Simply add new tests to smashbox/lib. If you have specific tests which are not generally applicable or which belong to the same functional category it is best to store them in a subdirectory, e.g. smashbox/lib/oc-tests.
 
 If you need to add new utilities then add a module in smashbox/python/smashbox/utilities.
 
 
 Design criteria for this testing software
 =========================================
-
-Some items not yet fully achieved:
 
   - test scripts with minimal code clutter
   - possible to run individual test scripts or the whole suite at once
@@ -156,10 +156,10 @@ Server test accounts follow this general naming scheme (some elements may be omm
     smash-<runid>-<collection>-<testname>
    
 
-Single test mode
+Organization of test directories
 ----------------
 
-Single test modes are triggered when running individual tests::
+Consider running an simple test::
 
     smash smashbox/lib/test_nplusone.py
 
@@ -182,29 +182,5 @@ Otherwsie the test account on the server will be everytime the same (and will be
     smash-nplusone
 
 The account_cleanup_procedure defines how the account is cleaned-up before running the test. These procedures are defined in smashbox/python/smashbox.
-
-Collection test mode (NOT YET IMPLEMENTED)
-------------------------------------------
-
-Collection test mode is triggered when running one or more test collections::
-
-    smash smashbox/lib ~/mytestcollection
-
-If workdir_runid_enabled option is enabled then local working directory for each test will be everytime different (and unique)::
-
-    <runbasedir>/<runid>/<collection>/test_nplusone
-
-If workdir_runid_enabled option is disabled (None) then local working directory will be the same (and cleaned up before running the test)::
-
-    <runbasedir>/<collection>/test_nplusone
-
-If oc_account_runid_enabled is enabled then the test account on the server will be everytime different (and unique)::
-
-    smash-<runid>-<collection>-nplusone
-
-If oc_account_runid_enabled is disabled then the test account on the server will be the same every time (see cleanup notes above)::
-
-    smash-<collection>-nplusone
-
 
 

@@ -82,13 +82,15 @@ OCS_PERMISSION_ALL = 31
 def setup(step):
 
     step (1, 'create test users')
-    reset_owncloud_account(config.oc_number_test_users)
+    reset_owncloud_account(num_test_users=config.oc_number_test_users)
     check_users(num_test_users=config.oc_number_test_users)
 
     reset_owncloud_group(num_groups=config.oc_number_test_groups)
     check_groups(config.oc_number_test_groups)
 
-    add_user_to_group('user3', 'testgroup1')
+    user3 = "%s%i"%(config.oc_account_name, 3)
+    group1 = "%s%i"%(config.oc_group_name, 1)
+    add_user_to_group(user3, group1)
 
     reset_rundir()
 
@@ -258,7 +260,10 @@ def admin(step):
 
 
     step (14, 'Admin user removes user from group')
-    remove_user_from_group('user3', 'testgroup1')
+
+    user3 = "%s%i"%(config.oc_account_name, 3)
+    group1 = "%s%i"%(config.oc_group_name, 1)
+    remove_user_from_group(user3, group1)
 
     step (16, 'Admin final step')
 
