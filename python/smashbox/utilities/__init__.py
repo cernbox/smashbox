@@ -643,16 +643,16 @@ def remove_user_from_group(username, group_name):
 
 
 def check_users(num_test_users=None):
-    """ Checks if a user exists or not
+    """ Checks if a user(s) exists or not
     """
-    if num_test_users is None:
-        result = check_owncloud_account(config.oc_account_name)
-        error_check(result, 'User %s not found' % config.oc_account_name)
-    else:
+    result = check_owncloud_account(config.oc_account_name)
+    fatal_check(result, 'User %s not found' % config.oc_account_name)
+
+    if num_test_users is not None:
         for i in range(1, num_test_users + 1):
             username = "%s%i" % (config.oc_account_name, i)
             result = check_owncloud_account(username)
-            error_check(result, 'User %s not found' % username)
+            fatal_check(result, 'User %s not found' % username)
 
 
 def check_groups(num_groups=None):
@@ -660,12 +660,12 @@ def check_groups(num_groups=None):
     """
     if num_groups is None:
         result = check_owncloud_group(config.oc_group_name)
-        error_check(result, 'Group %s not found' % config.oc_group_name)
+        fatal_check(result, 'Group %s not found' % config.oc_group_name)
     else:
         for i in range(1, num_groups + 1):
             group_name = "%s%i" % (config.oc_group_name, i)
             result = check_owncloud_group(group_name)
-            error_check(result, 'Group %s not found' % group_name)
+            fatal_check(result, 'Group %s not found' % group_name)
 
 
 def expect_modified(fn, md5):
