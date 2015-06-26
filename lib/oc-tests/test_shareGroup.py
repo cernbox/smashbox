@@ -127,7 +127,9 @@ def sharer(step):
 
     step (7, 'Sharer validates modified file')
     run_ocsync(d,user_num=1)
-    expect_modified(os.path.join(d,'TEST_FILE_MODIFIED_GROUP_SHARE.dat'), shared['md5_sharer'])
+    list_files(d)
+    expect_modified(os.path.join(d,'TEST_FILE_MODIFIED_GROUP_SHARE.dat'), shared['md5_sharer'], comparedTo="original file from sharer")
+    expect_not_modified(os.path.join(d,'TEST_FILE_MODIFIED_GROUP_SHARE.dat'), shared['md5_shareeGroup'], comparedTo="file from Sharee Group")
 
     step (10, 'Sharer unshares a file')
     delete_share (user1, shared['TEST_FILE_GROUP_RESHARE'])
@@ -167,6 +169,8 @@ def shareeGroup(step):
     step (6, 'Sharee Group modifies TEST_FILE_MODIFIED_GROUP_SHARE.dat')
 
     modify_file(os.path.join(d,'TEST_FILE_MODIFIED_GROUP_SHARE.dat'),'1',count=10,bs=filesizeKB)
+    shared = reflection.getSharedObject()
+    shared['md5_shareeGroup'] = md5sum(os.path.join(d,'TEST_FILE_MODIFIED_GROUP_SHARE.dat'))
     run_ocsync(d,user_num=2)
     list_files(d)
 
