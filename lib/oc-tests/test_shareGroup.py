@@ -141,12 +141,12 @@ def sharer(step):
     step (16, 'Sharer Final step')
 
 @add_worker
-def shareeOne(step):
+def reshareeUser(step):
 
-    step (2, 'Sharee One creates workdir')
+    step (2, 'Re-Sharee User creates workdir')
     d = make_workdir()
 
-    step (5, 'Sharee One syncs and validate files do not exist')
+    step (5, 'Re-Sharee User syncs and validate files do not exist')
 
     run_ocsync(d,user_num=2)
     list_files(d)
@@ -163,7 +163,7 @@ def shareeOne(step):
     logger.info ('Checking that %s is not present in local directory for Sharee One', sharedFile)
     error_check(not os.path.exists(sharedFile), "File %s should not exist" %sharedFile)
 
-    step (9, 'Sharee one validates share file')
+    step (9, 'Re-Sharee User validates share file')
 
     run_ocsync(d,user_num=2)
     list_files(d)
@@ -172,7 +172,7 @@ def shareeOne(step):
     logger.info ('Checking that %s is present in local directory for Sharee One', sharedFile)
     error_check(os.path.exists(sharedFile), "File %s should exist" %sharedFile)
 
-    step (11, 'Sharee one validates file does not exist after unsharing')
+    step (11, 'Re-Sharee User validates file does not exist after unsharing')
 
     run_ocsync(d,user_num=2)
     list_files(d)
@@ -181,7 +181,7 @@ def shareeOne(step):
     logger.info ('Checking that %s is not present in sharee local directory', sharedFile)
     error_check(not os.path.exists(sharedFile), "File %s should not exist" %sharedFile)
 
-    step (13, 'Sharee One syncs and validates file does not exist')
+    step (13, 'Re-Sharee User syncs and validates file does not exist')
 
     run_ocsync(d,user_num=2)
     list_files(d)
@@ -190,15 +190,15 @@ def shareeOne(step):
     logger.info ('Checking that %s is not present in sharee local directory', sharedFile)
     error_check(not os.path.exists(sharedFile), "File %s should not exist" %sharedFile)
 
-    step (16, 'Sharee One final step')
+    step (16, 'Re-Sharee User final step')
 
 @add_worker
-def shareeTwo(step):
+def shareeGroup(step):
   
-    step (2, 'Sharee Two creates workdir')
+    step (2, 'Sharee Group creates workdir')
     d = make_workdir()
 
-    step (5, 'Sharee Two syncs and validate files do exist')
+    step (5, 'Sharee Group syncs and validate files do exist')
 
     run_ocsync(d,user_num=3)
     list_files(d)
@@ -215,20 +215,20 @@ def shareeTwo(step):
     logger.info ('Checking that %s is present in local directory for Sharee Two', sharedFile)
     error_check(os.path.exists(sharedFile), "File %s should exist" %sharedFile)
 
-    step (6, 'Sharee Two modifies TEST_FILE_MODIFIED_GROUP_SHARE.dat')
+    step (6, 'Sharee Group modifies TEST_FILE_MODIFIED_GROUP_SHARE.dat')
 
     modify_file(os.path.join(d,'TEST_FILE_MODIFIED_GROUP_SHARE.dat'),'1',count=10,bs=filesizeKB)
     run_ocsync(d,user_num=3)
     list_files(d)
 
-    step (8, 'Sharee Two shares file with Sharee One')
+    step (8, 'Sharee Group shares file with Sharee One')
 
     user2 = "%s%i"%(config.oc_account_name, 2)
     user3 = "%s%i"%(config.oc_account_name, 3)
     kwargs = {'perms': OCS_PERMISSION_ALL}
     share_file_with_user ('TEST_FILE_GROUP_RESHARE.dat', user3, user2, **kwargs)
 
-    step (11, 'Sharee two validates file does not exist after unsharing')
+    step (11, 'Sharee Group validates file does not exist after unsharing')
 
     run_ocsync(d,user_num=3)
     list_files(d)
@@ -236,7 +236,8 @@ def shareeTwo(step):
     sharedFile = os.path.join(d,'TEST_FILE_GROUP_RESHARE.dat')
     logger.info ('Checking that %s is not present in sharee local directory', sharedFile)
     error_check(not os.path.exists(sharedFile), "File %s should not exist" %sharedFile)
-    step (13, 'Sharee two validates file does not exist after deleting')
+
+    step (13, 'Sharee Group validates file does not exist after deleting')
 
     run_ocsync(d,user_num=3)
     list_files(d)
@@ -244,7 +245,8 @@ def shareeTwo(step):
     sharedFile = os.path.join(d,'TEST_FILE_MODIFIED_GROUP_SHARE.dat')
     logger.info ('Checking that %s is not present in sharee local directory', sharedFile)
     error_check(not os.path.exists(sharedFile), "File %s should not exist" %sharedFile)
-    step (15, 'Sharee two validates file does not exist after being removed from group')
+
+    step (15, 'Sharee Group validates file does not exist after being removed from group')
 
     run_ocsync(d,user_num=3)
     list_files(d)
