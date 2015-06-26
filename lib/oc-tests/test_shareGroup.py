@@ -156,15 +156,15 @@ def shareeGroup(step):
 
     sharedFile = os.path.join(d,'TEST_FILE_GROUP_SHARE.dat')
     logger.info ('Checking that %s is present in local directory for Sharee Two', sharedFile)
-    error_check(os.path.exists(sharedFile), "File %s should exist" %sharedFile)
+    expect_exists(sharedFile)
 
     sharedFile = os.path.join(d,'TEST_FILE_GROUP_RESHARE.dat')
     logger.info ('Checking that %s is present in local directory for Sharee Two', sharedFile)
-    error_check(os.path.exists(sharedFile), "File %s should exist" %sharedFile)
+    expect_exists(sharedFile)
 
     sharedFile = os.path.join(d,'TEST_FILE_MODIFIED_GROUP_SHARE.dat')
     logger.info ('Checking that %s is present in local directory for Sharee Two', sharedFile)
-    error_check(os.path.exists(sharedFile), "File %s should exist" %sharedFile)
+    expect_exists(sharedFile)
 
     step (6, 'Sharee Group modifies TEST_FILE_MODIFIED_GROUP_SHARE.dat')
 
@@ -188,7 +188,7 @@ def shareeGroup(step):
 
     sharedFile = os.path.join(d,'TEST_FILE_GROUP_RESHARE.dat')
     logger.info ('Checking that %s is not present in sharee local directory', sharedFile)
-    error_check(not os.path.exists(sharedFile), "File %s should not exist" %sharedFile)
+    expect_does_not_exist(sharedFile)
 
     step (13, 'Sharee Group validates file does not exist after deleting')
 
@@ -197,7 +197,7 @@ def shareeGroup(step):
 
     sharedFile = os.path.join(d,'TEST_FILE_MODIFIED_GROUP_SHARE.dat')
     logger.info ('Checking that %s is not present in sharee local directory', sharedFile)
-    error_check(not os.path.exists(sharedFile), "File %s should not exist" %sharedFile)
+    expect_does_not_exist(sharedFile)
 
     step (15, 'Sharee Group validates file does not exist after being removed from group')
 
@@ -206,7 +206,7 @@ def shareeGroup(step):
 
     sharedFile = os.path.join(d,'TEST_FILE_GROUP_SHARE.dat')
     logger.info ('Checking that %s is not present in sharee local directory', sharedFile)
-    error_check(not os.path.exists(sharedFile), "File %s should not exist" %sharedFile)
+    expect_does_not_exist(sharedFile)
 
     step (16, 'Sharee Two final step')
 
@@ -223,15 +223,15 @@ def reshareeUser(step):
 
     sharedFile = os.path.join(d,'TEST_FILE_GROUP_SHARE.dat')
     logger.info ('Checking that %s is not present in local directory for Sharee One', sharedFile)
-    error_check(not os.path.exists(sharedFile), "File %s should not exist" %sharedFile)
+    expect_does_not_exist(sharedFile)
 
     sharedFile = os.path.join(d,'TEST_FILE_GROUP_RESHARE.dat')
     logger.info ('Checking that %s is not present in local directory for Sharee One', sharedFile)
-    error_check(not os.path.exists(sharedFile), "File %s should not exist" %sharedFile)
+    expect_does_not_exist(sharedFile)
 
     sharedFile = os.path.join(d,'TEST_FILE_MODIFIED_GROUP_SHARE.dat')
     logger.info ('Checking that %s is not present in local directory for Sharee One', sharedFile)
-    error_check(not os.path.exists(sharedFile), "File %s should not exist" %sharedFile)
+    expect_does_not_exist(sharedFile)
 
     step (9, 'Re-Sharee User validates share file')
 
@@ -240,7 +240,7 @@ def reshareeUser(step):
 
     sharedFile = os.path.join(d,'TEST_FILE_GROUP_RESHARE.dat')
     logger.info ('Checking that %s is present in local directory for Sharee One', sharedFile)
-    error_check(os.path.exists(sharedFile), "File %s should exist" %sharedFile)
+    expect_exists(sharedFile)
 
     step (11, 'Re-Sharee User validates file does not exist after unsharing')
 
@@ -249,7 +249,7 @@ def reshareeUser(step):
 
     sharedFile = os.path.join(d,'TEST_FILE_GROUP_RESHARE.dat')
     logger.info ('Checking that %s is not present in sharee local directory', sharedFile)
-    error_check(not os.path.exists(sharedFile), "File %s should not exist" %sharedFile)
+    expect_does_not_exist(sharedFile)
 
     step (13, 'Re-Sharee User syncs and validates file does not exist')
 
@@ -258,7 +258,7 @@ def reshareeUser(step):
 
     sharedFile = os.path.join(d,'TEST_FILE_GROUP_SHARE.dat')
     logger.info ('Checking that %s is not present in sharee local directory', sharedFile)
-    error_check(not os.path.exists(sharedFile), "File %s should not exist" %sharedFile)
+    expect_does_not_exist(sharedFile)
 
     step (16, 'Re-Sharee User final step')
 
