@@ -37,14 +37,16 @@ def reset_owncloud_account(reset_procedure=None, num_test_users=None):
         logger.info('reset_owncloud_account (%s) for %d users', reset_procedure, num_test_users)
 
     if reset_procedure == 'delete':
-        if num_test_users is None:
-            delete_owncloud_account(config.oc_account_name)
-            create_owncloud_account(config.oc_account_name, config.oc_account_password)
-        else:
+        delete_owncloud_account(config.oc_account_name)
+        create_owncloud_account(config.oc_account_name, config.oc_account_password)
+        login_owncloud_account(config.oc_account_name, config.oc_account_password)
+
+        if num_test_users is not None:
             for i in range(1, num_test_users + 1):
                 username = "%s%i" % (config.oc_account_name, i)
                 delete_owncloud_account(username)
                 create_owncloud_account(username, config.oc_account_password)
+                login_owncloud_account(username, config.oc_account_password)
 
         return
 
@@ -96,7 +98,7 @@ def make_workdir(name=None):
 def create_owncloud_account(username=None, password=None):
     """ Creates a user account on the server
 
-    :param user: name of the user to be created, if None then the username is retrieved from the config file
+    :param username: name of the user to be created, if None then the username is retrieved from the config file
     :param password: password for the user, if None then the password is retrieved from the config file
 
     """
@@ -112,10 +114,27 @@ def create_owncloud_account(username=None, password=None):
     oc_api.create_user(username, password)
 
 
+def login_owncloud_account(username=None, password=None):
+    """ Login as user on the server (to generate the encryption keys)
+
+    :param username: name of the user to be logged in
+    :param password: password for the user
+
+    """
+    if username is None:
+        username = config.oc_account_name
+    if password is None:
+        password = config.oc_account_password
+
+    logger.info('Logging in user %s with password %s', username, password)
+
+    oc_api = get_oc_api()
+    oc_api.login(username, password)
+
 def delete_owncloud_account(username):
     """ Deletes a user account on the server
 
-    :param user: name of the user to be created
+    :param username: name of the user to be created
 
     """
     logger.info('Deleting user %s', username)
@@ -257,17 +276,27 @@ def run_ocsync(local_folder, remote_folder="", n=None, user_num=None):
         ocsync_cnt[current_step]+=1
 
 
-def webdav_propfind_ls(path):
-    runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format -'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path)))
+def webdav_propfind_ls(path, user_num=None):
+    runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format -'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)))
 
-def webdav_delete(path):
-    runcmd('curl -k %s -X DELETE %s '%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path)))
+def expect_webdav_does_not_exist(path, user_num=None):
+    exitcode,stdout,stderr = runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format - | grep NotFound | wc -l'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)))
+    not_exists = stdout.rstrip() == "1"
+    error_check(not_exists, "Remote path does not %s exist but should" % path)
 
-def webdav_mkcol(path,silent=False):
+def expect_webdav_exist(path, user_num=None):
+    exitcode,stdout,stderr = runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format - | grep NotFound | wc -l'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)))
+    exists = stdout.rstrip() == "0"
+    error_check(exists, "Remote path %s exists but should not" % path)
+
+def webdav_delete(path, user_num=None):
+    runcmd('curl -k %s -X DELETE %s '%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)))
+
+def webdav_mkcol(path, silent=False, user_num=None):
     out=""
     if silent: # a workaround for super-verbose errors in case directory on the server already exists
         out = "> /dev/null 2>&1"
-    runcmd('curl -k %s -X MKCOL %s %s'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path),out))
+    runcmd('curl -k %s -X MKCOL %s %s'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num),out))
 
 # #### SHELL COMMANDS AND TIME FUNCTIONS
 
@@ -293,7 +322,7 @@ def runcmd(cmd,ignore_exitcode=False,echo=True,allow_stderr=True,shell=True,log_
         if not ignore_exitcode:
             raise subprocess.CalledProcessError(process.returncode,cmd)
 
-    return process.returncode
+    return (process.returncode, stdout, stderr)
 
 
 def sleep(n):
@@ -478,31 +507,31 @@ def scrape_log_file(d):
     :param d: The directory where the server log file is to be copied to
 
     """
-    cmd = 'scp root@%s:%s/owncloud.log %s/.' % (config.oc_server, config.oc_server_datadirectory, d)
-    rtn_code = runcmd(cmd)
+    cmd = 'scp -P %d root@%s:%s/owncloud.log %s/.' % (config.scp_port, config.oc_server, config.oc_server_datadirectory, d)
+    rtn_code,stdout,stderr = runcmd(cmd)
 
     logger.info('copy command returned %s', rtn_code)
 
     # search logfile for string (1 == not found; 0 == found):
 
     cmd = "grep -i \"integrity constraint violation\" %s/owncloud.log" % d
-    rtn_code = runcmd(cmd, ignore_exitcode=True, log_warning=False)
+    rtn_code,stdout,stderr = runcmd(cmd, ignore_exitcode=True, log_warning=False)
     error_check(rtn_code > 0, "\"Integrity Constraint Violation\" message found in server log file")
 
     cmd = "grep -i \"Exception\" %s/owncloud.log" % d
-    rtn_code = runcmd(cmd, ignore_exitcode=True, log_warning=False)
+    rtn_code,stdout,stderr = runcmd(cmd, ignore_exitcode=True, log_warning=False)
     error_check(rtn_code > 0, "\"Exception\" message found in server log file")
 
     cmd = "grep -i \"could not obtain lock\" %s/owncloud.log" % d
-    rtn_code = runcmd(cmd, ignore_exitcode=True, log_warning=False)
+    rtn_code,stdout,stderr = runcmd(cmd, ignore_exitcode=True, log_warning=False)
     error_check(rtn_code > 0, "\"Could Not Obtain Lock\" message found in server log file")
 
     cmd = "grep -i \"db error\" %s/owncloud.log" % d
-    rtn_code = runcmd(cmd, ignore_exitcode=True, log_warning=False)
+    rtn_code,stdout,stderr = runcmd(cmd, ignore_exitcode=True, log_warning=False)
     error_check(rtn_code > 0, "\"DB Error\" message found in server log file")
 
     cmd = "grep -i \"stat failed\" %s/owncloud.log" % d
-    rtn_code = runcmd(cmd, ignore_exitcode=True, log_warning=False)
+    rtn_code,stdout,stderr = runcmd(cmd, ignore_exitcode=True, log_warning=False)
     error_check(rtn_code > 0, "\"Stat Failed\" message found in server log file")
 
 
@@ -520,7 +549,7 @@ def get_oc_api(**kwargs):
         protocol += 's'
 
     url = protocol + '://' + config.oc_server + '/' + config.oc_root
-    oc_api = owncloud.Client(url, **kwargs)
+    oc_api = owncloud.Client(url, verify_certs=False)
     return oc_api
 
 
@@ -534,6 +563,8 @@ def share_file_with_user(filename, sharer, sharee, **kwargs):
     :returns: share id of the created share
 
     """
+    from owncloud import ResponseError
+
     logger.info('%s is sharing file %s with user %s', sharer, filename, sharee)
 
     oc_api = get_oc_api()
@@ -543,12 +574,9 @@ def share_file_with_user(filename, sharer, sharee, **kwargs):
         share_info = oc_api.share_file_with_user(filename, sharee, **kwargs)
         logger.info('share id for file share is %s', str(share_info.share_id))
         return share_info.share_id
-    except Exception as err:
-
-        # TODO: this code is not the best - the goal is to trap a share not allowed error and return that error code
-
+    except ResponseError as err:
         logger.info('Share failed with %s', str(err))
-        if "not allowed to share" in str(err):
+        if "not allowed to share" in str(err.get_resource_body()):
             return -1
         else:
             return -2
@@ -637,16 +665,16 @@ def remove_user_from_group(username, group_name):
 
 
 def check_users(num_test_users=None):
-    """ Checks if a user exists or not
+    """ Checks if a user(s) exists or not
     """
-    if num_test_users is None:
-        result = check_owncloud_account(config.oc_account_name)
-        error_check(result, 'User %s not found' % config.oc_account_name)
-    else:
+    result = check_owncloud_account(config.oc_account_name)
+    fatal_check(result, 'User %s not found' % config.oc_account_name)
+
+    if num_test_users is not None:
         for i in range(1, num_test_users + 1):
             username = "%s%i" % (config.oc_account_name, i)
             result = check_owncloud_account(username)
-            error_check(result, 'User %s not found' % username)
+            fatal_check(result, 'User %s not found' % username)
 
 
 def check_groups(num_groups=None):
@@ -654,12 +682,12 @@ def check_groups(num_groups=None):
     """
     if num_groups is None:
         result = check_owncloud_group(config.oc_group_name)
-        error_check(result, 'Group %s not found' % config.oc_group_name)
+        fatal_check(result, 'Group %s not found' % config.oc_group_name)
     else:
         for i in range(1, num_groups + 1):
             group_name = "%s%i" % (config.oc_group_name, i)
             result = check_owncloud_group(group_name)
-            error_check(result, 'Group %s not found' % group_name)
+            fatal_check(result, 'Group %s not found' % group_name)
 
 
 def expect_modified(fn, md5):
@@ -671,7 +699,7 @@ def expect_modified(fn, md5):
 
 
 def expect_not_modified(fn, md5):
-    """ Compares tha tthe checksum of two files is the same
+    """ Compares that the checksum of two files is the same
     """
     actual_md5 = md5sum(fn)
     error_check(actual_md5 == md5,

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # -*- python -*-
 #
 # The _open_SmashBox Project.
@@ -42,6 +42,7 @@ def main():
    parser.add_argument('--keep-going',dest="keep_going",action="store_true",default=False,help='do not abort the execution on the first failed testcase')
    parser.add_argument('--all-testsets', '-a', dest="all_testsets", action="store_true", help='run all testsets defined within each test script file')
    parser.add_argument('--testset', '-t', dest="testset", action="store", default=None, type=int, help='run just one testset specified by index, starting from 0')
+   parser.add_argument('--loop', '-l', dest="loop", action="store", default=1, type=int, help='number of times a test command should be executed')
 
    args = parser.parse_args()
 
@@ -134,7 +135,7 @@ def main():
    try:
       config.oc_server_folder = string.Template(config.oc_server_folder).substitute({'runid':config.runid})
    except ValueError,x:
-      logger.critical('Malformed options oc_server_shell_cmd: %s %s'%(repr(config.oc_server_shell_cmd),repr(x)))
+      logger.critical('Malformed options oc_server_folder: %s %s'%(repr(config.oc_server_folder),repr(x)))
       sys.exit(1)
 
    #
@@ -151,7 +152,7 @@ def main():
    def run_multiprocessing_engine(config,t):
        global global_exitcode_error
        import subprocess, pickle
-       cmd = ['python',os.path.join(os.path.dirname(os.path.dirname(__file__)),'python/smashbox/multiprocessing_engine.py'), t, pickle.dumps(config)]
+       cmd = ['python2',os.path.join(os.path.dirname(os.path.dirname(__file__)),'python/smashbox/multiprocessing_engine.py'), t, pickle.dumps(config)]
        p = subprocess.Popen(cmd)
        p.communicate()
        
@@ -183,10 +184,16 @@ def main():
       if test_mode == "single":
          pass
 
-      config.rundir = os.path.join(config.smashdir, barename(t))
+      def set_rundir_name(test_name, runid, loop=None, test_set=None):
+         config.rundir = os.path.join(config.smashdir, barename(test_name))
+         if config.workdir_runid_enabled:
+            config.rundir += '-' + str(runid)
+            if loop != None and args.loop > 1:
+               config.rundir += '-loop' + str(loop)
+            if test_set != None:
+               config.rundir += '-testset' + str(test_set)
 
-      if config.workdir_runid_enabled:
-         config.rundir += '-'+str(config.runid)
+      set_rundir_name(t, config.runid)
 
       if not user_defined_oc_account_name:
          config.oc_account_name = barename(t)
@@ -199,22 +206,27 @@ def main():
          if ts:
             for opt,val in zip(ts.keys(),ts.values()):
                setattr(config,opt,val)
-               
+
          log_quiet('running %s in %s as %s testset #%d %s',t,config.rundir,config.oc_account_name,i,repr(ts)) # log_quiet
          if not args.dry_run:
             run_multiprocessing_engine(config,os.path.abspath(t))
 
-      if args.all_testsets or args.testset is not None:
-         smashbox.no_engine.testsets=[None]
-         execfile(os.path.abspath(t),smashbox.no_engine.__dict__)
+      for j in range(1,args.loop+1):
+         log_quiet ("Running iteration %d" % j)
+         if args.all_testsets or args.testset is not None:
+            smashbox.no_engine.testsets=[None]
+            execfile(os.path.abspath(t),smashbox.no_engine.__dict__)
 
-         if args.all_testsets:
-            for i,ts in enumerate(smashbox.no_engine.testsets):
-               run_test(ts,i)
+            if args.all_testsets:
+               for i,ts in enumerate(smashbox.no_engine.testsets):
+                  set_rundir_name(t, config.runid, j, i)
+                  run_test(ts,i)
+            else:
+               set_rundir_name(t, config.runid, j)
+               run_test(smashbox.no_engine.testsets[args.testset],args.testset)
          else:
-            run_test(smashbox.no_engine.testsets[args.testset],args.testset)
-      else:
-         run_test(None)
+            set_rundir_name(t, config.runid, j)
+            run_test(None)
 
             
 

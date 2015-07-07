@@ -147,13 +147,22 @@ def file_upload(filename,dest_dir_url,header_if_match=None,checksum=None):
 
 
 def file_download(filename,src_dir_url,dest_dir):
-    
+    import tempfile
+
     src_url = os.path.join(src_dir_url,filename)
+    tmp_fn = tempfile.mktemp(suffix='.tmp',prefix=filename,dir=dest_dir)
     dest_fn = os.path.join(dest_dir,filename)
 
     client = smashbox.curl.Client()
 
-    r = client.GET(src_url,dest_fn)
+    r = client.GET(src_url,tmp_fn)
+
+    if r.rc == 200:
+        os.rename(tmp_fn,dest_fn)
+    else:
+        os.unlink(tmp_fn)
+
+    # make sure etag is present and quoted
 
     return r
 
@@ -171,17 +180,17 @@ def quota_check(url,depth=0):
 
 def stat_top_level(url,depth=0):
 
-    query="""
-<?xml version="1.0" ?>
+    query="""<?xml version="1.0" ?>
 <d:propfind xmlns:d="DAV:">
   <d:prop>
     <d:getetag/>
   </d:prop>
 </d:propfind>
 """
+
     client = smashbox.curl.Client()
 
-    # make sure etag is quoted
+    #  TODO: check if etag is quoted
     r = client.PROPFIND(url,query,depth=depth)
 
     for x in r.propfind_response:
@@ -221,9 +230,38 @@ def ls_prop_desktop17(url,depth=0):
     for x in r.propfind_response:
         print x
     return r
+
+
+def ls_prop_desktop18(url,depth=0):
+    """ List directory: desktop sync client 1.8
+    """
+
+    query= """<?xml version="1.0" encoding="utf-8"?>
+<propfind xmlns="DAV:"><prop>
+<getlastmodified xmlns="DAV:"/>
+<getcontentlength xmlns="DAV:"/>
+<resourcetype xmlns="DAV:"/>
+<getetag xmlns="DAV:"/>
+<id xmlns="http://owncloud.org/ns"/>
+<dDU xmlns="http://owncloud.org/ns"/>
+<dDC xmlns="http://owncloud.org/ns"/>
+<permissions xmlns="http://owncloud.org/ns"/>
+</prop></propfind>
+"""
+
+    client = smashbox.curl.Client()
+
+    # make sure etag is quoted
+
+    r=client.PROPFIND(url,query,depth=depth)
+
+    for x in r.propfind_response:
+        print x
+    return r
    
-    
-    
+
+
+
 
 
 # TODO: another important test: 409 is required if trying to upload to non-existing directory

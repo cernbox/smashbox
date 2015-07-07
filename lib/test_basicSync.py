@@ -49,7 +49,7 @@ testsets = [
           'basicSync_rmLocalStateDB':True
         },
         { 'basicSync_filesizeKB': 15000, 
-          'basicSync_rmLocalStateDB':False
+          'basicSync_rmLocalStateDB':True
         },
         { 'basicSync_filesizeKB': 50000, 
           'basicSync_rmLocalStateDB':True
