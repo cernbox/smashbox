@@ -2,6 +2,8 @@ from smashbox.utilities import *
 
 __doc__ = """ This test renames a directory A->B, creates an empty directory A and syncs. The move should be correctly propagated on the server.
 
+Optionally the files are also moved back.
+
 This pattern could happen in a situation when a sync client if switched off for some time.
 
 This follows from discussion in: https://github.com/owncloud/client/issues/3324
