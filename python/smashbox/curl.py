@@ -105,6 +105,32 @@ class Client:
         f.close()
         return r
 
+    def MKCOL(self,url):
+        logger.debug('MKCOL %s %s %s',url)
+        
+        c = self.c
+        
+        c.setopt(c.CUSTOMREQUEST, "MKCOL")
+
+        r = self._perform_request(url,{})
+
+        return r        
+
+    def MOVE(self,url,destination,overwrite=None):
+        logger.debug
+        
+        print 'MOVE %s %s %s'%(url,destination,overwrite)
+        c = self.c
+        
+        c.setopt(c.CUSTOMREQUEST, "MOVE")
+        c.setopt(pycurl.HTTPHEADER, ["Destination:%s"%destination])
+        if overwrite:
+            c.setopt(pycurl.HTTPHEADER, ['Overwrite:%s'%overwrite])
+
+        r = self._perform_request(url,{})
+
+        return r
+
 
     def _perform_request(self,url,headers,response_obj=None):
         c = self.c
