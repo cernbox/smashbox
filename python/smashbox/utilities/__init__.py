@@ -276,27 +276,27 @@ def run_ocsync(local_folder, remote_folder="", n=None, user_num=None):
         ocsync_cnt[current_step]+=1
 
 
-def webdav_propfind_ls(path):
-    runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format -'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path)))
+def webdav_propfind_ls(path, user_num=None):
+    runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format -'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)))
 
-def expect_webdav_does_not_exist(path):
-    exitcode,stdout,stderr = runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format - | grep NotFound | wc -l'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path)))
-    exists = stdout.rstrip() == "1"
-    error_check(exists, "Remote path does not %s exist but should" % path)
+def expect_webdav_does_not_exist(path, user_num=None):
+    exitcode,stdout,stderr = runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format - | grep NotFound | wc -l'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)))
+    not_exists = stdout.rstrip() == "1"
+    error_check(not_exists, "Remote path does not %s exist but should" % path)
 
-def expect_webdav_exist(path):
-    exitcode,stdout,stderr = runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format - | grep NotFound | wc -l'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path)))
+def expect_webdav_exist(path, user_num=None):
+    exitcode,stdout,stderr = runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format - | grep NotFound | wc -l'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)))
     exists = stdout.rstrip() == "0"
     error_check(exists, "Remote path %s exists but should not" % path)
 
-def webdav_delete(path):
-    runcmd('curl -k %s -X DELETE %s '%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path)))
+def webdav_delete(path, user_num=None):
+    runcmd('curl -k %s -X DELETE %s '%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)))
 
-def webdav_mkcol(path,silent=False):
+def webdav_mkcol(path, silent=False, user_num=None):
     out=""
     if silent: # a workaround for super-verbose errors in case directory on the server already exists
         out = "> /dev/null 2>&1"
-    runcmd('curl -k %s -X MKCOL %s %s'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path),out))
+    runcmd('curl -k %s -X MKCOL %s %s'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num),out))
 
 # #### SHELL COMMANDS AND TIME FUNCTIONS
 
@@ -508,30 +508,30 @@ def scrape_log_file(d):
 
     """
     cmd = 'scp -P %d root@%s:%s/owncloud.log %s/.' % (config.scp_port, config.oc_server, config.oc_server_datadirectory, d)
-    rtn_code = runcmd(cmd)
+    rtn_code,stdout,stderr = runcmd(cmd)
 
     logger.info('copy command returned %s', rtn_code)
 
     # search logfile for string (1 == not found; 0 == found):
 
     cmd = "grep -i \"integrity constraint violation\" %s/owncloud.log" % d
-    rtn_code = runcmd(cmd, ignore_exitcode=True, log_warning=False)
+    rtn_code,stdout,stderr = runcmd(cmd, ignore_exitcode=True, log_warning=False)
     error_check(rtn_code > 0, "\"Integrity Constraint Violation\" message found in server log file")
 
     cmd = "grep -i \"Exception\" %s/owncloud.log" % d
-    rtn_code = runcmd(cmd, ignore_exitcode=True, log_warning=False)
+    rtn_code,stdout,stderr = runcmd(cmd, ignore_exitcode=True, log_warning=False)
     error_check(rtn_code > 0, "\"Exception\" message found in server log file")
 
     cmd = "grep -i \"could not obtain lock\" %s/owncloud.log" % d
-    rtn_code = runcmd(cmd, ignore_exitcode=True, log_warning=False)
+    rtn_code,stdout,stderr = runcmd(cmd, ignore_exitcode=True, log_warning=False)
     error_check(rtn_code > 0, "\"Could Not Obtain Lock\" message found in server log file")
 
     cmd = "grep -i \"db error\" %s/owncloud.log" % d
-    rtn_code = runcmd(cmd, ignore_exitcode=True, log_warning=False)
+    rtn_code,stdout,stderr = runcmd(cmd, ignore_exitcode=True, log_warning=False)
     error_check(rtn_code > 0, "\"DB Error\" message found in server log file")
 
     cmd = "grep -i \"stat failed\" %s/owncloud.log" % d
-    rtn_code = runcmd(cmd, ignore_exitcode=True, log_warning=False)
+    rtn_code,stdout,stderr = runcmd(cmd, ignore_exitcode=True, log_warning=False)
     error_check(rtn_code > 0, "\"Stat Failed\" message found in server log file")
 
 
@@ -549,7 +549,7 @@ def get_oc_api():
         protocol += 's'
 
     url = protocol + '://' + config.oc_server + '/' + config.oc_root
-    oc_api = owncloud.Client(url)
+    oc_api = owncloud.Client(url, verify_certs=False)
     return oc_api
 
 

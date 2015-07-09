@@ -27,14 +27,22 @@ BLOCK_SIZE = 1024*1024
 import os
 import fnmatch
 
-def count_files(wdir,filemask=None):
+
+def get_files(wdir, filemask=None):
     fl = os.listdir(wdir)
     # if filemask defined then filter names out accordingly
     if filemask:
-        fl = fnmatch.filter(fl,filemask.replace('{md5}','*'))
-    nf = len(set(fl) - set(config.ignored_files))
-    logger.info('%s: %d files found',wdir,nf)
+        fl = fnmatch.filter(fl, filemask.replace('{md5}', '*'))
+    fl = set(fl) - set(config.ignored_files)
+    return fl
+
+
+def count_files(wdir, filemask=None):
+    fl = get_files(wdir, filemask)
+    nf = len(fl)
+    logger.info('%s: %d files found', wdir, nf)
     return nf
+
 
 def size2nbytes(size):
     """ Return the number of bytes from the size specification (size may be a distribution or nbytes directly).

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # -*- python -*-
 #
 # The _open_SmashBox Project.
@@ -152,7 +152,7 @@ def main():
    def run_multiprocessing_engine(config,t):
        global global_exitcode_error
        import subprocess, pickle
-       cmd = ['python',os.path.join(os.path.dirname(os.path.dirname(__file__)),'python/smashbox/multiprocessing_engine.py'), t, pickle.dumps(config)]
+       cmd = ['python2',os.path.join(os.path.dirname(os.path.dirname(__file__)),'python/smashbox/multiprocessing_engine.py'), t, pickle.dumps(config)]
        p = subprocess.Popen(cmd)
        p.communicate()
        
