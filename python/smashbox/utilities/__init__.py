@@ -566,7 +566,11 @@ def scrape_log_file(d):
     if config.oc_server == '127.0.0.1' or config.oc_server == 'localhost':
         cmd = 'cp %s/owncloud.log %s/.' % (config.oc_server_datadirectory, d)
     else:
-        cmd = 'scp -P %d root@%s:%s/owncloud.log %s/.' % (config.scp_port, config.oc_server, config.oc_server_datadirectory, d)
+        try:
+            log_user = config.oc_server_log_user
+        except AttributeError:  # allow this option not to be defined at all
+            log_user = 'root'
+        cmd = 'scp -P %d %s@%s:%s/owncloud.log %s/.' % (config.scp_port, log_user, config.oc_server, config.oc_server_datadirectory, d)
     runcmd(cmd)
 
     # search logfile for string (1 == not found; 0 == found):
