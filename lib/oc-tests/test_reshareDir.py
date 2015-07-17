@@ -123,7 +123,7 @@ def shareeTwo(step):
     dirName = "%s/%s"%(procName, 'localShareDir')
     localDir = make_workdir(dirName)
 
-    step (13, 'Sharee two validates share file')
+    step (7, 'Sharee two validates share file')
 
     run_ocsync(d,user_num=3)
     list_files(d)
