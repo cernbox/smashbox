@@ -563,13 +563,13 @@ def scrape_log_file(d):
     except AttributeError: # allow this option not to be defined at all
         return
 
-    cmd = 'scp -P %d root@%s:%s/owncloud.log %s/.' % (config.scp_port, config.oc_server, config.oc_server_datadirectory, d)
-    rtn_code,stdout,stderr = runcmd(cmd)
-
-    logger.info('copy command returned %s', rtn_code)
+    if config.oc_server == '127.0.0.1' or config.oc_server == 'localhost':
+        cmd = 'cp %s/owncloud.log %s/.' % (config.oc_server_datadirectory, d)
+    else:
+        cmd = 'scp -P %d root@%s:%s/owncloud.log %s/.' % (config.scp_port, config.oc_server, config.oc_server_datadirectory, d)
+    runcmd(cmd)
 
     # search logfile for string (1 == not found; 0 == found):
-
     cmd = "grep -i \"integrity constraint violation\" %s/owncloud.log" % d
     rtn_code,stdout,stderr = runcmd(cmd, ignore_exitcode=True, log_warning=False)
     error_check(rtn_code > 0, "\"Integrity Constraint Violation\" message found in server log file")
