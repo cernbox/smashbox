@@ -17,9 +17,14 @@ def main(step):
     analyse_hashfiles(d)
 
     # upload again matching the existing etag
-    r=file_upload(filename,URL,header_if_match=r.headers['ETag'])
+    r=file_upload(filename,URL,header_if_match=r.headers['ETAG'])
     analyse_hashfiles(d)
 
     # upload again with a non-matching etag
     r = file_upload(filename,URL,header_if_match='!@# does not exist 123')
     fatal_check(r.rc == 412) # precondition failed
+
+    # upload file to a directory which does not exist on the server
+    import uuid
+    r = file_upload(filename,os.path.join(URL,str(uuid.uuid1())), allow_failure=True)
+    fatal_check(r.rc == 409,'server replied: %s'%r.rc) # expected 409 Conflict according to http://www.webdav.org/specs/rfc4918.html#METHOD_PUT

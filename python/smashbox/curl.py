@@ -156,7 +156,7 @@ class Client:
             fields = h.split(':',1)
             assert(len(fields) <= 2)
             if len(fields)==2:
-                response_obj.headers[fields[0]] = fields[1]
+                response_obj.headers[fields[0].toupper()] = fields[1]
 
         logger.debug('_perform_request url=%s header=%s rc=%s reply_headers=%s',url,headers,response_obj.rc,response_obj.headers)
 

@@ -35,7 +35,7 @@ def main(step):
     analyse_hashfiles(d)
 
     # upload again matching the existing etag
-    r=chunk_file_upload(filename,URL,chunk_size=ANDROID_CHUNKSIZE,android_client_bug_900=True,header_if_match=r.headers['ETag'])
+    r=chunk_file_upload(filename,URL,chunk_size=ANDROID_CHUNKSIZE,android_client_bug_900=True,header_if_match=r.headers['ETAG'])
     analyse_hashfiles(d)
 
     # upload again with a non-matching etag

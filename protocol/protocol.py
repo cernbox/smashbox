@@ -24,7 +24,7 @@ def compute_checksum(fn):
         
 known_checksum_types = ['MD5','Adler32']
 
-def chunk_file_upload(filename,dest_dir_url,chunk_size=None,header_if_match=None,android_client_bug_900=False,checksum=None):
+def chunk_file_upload(filename,dest_dir_url,chunk_size=None,header_if_match=None,android_client_bug_900=False,checksum=None,allow_failure=False):
     """ Use the checksum if provided, if not calculate automatically.
     """
     
@@ -48,19 +48,19 @@ def chunk_file_upload(filename,dest_dir_url,chunk_size=None,header_if_match=None
     # NOTE: 1.6 mirall implementation: rand() ^ mtime ^ (size << 16), propagator_qnam.cpp
     transfer_id = random.randint(0,sys.maxint)
 
-    headers = {'OC-Chunked':'1', 'X-OC-Mtime':mtime, 'OC-Total-Length':total_size}
+    headers = {'OC-Chunked':'1', 'X-OC-MTIME':mtime, 'OC-TOTAL-LENGTH':total_size}
 
     if android_client_bug_900: # emulate this bug: https://github.com/owncloud/android/issues/900
-        del headers['OC-Total-Length']
+        del headers['OC-TOTAL-LENGTH']
 
     if header_if_match:
-        headers['If-Match'] = header_if_match
+        headers['IF-MATCH'] = header_if_match
 
     if CHECKSUM_ENABLED:
         if checksum is None:
-            headers['OC-Checksum'] = compute_checksum(filename)
+            headers['OC-CHECKSUM'] = compute_checksum(filename)
         else:
-            headers['OC-Checksum'] = checksum
+            headers['OC-CHECKSUM'] = checksum
 
     client = smashbox.curl.Client()
 
@@ -86,27 +86,31 @@ def chunk_file_upload(filename,dest_dir_url,chunk_size=None,header_if_match=None
         oc_rc_codes = [201] # NOTE: always 201, no difference if first or last chunk
         eos_rc_codes = [200]
 
-        fatal_check(r.rc in oc_rc_codes+eos_rc_codes, "rc=%s"%r.rc)
+        if r.rc not in oc_rc_codes+eos_rc_codes:
+            if allow_failure:
+                return r
+            else:
+                fatal_check("failed to upload", "rc=%s"%r.rc)
 
         if i < chunk_number-1: # not last chunk
 
             # NOTE: this is critical, otherwise client is confused
-            fatal_check('ETag' not in r.headers)
-            fatal_check('X-OC-Mtime' not in r.headers)
+            fatal_check('ETAG' not in r.headers)
+            fatal_check('X-OC-MTIME' not in r.headers)
 
             # NOTE: if file previously existed OC-FileId is returned here (oc7 server)
             # NOTE: so client (in theory at least) should not depend on this and hence this should not be part of the protocol
             #fatal_check('OC-FileId' in reply_headers)  
 
         else: # last chunk
-            fatal_check('ETag' in r.headers)
-            fatal_check('X-OC-Mtime' in r.headers)
-            fatal_check(r.headers.get('X-OC-Mtime','').strip()=='accepted')
-            fatal_check('OC-FileId' in r.headers)  
+            fatal_check('ETAG' in r.headers)
+            fatal_check('X-OC-MTIME' in r.headers)
+            fatal_check(r.headers.get('X-OC-MTIME','').strip()=='accepted')
+            fatal_check('OC-FILEID' in r.headers)  
 
     return r
 
-def file_upload(filename,dest_dir_url,header_if_match=None,checksum=None):
+def file_upload(filename,dest_dir_url,header_if_match=None,checksum=None,allow_failure=False):
 
     logger.info('file_upload: %s %s %s',filename,dest_dir_url,header_if_match)
     
@@ -118,16 +122,16 @@ def file_upload(filename,dest_dir_url,header_if_match=None,checksum=None):
 
     client = smashbox.curl.Client()
 
-    headers = {'X-OC-Mtime':mtime, 'OC-Total-Length':total_size} #NOTE: OC-Total-Length seems to be ignored by the oc7 server but is still included by the client (1.6)
+    headers = {'X-OC-MTIME':mtime, 'OC-TOTAL-LENGTH':total_size} #NOTE: OC-TOTAL-LENGTH seems to be ignored by the oc7 server but is still included by the client (1.6)
 
     if header_if_match:
-        headers['If-Match'] = header_if_match
+        headers['IF-MATCH'] = header_if_match
 
     if CHECKSUM_ENABLED:
         if checksum is None:
-            headers['OC-Checksum'] = compute_checksum(filename)
+            headers['OC-CHECKSUM'] = compute_checksum(filename)
         else:
-            headers['OC-Checksum'] = checksum
+            headers['OC-CHECKSUM'] = checksum
 
     r = client.PUT(filename,os.path.join(dest_dir_url,os.path.basename(filename)),headers)
 
@@ -137,11 +141,20 @@ def file_upload(filename,dest_dir_url,header_if_match=None,checksum=None):
     if checksum is not None and r.rc == 412: # allow precondition failed if checksum was provided
         return r
 
-    fatal_check(r.rc in [200,201,204]) # NOTE: 201 for new files, 204 for existing files, 200 is returned by EOS
-    fatal_check('ETag' in r.headers)
-    fatal_check('X-OC-Mtime' in r.headers)
-    fatal_check(r.headers.get('X-OC-Mtime','').strip()=='accepted')
-    fatal_check('OC-FileId' in r.headers)  
+
+    oc_rc_codes = [201,204]
+    eos_rc_codes = [200]
+
+    if r.rc not in oc_rc_codes+eos_rc_codes:
+        if allow_failure:
+            return r
+        else:
+            fatal_check("failed to upload", "rc=%s"%r.rc)
+
+    fatal_check('ETAG' in r.headers)
+    fatal_check('X-OC-MTIME' in IgnoreCase(r.headers))
+    fatal_check(r.headers.get('X-OC-MTIME','').strip()=='accepted') #FIX
+    fatal_check('OC-FILEID' in r.headers)  
 
     return r
 
@@ -275,7 +288,7 @@ def create_directory(url,d):
     client = smashbox.curl.Client()
     r = client.MKCOL(os.path.join(url,d))
 
-    fatal_check('OC-FileId' in r.headers)
+    fatal_check('OC-FILEID' in r.headers)
     fatal_check(r.rc in [200,201,204])
     return r
 

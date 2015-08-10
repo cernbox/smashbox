@@ -28,10 +28,10 @@ def main(step):
 
     analyse_hashfiles(d) # make sure that files uploaded without a checksum are not corrupted
 
-    logger.info('Got checksum from the server: %s', r.headers['OC-Checksum'])
+    logger.info('Got checksum from the server: %s', r.headers['OC-CHECKSUM'])
 
     try:
-        active_server_checksum_type = r.headers['OC-Checksum'].strip().split(':')[0]
+        active_server_checksum_type = r.headers['OC-CHECKSUM'].strip().split(':')[0]
     except KeyError,x:
         logger.warning('Checksum not enabled for %s',oc_webdav_url(hide_password=True))
         return
