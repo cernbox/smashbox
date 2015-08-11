@@ -359,9 +359,9 @@ def mv(a,b):
 
 def list_files(path,recursive=False):
     if recursive:
-        runcmd('ls -lR %s'%path)
+        runcmd('ls -lR --full-time %s'%path)
     else:
-        runcmd('ls -lh %s'%path)
+        runcmd('ls -lh --full-time %s'%path)
 
 
 # ## DATA FILES AND VERSIONS
@@ -694,3 +694,4 @@ def expect_does_not_exist(fn):
     """ Checks that a file does not exist, as expected
     """
     error_check(not os.path.exists(fn), "File %s exists but should not" % fn)
+
