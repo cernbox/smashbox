@@ -54,14 +54,14 @@ def creator(step):
     mkdir(d2)
     run_ocsync(d)
 
-    step(5,'final check')
+    step(6,'final check')
     run_ocsync(d)
     final_check(d)
 
     
 @add_worker
 def adder(step):
-    
+
     step(2,'sync the empty directory created by the creator')
     d = make_workdir()
     run_ocsync(d)
@@ -75,9 +75,12 @@ def adder(step):
     step(4,'sync the added files in parallel')
     if delaySeconds<0:
         sleep(-delaySeconds)
-    run_ocsync(d,n=2)
+    run_ocsync(d)
 
-    step(5,'final check')
+    step(5,'sync again in case the other work was not finished on the sync')
+    run_ocsync(d)
+
+    step(6,'final check')
     run_ocsync(d)
 
 
@@ -97,14 +100,17 @@ def mover(step):
         sleep(delaySeconds)
     run_ocsync(d)
 
-    step(5,'final check')
+    step(5,'sync again in case the other work was not finished on the sync')
+    run_ocsync(d)
+
+    step(6,'final check')
     run_ocsync(d)
     final_check(d)
 
 @add_worker
 def checker(step):
 
-    step(5,'sync the final state of the repository into a fresh local folder')
+    step(6,'sync the final state of the repository into a fresh local folder')
     d = make_workdir()
     run_ocsync(d)
 
@@ -113,10 +119,17 @@ def checker(step):
 
 def final_check(d):
 
-    list_files(d,recursive=True)
-
     d2 = os.path.join(d,'subdir2')
-    
+
+    logger.info('Check if the directory was renamed correctly')
+    expect_does_not_exist(os.path.join(d,'subdir'))
+    expect_exists(d2)
+
+    if not os.path.exists(d2):
+        return
+
+    list_files(d2)
+
     logger.info('final output: %s',d2)
 
     all_files,analysed_files,bad_files = analyse_hashfiles(d2)
