@@ -128,8 +128,8 @@ def sharer(step):
     step (7, 'Sharer validates modified file')
     run_ocsync(d,user_num=1)
     list_files(d)
-    expect_modified(os.path.join(d,'TEST_FILE_MODIFIED_GROUP_SHARE.dat'), shared['md5_sharer'], comparedTo="original file from sharer")
-    expect_not_modified(os.path.join(d,'TEST_FILE_MODIFIED_GROUP_SHARE.dat'), shared['md5_shareeGroup'], comparedTo="file from Sharee Group")
+    expect_modified(os.path.join(d,'TEST_FILE_MODIFIED_GROUP_SHARE.dat'), shared['md5_sharer'], comment=" compared to original file from sharer")
+    expect_not_modified(os.path.join(d,'TEST_FILE_MODIFIED_GROUP_SHARE.dat'), shared['md5_shareeGroup'], comment=" compared to file from Sharee Group")
 
     step (10, 'Sharer unshares a file')
     delete_share (user1, shared['TEST_FILE_GROUP_RESHARE'])
