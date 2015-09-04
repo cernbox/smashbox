@@ -668,20 +668,20 @@ def check_groups(num_groups=None):
             fatal_check(result, 'Group %s not found' % group_name)
 
 
-def expect_modified(fn, md5):
+def expect_modified(fn, md5, comment=''):
     """ Compares that the checksum of two files is different
     """
     actual_md5 = md5sum(fn)
     error_check(actual_md5 != md5,
-                "md5 of modified file %s did not change: expected %s, got %s" % (fn, md5, actual_md5))
+                "md5 of modified file %s did not change%s: expected %s" % (fn, comment, md5))
 
 
-def expect_not_modified(fn, md5):
+def expect_not_modified(fn, md5, comment=''):
     """ Compares that the checksum of two files is the same
     """
     actual_md5 = md5sum(fn)
     error_check(actual_md5 == md5,
-                "md5 of modified file %s changed and should not have: expected %s, got %s" % (fn, md5, actual_md5))
+                "md5 of modified file %s changed%s and should not have: expected %s, got %s" % (fn, comment, md5, actual_md5))
 
 
 def expect_exists(fn):
