@@ -21,17 +21,16 @@ Minimalistic doc style. Work in progress.
 Unless it is specified explicitly all calls must be authorised (https or http
 with authorization header).
 
-With every HTTP request, the client sends a BasicAuth header containing
-user and password as described in RFC #xxxx.  If the authentication was
-successful, the server returns a session cookie that is stored in the
-client. If a valid session cookie exists, it is sent in addition to a
-Basic Auth credentilas. The server is supposed to use the session cookie
-to validate the session, but if that fails, server can fall back to the
-BasicAuth header.
+With every HTTP request, the client sends a BasicAuth header
+containing user and password as described in RFC #2617
+(https://www.ietf.org/rfc/rfc2617.txt).  If the authentication was
+successful, the server returns a session cookie that is stored by the
+client. If a valid session cookie exists then it is sent in addition to a
+Basic Auth credentials. The server may use the session cookie, but if
+that fails, server can fall back to the BasicAuth header.
 
-The users password in the BasicAuth header is not encrypted. That is
-the reason why ownCloud has to use an encrpyted http setup (https) to
-provide basic security.
+The users password in the BasicAuth header is not encrypted. Hence this protocol
+relies on https for providing secure communication channel.
 
 Authorization header:
 
@@ -91,7 +90,7 @@ request.
 
 Syntax:
 
-    GET http://mycomputer/oc/ocs/v1.php/cloud/capabilities?format=json
+    GET /ocs/v1.php/cloud/capabilities?format=json
 
 Response: 200
 
@@ -150,14 +149,10 @@ Namespace for non-standard properties: `http://owncloud.org/ns`
 
 #### ETag Format
 
-The HTTP header for the ETag can be implemented in two different formats due to historical
-error conditions of the ownCloud server. 
+There are no format restrictions on the ETag value. However, for historical reasons the following deprecated rules are valid for the value of the ETag header:
 
-The normal and expected format is that the value of the header contains the ETag. However, 
-if the header value is enclosed in two quote signs, the client is expected to remove the
-quotes. 
-
-Also, if the header value contains the word "-gzip", client is expected to remove that with no replace. Ref http://github.com/owncloud/client/issues/1195
+ - if ETag header value is enclosed in double quotes ("double-quoted") then client should strip off the quote characters
+ - if ETag header value contains the word then "-gzip", client should remove that with no replace. Ref http://github.com/owncloud/client/issues/1195 
 
 #### Properties
 
@@ -167,7 +162,7 @@ In the response body the value of resourcetype property MUST NOT contain whitesp
 
 #### Headers
 
-PROPFIND Depth:infinity is not supported: client will try this for compatibility with older code  but server may choose to return 501 (not implemented).
+PROPFIND Depth:infinity is not supported: client will try this for compatibility with older code  but server may choose to return 501 (NotImplemented).
 
 ### Quota Check Call
 
@@ -176,7 +171,7 @@ user space on the webdav server.
 
 Syntax:
 
-	PROPFIND /remote.php/webdav/ HTTP/1.1
+	> PROPFIND /remote.php/webdav/ HTTP/1.1
 	Depth: 0
 
 	<?xml version="1.0" ?>
@@ -189,10 +184,12 @@ Response: 207
 
 Reponse body example:
 
+    < PROPFIND
+
     <?xml version='1.0' encoding='utf-8'?>
     <d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:oc="http://owncloud.org/ns">
       <d:response>
-        <d:href>/oc/remote.php/webdav/</d:href>
+        <d:href>/remote.php/webdav/</d:href>
         <d:propstat>
           <d:prop>
             <oc:id>00000003ocobzus5kn6s</oc:id>
@@ -220,7 +217,7 @@ client goes to offline mode or opens the authentication dialog to ask for new pa
 
 Syntax:
 
-    PROPFIND /remote.php/webdav/ HTTP/1.1
+    > PROPFIND /remote.php/webdav/ HTTP/1.1
     Depth: 0
 
     <?xml version="1.0"?>
@@ -232,15 +229,14 @@ Reponse: 207
 
 Response body example:
 
+    < PROPFIND
+
     <?xml version='1.0' encoding='utf-8'?>
     <d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:oc="http://owncloud.org/ns">
       <d:response>
-        <d:href>/oc/remote.php/webdav/</d:href>
+        <d:href>/remote.php/webdav/</d:href>
         <d:propstat>
           <d:prop>
-            <oc:id>00000003ocobzus5kn6s</oc:id>
-            <oc:permissions>RDNVCK</oc:permissions>
-            <oc:size>592610518</oc:size>
             <d:getlastmodified>Mon, 07 Sep 2015 13:30:52 GMT</d:getlastmodified>
           </d:prop>
           <d:status>HTTP/1.1 200 OK</d:status>
@@ -252,11 +248,13 @@ This call only happens to the server top directory.
 
 ### Modification Check on Top-level Directory
 
+FIXME
+
 To detect changes of data on the server repository client issues stat-like calls to the 
 top level directory of a sync connection to request the last modification timestamp on a regular basis. 
 
 Syntax:
-    PROPFIND /remote.php/webdav/ HTTP/1.1
+    > PROPFIND /remote.php/webdav/ HTTP/1.1
     Depth: 0
 
     <?xml version='1.0' encoding='UTF-8'?>
@@ -270,22 +268,21 @@ Reponse: 207
 
 Response body example:
 
+    < PROPFIND
+
     <?xml version='1.0' encoding='utf-8'?>
     <d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:oc="http://owncloud.org/ns">
       <d:response>
-        <d:href>/oc/remote.php/webdav/</d:href>
+        <d:href>/remote.php/webdav/</d:href>
         <d:propstat>
           <d:prop>
-            <oc:id>00000003ocobzus5kn6s</oc:id>
-            <oc:permissions>RDNVCK</oc:permissions>
-            <oc:size>592610518</oc:size>
             <d:getetag>"55ed918c28ac9"</d:getetag>
           </d:prop>
           <d:status>HTTP/1.1 200 OK</d:status>
         </d:propstat>
       </d:response>
        <d:response>
-        <d:href>/oc/remote.php/webdav/%d7%91%d7%a2%d7%91%d7%a8%d7%99%d7%aa-.txt</d:href>
+        <d:href>/remote.php/webdav/%d7%91%d7%a2%d7%91%d7%a8%d7%99%d7%aa-.txt</d:href>
         <d:propstat>
           <d:prop>
             <oc:id>00004227ocobzus5kn6s</oc:id>
@@ -308,7 +305,7 @@ List directory _path_ and return mtime, size, type, etag and file id.
 
 Syntax:
 
-    PROPFIND /remote.php/webdav/Test%20Folder HTTP/1.1
+    > PROPFIND /remote.php/webdav/Test%20Folder HTTP/1.1
     Depth: 1
 
     <?xml version='1.0' encoding='UTF-8'?>
@@ -325,16 +322,18 @@ Syntax:
       </d:prop>
     </d:propfind>
     
-    Response: 207
+Response: 207
 
 Response body: see restrictions and limitations paragraph
 
 Response body example:
 
+    < PROPFIND
+
     <?xml version='1.0' encoding='utf-8'?>
     <d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:oc="http://owncloud.org/ns">
       <d:response>
-        <d:href>/oc/remote.php/webdav/a%20new%20folder/</d:href>
+        <d:href>/remote.php/webdav/a%20new%20folder/</d:href>
         <d:propstat>
           <d:prop>
             <oc:id>00004609ocobzus5kn6s</oc:id>
@@ -358,7 +357,7 @@ Response body example:
         </d:propstat>
       </d:response>
         <d:response>
-        <d:href>/oc/remote.php/webdav/a%20new%20folder/Test.txt</d:href>
+        <d:href>/remote.php/webdav/a%20new%20folder/Test.txt</d:href>
         <d:propstat>
           <d:prop>
             <oc:id>00004610ocobzus5kn6s</oc:id>
@@ -379,7 +378,7 @@ Response body example:
         </d:propstat>
       </d:response>
       <d:response>
-        <d:href>/oc/remote.php/webdav/a%20new%20folder/tagfrei_wald.txt</d:href>
+        <d:href>/remote.php/webdav/a%20new%20folder/tagfrei_wald.txt</d:href>
         <d:propstat>
           <d:prop>
             <oc:id>00004613ocobzus5kn6s</oc:id>
@@ -413,15 +412,13 @@ Explanation of the `PROPFIND` result attributes:
 * `d:getcontentlength`: size in bytes
 
     
-### Server Directory Creation
+### Create directory
 
-Client sends: WebDAV request `MKCOL path`
+Syntax: 
 
-Expected success result: HTTP Reply Code 201
+    MKCOL /remote.php/webdav/new_directory
 
-Example:
-
-    MKCOL http://mycomputer/oc/remote.php/webdav/documentation
+Response: 201
 
 Request Custom Header: None
 
@@ -429,18 +426,17 @@ Response Custom Header:
 
 `OC-FileId`: The fileId of the new directory.
 
-Specific error code handling:
+Specific error code handling: None
 
 ### Move file or directory
 
-Client sends: HTTP request `MOVE path` with destination set.
 
-Expected success result: HTTP Reply Code 201
+Syntax: 
 
-Example:
+    MOVE /remote.php/webdav/old_name
+    Destination: /remote.php/webdav/new_location/new_name
 
-    MOVE http://mycomputer/oc/remote.php/webdav/welcome.txt
-    Destination: /oc/remote.php/webdav/welcome_kf.txt
+Response: 201
 
 Request Custom Header: None
 
@@ -452,51 +448,29 @@ Specific error code handling: None
 
 ## HTTP
 
-### Server Directory Removal
+### Remove a file or directory
 
-Client sends: HTTP request `DELETE path`
+Syntax:
 
-Expected success result: HTTP Reply Code 204
+    DELETE /remote.php/webdav/file_or_directory
+
+Response: 204
 
 Example:
 
-    DELETE http://mycomputer/oc/remote.php/webdav/documentation
+    DELETE https://mycomputer/remote.php/webdav/documentation
 
 Request Custom Header: None
 
 Response Custom Header:
 
-`OC-FileId`: The fileId of the new directory.
+`OC-FileId`: The fileId of the new file (directory).
 
 Specific error code handling:
 
-* `403` - removed local share directory without permission
-      The client will try to recover the file from server in a subsequent
-      sync run.
-* `404` - Not considered an error, because directory is already gone.
+* `403` - No permission to remove the file (directory) on the server (e.g. shared with read-only permissions). The client will re-download a locally deleted file (directory) in a subsequent sync run.
+* `404` - Not considered an error, because the file (directory) is already gone.
 
-### Server File Removal:
-
-Client sends: HTTP request `DELETE file`
-
-Expected success result: HTTP Reply Code 204
-
-Example:
-
-    DELETE http://mycomputer/oc/remote.php/webdav/documentation/mybook.txt
-
-Request Custom Header: None
-
-Response Custom Header:
-
-`OC-FileId`: The fileId of the new directory.
-
-Specific error code handling:
-
-* `403` - removed shared file from local permission without permission.
-          The client will try to recover the file from server in a subsequent
-          sync run.
-* `404` - Not considered an error, because file is already gone.
 
 ### File Download 
 
@@ -505,18 +479,19 @@ the WebDAV route on the server. Since GET requests do not have the same
 limitations that PUT requests have (file size limitation) there is no
 chunking required for downloads.
 
-Client sends: HTTP request GET on the resource to download
+Syntax:
 
-Expected success result: HTTP Reply Code 201
+   GET /remote.php/webdav/file
+
+Response: 201
 
 Example:
 
-    GET http://mycomputer/oc/remote.php/webdav/cheaper.jpg
+    GET https://mycomputer/remote.php/webdav/cheaper.jpg
 
 Request Custom Header:
 
-Optional: Range header - set if the client detects that the download can
-                         be resumed.
+Optional: Range header - set if the client detects that the download can be resumed.
 
 Response Custom Header:
 
@@ -525,37 +500,35 @@ Response Custom Header:
                  of the file in the sync engine.
                  
 `ETag`:          `"6c17343130f542a7410569a5f0c88abc"` - the current ETag of
-               the file. Note that the ETag must be enclosed in quotes
+               the file. Note that the ETag may be enclosed in quotes
                for historical reason.
 
 Specific error code handling:
 
-* `416`: The request sent an range header that did not fit. Receiving 416
-means that the request has to be tried again without range header.
+* `416`: The request sent an range header that did not fit. Receiving 416 means that the request has to be tried again without range header.
 * `404`: The file to download was meanwhile deleted on the server
 
 
-### File Upload 
+### Plain File Upload 
 
-File upload to the server happens through HTTP PUT. If the file
-size exceeds a certain size, the file uploads happens through so
+File upload to the server happens through HTTP PUT. If the file size exceeds a certain size, the file uploads happens through so
 called "big file chunking", see next chapter.
 
-Client sends: HTTP request `PUT`, with file contents in the body
+Syntax:
 
-Expected success result: HTTP Reply Code 201
+    PUT remote.php/webdav/file
+
+Response: 201
 
 Example:
 
-    PUT http://mycomputer/oc/remote.php/webdav/documentation/mybook.txt
+    PUT https://mycomputer/remote.php/webdav/documentation/mybook.txt
 
 Request Custom Header:
 
-`If-Match`: ETag to be overwritten by this PUT. Server refuses to replace
-          the file if the ETag on the server is different.
-`OC-ASync`:        1  - Allow a asnychronous file assembly on the server
-`OC-Chunk-Size`:   longint - Size of a chunk in bytes. Irrelevant if
-                           chunking is not happening
+`If-Match`: ETag to be overwritten by this PUT. Server refuses to replace the file if the ETag on the server is different.
+`OC-ASync`:        1  - Allow a asynchronous file assembly on the server.
+`OC-Chunk-Size`:   longint - Size of a chunk in bytes. Ignored chunking is not happening
 `OC-Total-Length`: longint - File size in bytes
 `X-OC-Mtime`:      longint - time stamp in seconds since 1.1.1970
                            Server sets this value as modification time of
@@ -583,12 +556,13 @@ Specific error code handling:
 
 ### Chunked File Upload 
 
-If the file size exceeds a certain size, the file uploads happens through
-so called "big file chunking. The file is split into chunks of equal
-sizes and each chunk is transfered to the server through its own PUT
-request.
+If the file size exceeds a certain size, the file uploads happens
+through so called "big file chunking". The file is split into chunks
+of equal sizes and each chunk is transfered to the server through its
+own PUT request. Client performs HTTP PUT requests to a pseudo URI
+based on the file name, as described below.
 
-For that, client creates PUT requests to a special name for each chunk.
+Client performs PUT requests to a special name for each chunk.
 The name consists of four components appended ot the original name of
 the file with the character '-' between them.
 
@@ -601,36 +575,37 @@ the transfer is consisting of. The last component is the number of
 the current chunk, starting with zero. The sequence number indicates
 the sequence how the server is supposed to reassemble the original file.
 
-Client sends: HTTP request `PUT` to pseudo name as describe above, with
-file contents in the body
 
-Expected success result: HTTP Reply Code 201
+Syntax (N chunks, i-th chunk, transferId):
+
+   PUT /remote.php/webdav/file-chunking-transferId-N-i
+
+Response: 201
 
 Example:
 
-    PUT http://mycomputer/oc/remote.php/webdav/large.tgz-chunking-4273312896-15-0
+    PUT https://mycomputer/remote.php/webdav/large.tgz-chunking-4273312896-15-0
 
 Request Custom Header:
 
-The PUT request sends all customer headers  escribed in the chapter
-"File Creation on Server" above. In addition to that, it also sends:
+All header described in "Plain File Upload" and in addition:
 
-`OC-Chunked:        1`  - Indicate chunked file transfer.
+`OC-Chunked:        1`  - indicates chunked file transfer.
 
 Response Custom Header: 
 
-None for all of the chunk-requests except the one that completes the
-transfer. The last one contains all the custom header that are described
-in chapter "File Creation on Server" with the same meaning.
+No custom headers for responses to first and intermediate chunks
+requests.  For the response to the final chunk request, all response
+headers described in "Plain File Upload" apply.
 
-Note: The last one is not neccessarily the one with the highest sequence
-number. Tthe server will return the headers with the chunk that makes
-the transfer complete. With every chunk server receives for a certain
-transfer, it checks if it has now all chunks received for that transfer.
-If so, it will add the custom headers to the response to indicate
-completeness. For the client that means that it will send all chunks
-again as long as it hasn't detected the response headers in a response
-for the transfer.
+Note: The final chunk is not neccessarily the one with the highest
+sequence number. The final chunk is the one which makes up for the
+complete file on the server (this distinction becomes important when
+for example intermediate chunk upload fails and is retried later).
+Server must add the custom headers to the response of the final chunk
+to indicate the fact that the chunked file transfer is now complete.
+For the client that means that it may keep sending chunks as long
+as it hasn't detected the response headers for the final chunk.
 
 `OC-ErrorString` - Optional header that returns the original error message
 of the server in case something went wrong.
