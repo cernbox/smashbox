@@ -464,7 +464,7 @@ Request Custom Header: None
 
 Response Custom Header:
 
-`OC-FileId`: The fileId of the new file (directory).
+None.
 
 Specific error code handling:
 
