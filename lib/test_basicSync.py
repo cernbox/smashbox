@@ -197,9 +197,6 @@ def loser(step):
     logger.info('md5_loser: %s',shared['md5_loser'])
 
 
-    #os.system('curl -v -s -k -XPROPFIND --data @/b/eos/CURL-TEST/p2.dat %s| xmllint --format -'%oc_webdav_url(remote_folder='TEST_FILE_MODIFIED_BOTH.dat'))
-    #os.system('sqlite3 -line /tmp/smashdir/test_basicSync/loser/.csync_journal.db  \'select * from metadata where path like "%TEST_FILE_MODIFIED_BOTH%"\'')
-
     # remove the sync db
     if rmLocalStateDB:
         remove_file(os.path.join(d,'.csync_journal.db'))

@@ -123,7 +123,6 @@ def checker(step):
     # print the status
     logger.info('final output %s',d)
     logger.info('content as reported by webdav')
-    #runcmd('curl -s -k -XPROPFIND %s | xmllint --format -'%oc_webdav_url()) #FIXME: no request body, unsupported by EOS
 
     #DISABLED FOR NOW
     #list_versions_on_server('test.BIG')

@@ -32,7 +32,7 @@ def main():
    import datetime
    import smashbox.script
    import smashbox.no_engine
-
+   
    parser=smashbox.script.arg_parser(description='Run the tests and smash the box')
 
    parser.add_argument('tests', metavar='test', type=str, nargs='*',
@@ -120,16 +120,16 @@ def main():
 
    # relative paths are resolved wrt to <top_smash>
    # absolute paths are left as-is
-   config.oc_server_tools_path = os.path.join(top_smash,config.oc_server_tools_path)
+   #config.oc_server_tools_path = os.path.join(top_smash,config.oc_server_tools_path)
    config.oc_sync_cmd = os.path.join(top_smash,config.oc_sync_cmd)
 
    import string
 
-   try:
-      config.oc_server_shell_cmd = string.Template(config.oc_server_shell_cmd).substitute({'oc_server':config.oc_server})
-   except ValueError,x:
-      logger.critical('Malformed options oc_server_shell_cmd: %s %s'%(repr(config.oc_server_shell_cmd),repr(x)))
-      sys.exit(1)
+   #try:
+   #   config.oc_server_shell_cmd = string.Template(config.oc_server_shell_cmd).substitute({'oc_server':config.oc_server})
+   #except ValueError,x:
+   #   logger.critical('Malformed options oc_server_shell_cmd: %s %s'%(repr(config.oc_server_shell_cmd),repr(x)))
+   #   sys.exit(1)
 
 
    try:
@@ -167,13 +167,15 @@ def main():
              sys.exit(p.returncode)
           
 
-   from smashbox.utilities import  oc_webdav_url
+   from smashbox.utilities import  oc_webdav_url,check_url
 
    log_quiet('runid: %s',config.runid) # log_quiet
-   log_quiet('URL: %s',oc_webdav_url(hide_password=True))  # log_quiet
-   
+   log_quiet('URL: --curl_opts %s --user %s --password %s, %s'%oc_webdav_url(hide_password=True))  # log_quiet
    user_defined_oc_account_name = config.oc_account_name
-
+   
+   #check if oc_root is correct, and try to correct it using redirect response
+   check_url()
+   
    for t in tests:
 
       workdir = None
@@ -200,7 +202,8 @@ def main():
 
       if config.oc_account_runid_enabled:
          config.oc_account_name += '-'+str(config.runid)
-
+        
+      
 
       def run_test(ts,i=0):
          if ts:
@@ -208,6 +211,8 @@ def main():
                setattr(config,opt,val)
 
          log_quiet('running %s in %s as %s testset #%d %s',t,config.rundir,config.oc_account_name,i,repr(ts)) # log_quiet
+         #sys.exit("MROWA")
+         
          if not args.dry_run:
             run_multiprocessing_engine(config,os.path.abspath(t))
 
@@ -229,13 +234,17 @@ def main():
             run_test(None)
 
             
-
+   import os.path
+   #file_path='test_results.json'
+   #if(os.path.exists(file_path)):
+   #    os.remove(file_path)
+   log_quiet ("THE END")
    if args.dry_run:
       log_quiet('*** DRY RUN ***')
 
    if global_exitcode_error:
       sys.exit(global_exitcode_error)
-
+   
 if __name__ == '__main__':
    main()
 

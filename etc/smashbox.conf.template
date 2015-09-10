@@ -18,14 +18,14 @@ oc_account_name=None
 
 # default number of users for tests involving multiple users (user number is appended to the oc_account_name)
 # this only applies to the tests involving multiple users
-oc_number_test_users=3
+#oc_number_test_users=3
 
 # name of the group used for testing
 oc_group_name=None
 
 # default number of groups for tests involving multiple groups (group number is appended to the oc_group_name)
 # this only applies to the tests involving multiple groups
-oc_number_test_groups=1
+#oc_number_test_groups=1
 
 # password for test accounts: all test account will have the same password
 # if not set then it's an error
@@ -54,7 +54,7 @@ oc_ssl_enabled = True
 # for remote host it may be set like this: "ssh -t -l root $oc_server"
 # note: configure ssh for passwordless login 
 # note: -t option is to make it possible to run sudo
-oc_server_shell_cmd = ""
+#oc_server_shell_cmd = ""
 
 # Data directory on the owncloud server.
 # 
@@ -67,7 +67,7 @@ oc_server_datadirectory = os.path.join('/var/www/html',oc_root, 'data')
 # containing THIS configuration file
 #
 
-oc_server_tools_path = "server-tools"
+#oc_server_tools_path = "server-tools"
 
 # a path to ocsync command with options
 # this path should work for all client hosts

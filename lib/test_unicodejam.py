@@ -128,8 +128,7 @@ def worker0(step):
 
     (ngood,nbad) = checkunicodejam(d)
 
-    error_check(ngood==nfiles,'Not all files are OK! good=%d, bad=%d, expected=%d'%(ngood,nbad,nfiles))
-    error_check(nbad==0,'After synch corrupted files found good=%d, bad%d, expected=%d'%(ngood,nbad,nfiles))
+    error_check(ngood==nfiles,'After synch missing or corrupted files found: good=%d, bad=%d, expected=%d'%(ngood,nbad,nfiles))
 
     if ngood==nfiles and nbad==0: logger.info('SUCCESS: %d files found',ngood)
 
@@ -150,8 +149,7 @@ def worker1(step):
 
     (ngood,nbad) = checkunicodejam(d)
 
-    error_check(ngood==nfiles,'Not all files are OK! good=%d, bad=%d, expected=%d'%(ngood,nbad,nfiles))
-    error_check(nbad==0,'After synch corrupted files found: good=%d, bad=%d, expected=%d'%(ngood,nbad,nfiles))
+    error_check(ngood==nfiles,'After synch missing or corrupted files found: good=%d, bad=%d, expected=%d'%(ngood,nbad,nfiles))
 
     if ngood==nfiles and nbad==0: logger.info('SUCCESS: %d files found',ngood)
 

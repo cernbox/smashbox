@@ -37,17 +37,19 @@ def reset_owncloud_account(reset_procedure=None, num_test_users=None):
         logger.info('reset_owncloud_account (%s) for %d users', reset_procedure, num_test_users)
 
     if reset_procedure == 'delete':
-        delete_owncloud_account(config.oc_account_name)
-        create_owncloud_account(config.oc_account_name, config.oc_account_password)
+        #delete_owncloud_account(config.oc_account_name)
+        #create_owncloud_account(config.oc_account_name, config.oc_account_password)
         login_owncloud_account(config.oc_account_name, config.oc_account_password)
+        webdav_delete('/')
+        webdav_delete('/')
+        webdav_mkcol('/')
 
-        if num_test_users is not None:
-            for i in range(1, num_test_users + 1):
-                username = "%s%i" % (config.oc_account_name, i)
-                delete_owncloud_account(username)
-                create_owncloud_account(username, config.oc_account_password)
-                login_owncloud_account(username, config.oc_account_password)
-
+        #if num_test_users is not None:
+        #    for i in range(1, num_test_users + 1):
+        #        username = "%s%i" % (config.oc_account_name, i)
+        #        delete_owncloud_account(username)
+        #        create_owncloud_account(username, config.oc_account_password)
+        #        login_owncloud_account(username, config.oc_account_password)
         return
 
     if reset_procedure == 'webdav_delete':
@@ -219,7 +221,9 @@ def create_owncloud_group(group_name):
 
 ######### WEBDAV AND SYNC UTILITIES #####################
 
-def oc_webdav_url(protocol='http',remote_folder="",user_num=None,webdav_endpoint=None,hide_password=False):
+
+
+def oc_webdav_url(protocol='http',remote_folder="",user_num=None, local_folder=None,webdav_endpoint=None, hide_password=False,option=None):
     """ Protocol for sync client should be set to 'owncloud'. Protocol for generic webdav clients is http.
     """
 
@@ -228,23 +232,32 @@ def oc_webdav_url(protocol='http',remote_folder="",user_num=None,webdav_endpoint
 
     # strip-off any leading / characters to prevent 1) abspath result from the join below, 2) double // and alike...
     remote_folder = remote_folder.lstrip('/')
-
+    
     if webdav_endpoint is None:
         webdav_endpoint = config.oc_webdav_endpoint
-
+        
     remote_path = os.path.join(webdav_endpoint, config.oc_server_folder, remote_folder)
 
     if user_num is None:
         username = "%s" % config.oc_account_name
     else:
         username = "%s%i" % (config.oc_account_name, user_num)
-
+    
     if hide_password:
         password = "***"
     else:
         password = config.oc_account_password
-
-    return protocol + '://' + username + ':' + password + '@' + config.oc_server + '/' + remote_path
+    if local_folder==None:
+        path = protocol + '://' + config.oc_server + '/' + remote_path
+        if option==None:
+            return config.get('curl_opts',''),config.oc_account_name,config.oc_account_password,path
+        else:
+            return config.get('curl_opts',''),config.oc_account_name,config.oc_account_password,path,option
+    else:
+        path = ' --user '+username+' --password '+password+' '+local_folder+' ' + protocol + '://' + config.oc_server + '/' + remote_path
+        return path
+    #print str(path)
+    
 
 
 # this is a local variable for each worker that keeps track of the repeat count for the current step
@@ -269,7 +282,7 @@ def run_ocsync(local_folder, remote_folder="", n=None, user_num=None):
 
     for i in range(n):
         t0 = datetime.datetime.now()
-        cmd = config.oc_sync_cmd+' '+local_folder+' '+oc_webdav_url('owncloud',remote_folder,user_num) + " >> "+config.rundir+"/%s-ocsync.step%02d.cnt%03d.log 2>&1"%(reflection.getProcessName(),current_step,ocsync_cnt[current_step])
+        cmd = cmd = config.oc_sync_cmd + oc_webdav_url('owncloud',remote_folder, user_num,local_folder) + " >> "+config.rundir+"/%s-ocsync.step%02d.cnt%03d.log 2>&1"%(reflection.getProcessName(),current_step,ocsync_cnt[current_step])
         runcmd(cmd, ignore_exitcode=True)  # exitcode of ocsync is not reliable
         logger.info('sync cmd is: %s',cmd)
         logger.info('sync finished: %s',datetime.datetime.now()-t0)
@@ -277,27 +290,28 @@ def run_ocsync(local_folder, remote_folder="", n=None, user_num=None):
 
 
 def webdav_propfind_ls(path, user_num=None):
-    runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format -'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)))
+    runcmd('curl -s -k %s -u %s:%s -XPROPFIND %s | xmllint --format -'%oc_webdav_url(remote_folder=path, user_num=user_num))
 
 def expect_webdav_does_not_exist(path, user_num=None):
-    exitcode,stdout,stderr = runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format - | grep NotFound | wc -l'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)))
+    exitcode,stdout,stderr = runcmd('curl -s -k %s -u %s:%s -XPROPFIND %s | xmllint --format - | grep NotFound | wc -l'%oc_webdav_url(remote_folder=path, user_num=user_num))
     not_exists = stdout.rstrip() == "1"
     error_check(not_exists, "Remote path does not %s exist but should" % path)
 
 def expect_webdav_exist(path, user_num=None):
-    exitcode,stdout,stderr = runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format - | grep NotFound | wc -l'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)))
+    exitcode,stdout,stderr = runcmd('curl -s -k %s -u %s:%s  -XPROPFIND %s | xmllint --format - | grep NotFound | wc -l'%oc_webdav_url(remote_folder=path, user_num=user_num))
     exists = stdout.rstrip() == "0"
     error_check(exists, "Remote path %s exists but should not" % path)
 
 def webdav_delete(path, user_num=None):
-    runcmd('curl -k %s -X DELETE %s '%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)))
-
+    runcmd('curl -k %s -u %s:%s  -XDELETE %s '%oc_webdav_url(remote_folder=path, user_num=user_num))
+    
 def webdav_mkcol(path, silent=False, user_num=None):
     out=""
     if silent: # a workaround for super-verbose errors in case directory on the server already exists
         out = "> /dev/null 2>&1"
-    runcmd('curl -k %s -X MKCOL %s %s'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num),out))
-
+    runcmd('curl -k %s -u %s:%s -XMKCOL %s %s'%oc_webdav_url(remote_folder=path, user_num=user_num,option=out))
+    
+    
 # #### SHELL COMMANDS AND TIME FUNCTIONS
 
 def runcmd(cmd,ignore_exitcode=False,echo=True,allow_stderr=True,shell=True,log_warning=True):
@@ -476,16 +490,14 @@ def implies(p,q):
 
 reported_errors = []
 
+
 def error_check(expr,message=""):
     """ Assert expr is True. If not, then mark the test as failed but carry on the execution.
     """
-
     if not expr: 
         import inspect
         f=inspect.getouterframes(inspect.currentframe())[1]
-        message=" ".join([message, "%s failed in %s() [\"%s\" at line %s]" %(''.join(f[4]).strip(),f[3],f[1],f[2])])
-        logger.error(message)
-        reported_errors.append(message)
+        logger.error(report_error(message,f))
 
 def fatal_check(expr,message=""):
     """ Assert expr is True. If not, then mark the test as failed and stop immediately.
@@ -493,11 +505,9 @@ def fatal_check(expr,message=""):
     if not expr:
         import inspect
         f=inspect.getouterframes(inspect.currentframe())[1]
-        message=" ".join([message, "%s failed in %s() [\"%s\" at line %s]" %(''.join(f[4]).strip(),f[3],f[1],f[2])])
+        message=report_error(message,f)
         logger.fatal(message)
-        reported_errors.append(message)
         raise AssertionError(message)
-
 
 # ###### Server Log File Scraping ############
 
@@ -668,20 +678,20 @@ def check_groups(num_groups=None):
             fatal_check(result, 'Group %s not found' % group_name)
 
 
-def expect_modified(fn, md5, comment=''):
+def expect_modified(fn, md5):
     """ Compares that the checksum of two files is different
     """
     actual_md5 = md5sum(fn)
     error_check(actual_md5 != md5,
-                "md5 of modified file %s did not change%s: expected %s" % (fn, comment, md5))
+                "md5 of modified file %s did not change: expected %s, got %s" % (fn, md5, actual_md5))
 
 
-def expect_not_modified(fn, md5, comment=''):
+def expect_not_modified(fn, md5):
     """ Compares that the checksum of two files is the same
     """
     actual_md5 = md5sum(fn)
     error_check(actual_md5 == md5,
-                "md5 of modified file %s changed%s and should not have: expected %s, got %s" % (fn, comment, md5, actual_md5))
+                "md5 of modified file %s changed and should not have: expected %s, got %s" % (fn, md5, actual_md5))
 
 
 def expect_exists(fn):
@@ -695,3 +705,61 @@ def expect_does_not_exist(fn):
     """
     error_check(not os.path.exists(fn), "File %s exists but should not" % fn)
 
+def curl_check_url():
+    cmd = 'curl -L %s -u %s:%s -XMKCOL %s | xmllint --format -'%oc_webdav_url(remote_folder='', user_num=None)
+    process1 = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    process1.communicate()
+    cmd = 'curl -L %s -u %s:%s -XPROPFIND %s | xmllint --format -'%oc_webdav_url(remote_folder='', user_num=None)
+    process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    stdout,stderr = process.communicate()
+    return stdout
+
+def path_check_url(url=''):
+    config.oc_root = url
+    config.oc_webdav_endpoint = os.path.join(url,'remote.php/webdav') 
+    
+def check_url():
+    import xml.etree.ElementTree as ET
+    import sys
+    stdout = curl_check_url()
+    if stdout:
+        root = ET.fromstring(stdout)[0][0].text
+        root.rsplit('/remote.php/webdav', 1)
+        if root:
+            url = root[0].split('/',1)
+            path_check_url(str(url[1]))
+        else:
+            path_check_url()
+    else:
+        path_check_url()
+        
+
+def report_error(message,f):
+    import os.path
+    import json
+    import io, datetime
+    
+    split = f[1].split('smashbox/lib/', 1)
+    
+    test_name = str(split[1])
+    dict = { str(datetime.datetime.now()): message }
+    file_path='test_results.json'
+    
+    if (os.path.exists(os.path.abspath(file_path))):
+        with io.open(file_path,'r') as file:
+            data = json.load(file)
+            serv_dict = data[str(config.oc_server)]
+            if(serv_dict.has_key(test_name)):
+                data[str(config.oc_server)][test_name].append(dict)
+            else:
+                data[str(config.oc_server)][test_name]=[dict]
+    else:
+        data = { config.oc_server: { test_name: [ { str(datetime.datetime.now()): message } ] } }
+        
+    with io.open(file_path, 'w', encoding='utf-8') as file:
+        file.write(unicode(json.dumps(data, ensure_ascii=False)))
+    
+    message=" ".join([message, "%s failed in %s() [\"%s\" at line %s]" %(''.join(f[4]).strip(),f[3],f[1],f[2])])
+    reported_errors.append(message)
+    return message
+ 

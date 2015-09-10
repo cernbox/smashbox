@@ -10,7 +10,7 @@ from smashbox.utilities import *
 from smashbox.utilities.hash_files import *
 
 tinker_wait = int(config.get('fileTinkerDownload_tinker_wait',2))
-filesize = config.get('fileTinkerDownload_filesize',300000000)
+filesize = int(config.get('fileTinkerDownload_filesize',300000000))
 
 if type(filesize) is type(''):
     filesize = eval(filesize)
