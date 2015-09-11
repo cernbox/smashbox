@@ -15,6 +15,10 @@ Notes:
 
 filesizeKB = int(config.get('filenames_filesizeKB',1))
 
+testsets = [
+        { 'filenames_filesizeKB': 1
+        }
+]
 # see: mirall/csync/src/csync_exclude.c
 charsets_excluded_from_sync = {
                  'backslash' : '\\',

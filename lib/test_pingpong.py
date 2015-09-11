@@ -41,6 +41,12 @@ Logfile: test_pingpong/pong-ocsync.step02.cnt000.log
 filesizeKB = int(config.get('pingpong_filesizeKB',5000))
 pongdelay = float(config.get('pingpong_pongdelay',0))
 
+testsets = [
+        { 'pingpong_filesizeKB': 5000,
+         'pingpong_pongdelay': 0
+        }
+]
+
 @add_worker
 def ping(step):
     

@@ -1,0 +1,592 @@
+{
+    "data.deic.dk": {
+        "test_concurrentOverwriteFile.py": [
+            {
+                "results": {
+                    "exec_time": "0:02:17.554312"
+                }, 
+                "scenario": null, 
+                "time": "2015-09-11 12:44:57.680804"
+            }
+        ], 
+        "test_slowwrite.py": [
+            {
+                "results": {
+                    "exec_time": "0:01:32.845086"
+                }, 
+                "scenario": {
+                    "slowwrite_filesizeKB": 2, 
+                    "slowwrite_slowWrite": 1.5, 
+                    "slowwrite_blockSize": 200
+                }, 
+                "time": "2015-09-11 13:25:19.695361"
+            }, 
+            {
+                "results": {
+                    "exec_time": "0:01:25.667139"
+                }, 
+                "scenario": {
+                    "slowwrite_filesizeKB": 5000, 
+                    "slowwrite_slowWrite": 1, 
+                    "slowwrite_blockSize": 1024000
+                }, 
+                "time": "2015-09-11 13:26:52.592148"
+            }, 
+            {
+                "results": {
+                    "exec_time": "0:01:32.917919"
+                }, 
+                "scenario": {
+                    "slowwrite_filesizeKB": 11000, 
+                    "slowwrite_slowWrite": 1, 
+                    "slowwrite_blockSize": 1024000
+                }, 
+                "time": "2015-09-11 13:28:18.320882"
+            }, 
+            {
+                "results": {
+                    "exec_time": "0:01:50.225068"
+                }, 
+                "scenario": {
+                    "slowwrite_filesizeKB": 25000, 
+                    "slowwrite_slowWrite": 1, 
+                    "slowwrite_blockSize": 1024000
+                }, 
+                "time": "2015-09-11 13:29:51.284164"
+            }, 
+            {
+                "results": {
+                    "exec_time": "0:02:18.797407"
+                }, 
+                "scenario": {
+                    "slowwrite_filesizeKB": 50000, 
+                    "slowwrite_slowWrite": 1, 
+                    "slowwrite_blockSize": 1024000
+                }, 
+                "time": "2015-09-11 13:31:41.568096"
+            }
+        ], 
+        "test_localDirRenameRecreate.py": [
+            {
+                "results": {
+                    "exec_time": "0:01:22.050440"
+                }, 
+                "scenario": {
+                    "localDirRenameRecreate_DIRA": "DIRA", 
+                    "localDirRenameRecreate_DIRB": "DIRB", 
+                    "localDirRenameRecreate_moveFilesBack": false
+                }, 
+                "time": "2015-09-11 13:10:00.161813"
+            }, 
+            {
+                "results": {
+                    "exec_time": "0:01:25.421682"
+                }, 
+                "scenario": {
+                    "localDirRenameRecreate_DIRA": "DIRA", 
+                    "localDirRenameRecreate_DIRB": "DIRB", 
+                    "localDirRenameRecreate_moveFilesBack": true
+                }, 
+                "time": "2015-09-11 13:11:22.270862"
+            }
+        ], 
+        "test_nplusone.py": [
+            {
+                "results": {
+                    "exec_time": "0:01:55.112994"
+                }, 
+                "scenario": {
+                    "nplusone_filesize": 1000, 
+                    "nplusone_nfiles": 100
+                }, 
+                "time": "2015-09-11 13:12:47.745670"
+            }, 
+            {
+                "results": {
+                    "exec_time": "0:01:39.717102"
+                }, 
+                "scenario": {
+                    "nplusone_filesize": 6291456, 
+                    "nplusone_nfiles": 10
+                }, 
+                "time": "2015-09-11 13:14:42.909594"
+            }, 
+            {
+                "results": {
+                    "exec_time": "0:01:34.882811"
+                }, 
+                "scenario": {
+                    "nplusone_filesize": 27262976, 
+                    "nplusone_nfiles": 2
+                }, 
+                "time": "2015-09-11 13:16:22.671786"
+            }, 
+            {
+                "results": {
+                    "exec_time": "0:01:39.522264"
+                }, 
+                "scenario": {
+                    "nplusone_filesize": 73400320, 
+                    "nplusone_nfiles": 1
+                }, 
+                "time": "2015-09-11 13:17:57.591181"
+            }, 
+            {
+                "results": {
+                    "exec_time": "0:01:26.936731"
+                }, 
+                "scenario": {
+                    "nplusone_filesize": [
+                        3.5, 
+                        1.37
+                    ], 
+                    "nplusone_nfiles": 10
+                }, 
+                "time": "2015-09-11 13:19:37.165200"
+            }
+        ], 
+        "test_fileMove.py": [
+            {
+                "results": {
+                    "exec_time": "0:01:37.109505"
+                }, 
+                "scenario": {
+                    "dirMove_DIRB": "DIRB", 
+                    "dirMove_DIRA": "DIRA"
+                }, 
+                "time": "2015-09-11 12:55:03.450732"
+            }
+        ], 
+        "test_fileTinkerDownload.py": [
+            {
+                "results": {
+                    "exec_time": "0:02:44.475876", 
+                    "errors": [
+                        {
+                            "message": " error_check(md5sum(fn) == md5) failed in tinkerer() [\"/home/piotr/PROJECTS/DeIC/smashbox/lib/test_fileTinkerDownload.py\" at line 68], 0"
+                        }
+                    ]
+                }, 
+                "scenario": {
+                    "fileTinkerDownload_filesize": 300000000, 
+                    "fileTinkerDownload_tinker_wait": 1
+                }, 
+                "time": "2015-09-11 12:58:35.784748"
+            }, 
+            {
+                "results": {
+                    "exec_time": "0:02:48.094097", 
+                    "errors": [
+                        {
+                            "message": " error_check(md5sum(fn) == md5) failed in tinkerer() [\"/home/piotr/PROJECTS/DeIC/smashbox/lib/test_fileTinkerDownload.py\" at line 68], 0"
+                        }
+                    ]
+                }, 
+                "scenario": {
+                    "fileTinkerDownload_filesize": 300000000, 
+                    "fileTinkerDownload_tinker_wait": 2
+                }, 
+                "time": "2015-09-11 13:01:20.296033"
+            }, 
+            {
+                "results": {
+                    "exec_time": "0:02:50.867756", 
+                    "errors": [
+                        {
+                            "message": " error_check(md5sum(fn) == md5) failed in tinkerer() [\"/home/piotr/PROJECTS/DeIC/smashbox/lib/test_fileTinkerDownload.py\" at line 68], 0"
+                        }
+                    ]
+                }, 
+                "scenario": {
+                    "fileTinkerDownload_filesize": 300000000, 
+                    "fileTinkerDownload_tinker_wait": 3
+                }, 
+                "time": "2015-09-11 13:04:08.430215"
+            }, 
+            {
+                "results": {
+                    "exec_time": "0:03:00.783940", 
+                    "errors": [
+                        {
+                            "message": " error_check(md5sum(fn) == md5) failed in tinkerer() [\"/home/piotr/PROJECTS/DeIC/smashbox/lib/test_fileTinkerDownload.py\" at line 68], 0"
+                        }
+                    ]
+                }, 
+                "scenario": {
+                    "fileTinkerDownload_filesize": 300000000, 
+                    "fileTinkerDownload_tinker_wait": 4
+                }, 
+                "time": "2015-09-11 13:06:59.330925"
+            }
+        ], 
+        "test_concurrentDirMove.py": [
+            {
+                "results": {
+                    "exec_time": "0:01:46.222569"
+                }, 
+                "scenario": {
+                    "concurrentMoveDir_delaySeconds": 10, 
+                    "concurrentMoveDir_filesize": 10, 
+                    "concurrentMoveDir_nfiles": 100
+                }, 
+                "time": "2015-09-11 12:26:45.118876"
+            }, 
+            {
+                "results": {
+                    "exec_time": "0:01:18.472778", 
+                    "errors": [
+                        {
+                            "message": "not all files are present (3/0) error_check(analysed_files == nfiles,\"not all files are present (%d/%d)\"%(nfiles,analysed_files)) # FIXME: well, there may be other files - we don't check that yet failed in final_check() [\"/home/piotr/PROJECTS/DeIC/smashbox/lib/test_concurrentDirMove.py\" at line 126], 0"
+                        }, 
+                        {
+                            "message": "not all files are present (3/0) error_check(analysed_files == nfiles,\"not all files are present (%d/%d)\"%(nfiles,analysed_files)) # FIXME: well, there may be other files - we don't check that yet failed in final_check() [\"/home/piotr/PROJECTS/DeIC/smashbox/lib/test_concurrentDirMove.py\" at line 126], 0"
+                        }, 
+                        {
+                            "message": "not all files are present (3/0) error_check(analysed_files == nfiles,\"not all files are present (%d/%d)\"%(nfiles,analysed_files)) # FIXME: well, there may be other files - we don't check that yet failed in final_check() [\"/home/piotr/PROJECTS/DeIC/smashbox/lib/test_concurrentDirMove.py\" at line 126], 0"
+                        }
+                    ]
+                }, 
+                "scenario": {
+                    "concurrentMoveDir_delaySeconds": 5, 
+                    "concurrentMoveDir_filesize": 23068672, 
+                    "concurrentMoveDir_nfiles": 3
+                }, 
+                "time": "2015-09-11 12:28:31.384788"
+            }, 
+            {
+                "results": {
+                    "exec_time": "0:03:45.364623"
+                }, 
+                "scenario": {
+                    "concurrentMoveDir_delaySeconds": 10, 
+                    "concurrentMoveDir_nfiles": 20, 
+                    "concurrentMoveDir_filesize": 18874368
+                }, 
+                "time": "2015-09-11 12:29:49.915025"
+            }, 
+            {
+                "results": {
+                    "exec_time": "0:01:27.116396"
+                }, 
+                "scenario": {
+                    "concurrentMoveDir_delaySeconds": -5, 
+                    "concurrentMoveDir_nfiles": 5, 
+                    "concurrentMoveDir_filesize": 2097152
+                }, 
+                "time": "2015-09-11 12:33:35.315934"
+            }, 
+            {
+                "results": {
+                    "exec_time": "0:02:38.793115"
+                }, 
+                "scenario": {
+                    "concurrentMoveDir_delaySeconds": -10, 
+                    "concurrentMoveDir_nfiles": 5, 
+                    "concurrentMoveDir_filesize": 44040192
+                }, 
+                "time": "2015-09-11 12:35:02.491821"
+            }
+        ], 
+        "test_pingpong.py": [
+            {
+                "results": {
+                    "exec_time": "0:01:26.707774"
+                }, 
+                "scenario": {
+                    "pingpong_filesizeKB": 5000, 
+                    "pingpong_pongdelay": 0
+                }, 
+                "time": "2015-09-11 13:23:52.937179"
+            }
+        ], 
+        "test_storm.py": [
+            {
+                "results": {
+                    "exec_time": "0:01:53.912106"
+                }, 
+                "scenario": {
+                    "storm_filesize": null, 
+                    "storm_ndownloaders": 10, 
+                    "storm_nuploaders": 10, 
+                    "storm_verbose": false, 
+                    "storm_nfiles": 10
+                }, 
+                "time": "2015-09-11 13:34:00.441417"
+            }
+        ], 
+        "test_dirDelete.py": [
+            {
+                "results": {
+                    "exec_time": "0:02:12.070989"
+                }, 
+                "scenario": {
+                    "dirDel_nfiles": 100, 
+                    "dirDel_nestingLevels": 50
+                }, 
+                "time": "2015-09-11 12:47:15.271599"
+            }
+        ], 
+        "test_unicodejam.py": [
+            {
+                "results": {
+                    "exec_time": "0:01:25.793420", 
+                    "errors": [
+                        {
+                            "message": "After synch missing or corrupted files found: good=2, bad=3, expected=5 error_check(ngood==nfiles,'After synch missing or corrupted files found: good=%d, bad=%d, expected=%d'%(ngood,nbad,nfiles)) failed in worker1() [\"/home/piotr/PROJECTS/DeIC/smashbox/lib/test_unicodejam.py\" at line 157], 0"
+                        }
+                    ]
+                }, 
+                "scenario": {
+                    "nfiles": 5
+                }, 
+                "time": "2015-09-11 13:35:54.411390"
+            }, 
+            {
+                "results": {
+                    "exec_time": "0:01:29.886589", 
+                    "errors": [
+                        {
+                            "message": "After synch missing or corrupted files found: good=7, bad=3, expected=10 error_check(ngood==nfiles,'After synch missing or corrupted files found: good=%d, bad=%d, expected=%d'%(ngood,nbad,nfiles)) failed in worker1() [\"/home/piotr/PROJECTS/DeIC/smashbox/lib/test_unicodejam.py\" at line 157], 0"
+                        }
+                    ]
+                }, 
+                "scenario": {
+                    "nfiles": 10
+                }, 
+                "time": "2015-09-11 13:37:20.242382"
+            }
+        ], 
+        "test_basicSync.py": [
+            {
+                "results": {
+                    "exec_time": "0:01:29.741945"
+                }, 
+                "scenario": {
+                    "basicSync_filesizeKB": 1, 
+                    "basicSync_rmLocalStateDB": false
+                }, 
+                "time": "2015-09-11 12:07:45.421207"
+            }, 
+            {
+                "results": {
+                    "exec_time": "0:01:47.495833"
+                }, 
+                "scenario": {
+                    "basicSync_filesizeKB": 5000, 
+                    "basicSync_rmLocalStateDB": false
+                }, 
+                "time": "2015-09-11 12:09:15.203587"
+            }, 
+            {
+                "results": {
+                    "exec_time": "0:02:26.917421"
+                }, 
+                "scenario": {
+                    "basicSync_filesizeKB": 15000, 
+                    "basicSync_rmLocalStateDB": false
+                }, 
+                "time": "2015-09-11 12:11:02.748956"
+            }, 
+            {
+                "results": {
+                    "exec_time": "0:01:26.582680", 
+                    "errors": [
+                        {
+                            "message": "inconsistent md5 of /home/piotr/PROJECTS/DeIC/tests/test_basicSync/winner/TEST_FILE_ADDED_LOSER.dat: expected f00aea5276fee4aa8ad4e8394cf09749, got aa9cbefa4b55a2504926d54118bbaeac error_check(actual_md5 == md5, \"inconsistent md5 of %s: expected %s, got %s\"%(fn,md5,actual_md5)) failed in expect_content() [\"/home/piotr/PROJECTS/DeIC/smashbox/lib/test_basicSync.py\" at line 61], 0"
+                        }, 
+                        {
+                            "message": "inconsistent md5 of /home/piotr/PROJECTS/DeIC/tests/test_basicSync/checker/TEST_FILE_ADDED_LOSER.dat: expected f00aea5276fee4aa8ad4e8394cf09749, got aa9cbefa4b55a2504926d54118bbaeac error_check(actual_md5 == md5, \"inconsistent md5 of %s: expected %s, got %s\"%(fn,md5,actual_md5)) failed in expect_content() [\"/home/piotr/PROJECTS/DeIC/smashbox/lib/test_basicSync.py\" at line 61], 0"
+                        }, 
+                        {
+                            "message": "inconsistent md5 of /home/piotr/PROJECTS/DeIC/tests/test_basicSync/winner/TEST_FILE_MODIFIED_LOSER.dat: expected f00aea5276fee4aa8ad4e8394cf09749, got aa9cbefa4b55a2504926d54118bbaeac error_check(actual_md5 == md5, \"inconsistent md5 of %s: expected %s, got %s\"%(fn,md5,actual_md5)) failed in expect_content() [\"/home/piotr/PROJECTS/DeIC/smashbox/lib/test_basicSync.py\" at line 61], 0"
+                        }, 
+                        {
+                            "message": "inconsistent md5 of /home/piotr/PROJECTS/DeIC/tests/test_basicSync/checker/TEST_FILE_MODIFIED_LOSER.dat: expected f00aea5276fee4aa8ad4e8394cf09749, got aa9cbefa4b55a2504926d54118bbaeac error_check(actual_md5 == md5, \"inconsistent md5 of %s: expected %s, got %s\"%(fn,md5,actual_md5)) failed in expect_content() [\"/home/piotr/PROJECTS/DeIC/smashbox/lib/test_basicSync.py\" at line 61], 0"
+                        }, 
+                        {
+                            "message": "inconsistent md5 of /home/piotr/PROJECTS/DeIC/tests/test_basicSync/checker/TEST_FILE_ADDED_WINNER.dat: expected b919205feb13dac964688a238ec92869, got 8639eb1558524bb513f0a0d8f09f41e4 error_check(actual_md5 == md5, \"inconsistent md5 of %s: expected %s, got %s\"%(fn,md5,actual_md5)) failed in expect_content() [\"/home/piotr/PROJECTS/DeIC/smashbox/lib/test_basicSync.py\" at line 61], 0"
+                        }, 
+                        {
+                            "message": "inconsistent md5 of /home/piotr/PROJECTS/DeIC/tests/test_basicSync/checker/TEST_FILE_MODIFIED_WINNER.dat: expected b919205feb13dac964688a238ec92869, got 8639eb1558524bb513f0a0d8f09f41e4 error_check(actual_md5 == md5, \"inconsistent md5 of %s: expected %s, got %s\"%(fn,md5,actual_md5)) failed in expect_content() [\"/home/piotr/PROJECTS/DeIC/smashbox/lib/test_basicSync.py\" at line 61], 0"
+                        }, 
+                        {
+                            "message": "inconsistent md5 of /home/piotr/PROJECTS/DeIC/tests/test_basicSync/checker/TEST_FILE_ADDED_BOTH.dat: expected b919205feb13dac964688a238ec92869, got 8639eb1558524bb513f0a0d8f09f41e4 error_check(actual_md5 == md5, \"inconsistent md5 of %s: expected %s, got %s\"%(fn,md5,actual_md5)) failed in expect_content() [\"/home/piotr/PROJECTS/DeIC/smashbox/lib/test_basicSync.py\" at line 61], 0"
+                        }, 
+                        {
+                            "message": "inconsistent md5 of /home/piotr/PROJECTS/DeIC/tests/test_basicSync/checker/TEST_FILE_MODIFIED_BOTH.dat: expected b919205feb13dac964688a238ec92869, got 8639eb1558524bb513f0a0d8f09f41e4 error_check(actual_md5 == md5, \"inconsistent md5 of %s: expected %s, got %s\"%(fn,md5,actual_md5)) failed in expect_content() [\"/home/piotr/PROJECTS/DeIC/smashbox/lib/test_basicSync.py\" at line 61], 0"
+                        }, 
+                        {
+                            "message": "inconsistent md5 of /home/piotr/PROJECTS/DeIC/tests/test_basicSync/loser/TEST_FILE_ADDED_WINNER.dat: expected b919205feb13dac964688a238ec92869, got 8639eb1558524bb513f0a0d8f09f41e4 error_check(actual_md5 == md5, \"inconsistent md5 of %s: expected %s, got %s\"%(fn,md5,actual_md5)) failed in expect_content() [\"/home/piotr/PROJECTS/DeIC/smashbox/lib/test_basicSync.py\" at line 61], 0"
+                        }, 
+                        {
+                            "message": "inconsistent md5 of /home/piotr/PROJECTS/DeIC/tests/test_basicSync/loser/TEST_FILE_MODIFIED_WINNER.dat: expected b919205feb13dac964688a238ec92869, got 8639eb1558524bb513f0a0d8f09f41e4 error_check(actual_md5 == md5, \"inconsistent md5 of %s: expected %s, got %s\"%(fn,md5,actual_md5)) failed in expect_content() [\"/home/piotr/PROJECTS/DeIC/smashbox/lib/test_basicSync.py\" at line 61], 0"
+                        }, 
+                        {
+                            "message": "inconsistent md5 of /home/piotr/PROJECTS/DeIC/tests/test_basicSync/loser/TEST_FILE_ADDED_BOTH.dat: expected b919205feb13dac964688a238ec92869, got f00aea5276fee4aa8ad4e8394cf09749 error_check(actual_md5 == md5, \"inconsistent md5 of %s: expected %s, got %s\"%(fn,md5,actual_md5)) failed in expect_content() [\"/home/piotr/PROJECTS/DeIC/smashbox/lib/test_basicSync.py\" at line 61], 0"
+                        }, 
+                        {
+                            "message": "inconsistent md5 of /home/piotr/PROJECTS/DeIC/tests/test_basicSync/loser/TEST_FILE_MODIFIED_BOTH.dat: expected b919205feb13dac964688a238ec92869, got f00aea5276fee4aa8ad4e8394cf09749 error_check(actual_md5 == md5, \"inconsistent md5 of %s: expected %s, got %s\"%(fn,md5,actual_md5)) failed in expect_content() [\"/home/piotr/PROJECTS/DeIC/smashbox/lib/test_basicSync.py\" at line 61], 0"
+                        }
+                    ]
+                }, 
+                "scenario": {
+                    "basicSync_filesizeKB": 50000, 
+                    "basicSync_rmLocalStateDB": false
+                }, 
+                "time": "2015-09-11 12:13:29.725395"
+            }, 
+            {
+                "results": {
+                    "exec_time": "0:01:33.012602"
+                }, 
+                "scenario": {
+                    "basicSync_filesizeKB": 1, 
+                    "basicSync_rmLocalStateDB": true
+                }, 
+                "time": "2015-09-11 12:14:56.367466"
+            }, 
+            {
+                "results": {
+                    "exec_time": "0:01:50.374721"
+                }, 
+                "scenario": {
+                    "basicSync_filesizeKB": 5000, 
+                    "basicSync_rmLocalStateDB": true
+                }, 
+                "time": "2015-09-11 12:16:29.424005"
+            }, 
+            {
+                "results": {
+                    "exec_time": "0:02:27.708249"
+                }, 
+                "scenario": {
+                    "basicSync_filesizeKB": 15000, 
+                    "basicSync_rmLocalStateDB": true
+                }, 
+                "time": "2015-09-11 12:18:19.859808"
+            }, 
+            {
+                "results": {
+                    "exec_time": "0:05:57.468547"
+                }, 
+                "scenario": {
+                    "basicSync_filesizeKB": 50000, 
+                    "basicSync_rmLocalStateDB": true
+                }, 
+                "time": "2015-09-11 12:20:47.611925"
+            }
+        ], 
+        "test_userload.py": [
+            {
+                "results": {
+                    "exec_time": "0:01:30.015110"
+                }, 
+                "scenario": {
+                    "userload_nworkers": 10, 
+                    "userload_nfiles": 5, 
+                    "userload_verbose": false
+                }, 
+                "time": "2015-09-11 13:38:50.167407"
+            }
+        ], 
+        "test_filenames.py": [
+            {
+                "results": {
+                    "exec_time": "0:01:55.137956"
+                }, 
+                "scenario": {
+                    "filenames_filesizeKB": 1
+                }, 
+                "time": "2015-09-11 12:56:40.605443"
+            }
+        ], 
+        "test_dirMove.py": [
+            {
+                "results": {
+                    "exec_time": "0:01:18.317877"
+                }, 
+                "scenario": {
+                    "dirMove_DIRB": "DIRB", 
+                    "dirMove_DIRA": "DIRA"
+                }, 
+                "time": "2015-09-11 12:49:27.384374"
+            }, 
+            {
+                "results": {
+                    "exec_time": "0:01:26.362094"
+                }, 
+                "scenario": {
+                    "dirMove_DIRB": "DIRB", 
+                    "dirMove_DIRA": "A/A/A/DIRA"
+                }, 
+                "time": "2015-09-11 12:50:45.749949"
+            }, 
+            {
+                "results": {
+                    "exec_time": "0:01:23.672651"
+                }, 
+                "scenario": {
+                    "dirMove_DIRB": "B/B/B/DIRB", 
+                    "dirMove_DIRA": "DIRA"
+                }, 
+                "time": "2015-09-11 12:52:12.174473"
+            }, 
+            {
+                "results": {
+                    "exec_time": "0:01:27.500814"
+                }, 
+                "scenario": {
+                    "dirMove_DIRB": "B/B/B/B/B/B/DIRB", 
+                    "dirMove_DIRA": "A/A/A/A/DIRA"
+                }, 
+                "time": "2015-09-11 12:53:35.899828"
+            }
+        ], 
+        "test_nplustwo.py": [
+            {
+                "results": {
+                    "exec_time": "0:02:48.725798"
+                }, 
+                "scenario": {
+                    "nplustwo_nfiles": 10
+                }, 
+                "time": "2015-09-11 13:21:04.153415"
+            }
+        ], 
+        "test_concurrentDirRemove.py": [
+            {
+                "results": {
+                    "exec_time": "0:01:35.002181"
+                }, 
+                "scenario": {
+                    "concurrentRemoveDir_filesizeKB": 10000, 
+                    "concurrentRemoveDir_nfiles": 3, 
+                    "concurrentRemoveDir_delaySeconds": 5
+                }, 
+                "time": "2015-09-11 12:37:41.346738"
+            }, 
+            {
+                "results": {
+                    "exec_time": "0:04:09.288401"
+                }, 
+                "scenario": {
+                    "concurrentRemoveDir_filesizeKB": 9000, 
+                    "concurrentRemoveDir_nfiles": 40, 
+                    "concurrentRemoveDir_delaySeconds": 5
+                }, 
+                "time": "2015-09-11 12:39:16.390200"
+            }, 
+            {
+                "results": {
+                    "exec_time": "0:01:31.917238"
+                }, 
+                "scenario": {
+                    "concurrentRemoveDir_filesizeKB": 15000, 
+                    "concurrentRemoveDir_nfiles": 5, 
+                    "concurrentRemoveDir_delaySeconds": -5
+                }, 
+                "time": "2015-09-11 12:43:25.729665"
+            }
+        ]
+    }
+}

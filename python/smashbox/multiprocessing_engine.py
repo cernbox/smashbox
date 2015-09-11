@@ -176,9 +176,11 @@ class _smash_:
                   
 
     @staticmethod
-    def run():
+    def run(target_script):
         """ Lunch worker processes and the supervisor loop. Block until all is finished.
         """
+        time_zero = time_now()
+        #append new scenario to the json and leave it blank to be filled later
         from multiprocessing import Process, Manager
 
         manager = Manager()
@@ -210,8 +212,15 @@ class _smash_:
 
         for p in _smash_.all_procs:
            if p.exitcode != 0:
+              dict = { "exec_time": str(time_now(time_zero)) }
+              append_to_json_file(dict,str(target_script))
               import sys
               sys.exit(p.exitcode)
+              
+        #after execution of the test, append the elapsed time to json file
+        dict = { "exec_time": str(time_now(time_zero)) }
+        append_to_json_file(dict,str(target_script))      
+        
 
 def add_worker(f,name=None):
     """ Decorator for worker functions in the user-defined test
@@ -295,10 +304,10 @@ if __name__ == "__main__":
     smashbox.utilities.logger = logger
     
     # load test case file directly into the global namespace of this script
-    execfile(_smash_.args.test_target)
-
+    target_script = _smash_.args.test_target
+    execfile(target_script)
     # start the framework and dispatch workers
-    _smash_.run()
+    _smash_.run(target_script)
 
 
     

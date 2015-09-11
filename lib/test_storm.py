@@ -24,6 +24,14 @@ verbose = bool(config.get('storm_verbose',False))
 # File size. None = default size/distribution.
 filesize = config.get('storm_filesize',None)
 
+testsets = [
+        { 'storm_nfiles': 10,
+         'storm_nuploaders': 10,
+         'storm_ndownloaders': 10,
+         'storm_verbose': False,
+         'storm_filesize': None
+        }
+]
 def uploader(step):
     
     step(1,'Preparation')

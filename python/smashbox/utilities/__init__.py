@@ -734,32 +734,53 @@ def check_url():
         path_check_url()
         
 
-def report_error(message,f):
-    import os.path
+def time_now(time_zero=None): 
+    import datetime
+    if time_zero==None:
+        return datetime.datetime.now()
+    else:
+        return (datetime.datetime.now()-time_zero)
+    
+def append_to_json_file(dict,test_path):
     import json
-    import io, datetime
-    
-    split = f[1].split('smashbox/lib/', 1)
-    
-    test_name = str(split[1])
-    dict = { str(datetime.datetime.now()): message }
+    import io
+    import os.path
     file_path='test_results.json'
+    split = test_path.split('smashbox/lib/', 1)
+    test_name = str(split[1])
     
     if (os.path.exists(os.path.abspath(file_path))):
         with io.open(file_path,'r') as file:
             data = json.load(file)
             serv_dict = data[str(config.oc_server)]
             if(serv_dict.has_key(test_name)):
-                data[str(config.oc_server)][test_name].append(dict)
+                if dict.has_key("scenario"):
+                    data[str(config.oc_server)][test_name].append(dict)
+                elif dict.has_key("exec_time"):
+                    array_len = len(data[str(config.oc_server)][test_name])
+                    data[str(config.oc_server)][test_name][array_len-1]["results"].update(dict)
+                elif dict.has_key("errors"):
+                    array_len = len(data[str(config.oc_server)][test_name])
+                    results_dict = data[str(config.oc_server)][test_name][array_len-1]["results"]
+                    if results_dict.has_key("errors"):
+                        data[str(config.oc_server)][test_name][array_len-1]["results"]["errors"].append(dict["errors"][0])
+                    else:
+                        data[str(config.oc_server)][test_name][array_len-1]["results"].update(dict)
+                        
             else:
                 data[str(config.oc_server)][test_name]=[dict]
     else:
-        data = { config.oc_server: { test_name: [ { str(datetime.datetime.now()): message } ] } }
+        data = { config.oc_server: { test_name: [] } }
+        data[str(config.oc_server)][test_name].append(dict)
         
     with io.open(file_path, 'w', encoding='utf-8') as file:
-        file.write(unicode(json.dumps(data, ensure_ascii=False)))
+        file.write(unicode(json.dumps(data, ensure_ascii=False, indent=4)))
     
-    message=" ".join([message, "%s failed in %s() [\"%s\" at line %s]" %(''.join(f[4]).strip(),f[3],f[1],f[2])])
+def report_error(message,f):
+    message=" ".join([message, "%s failed in %s() [\"%s\" at line %s], %s" %(''.join(f[4]).strip(),f[3],f[1],f[2], f[5])])
+    dict = { "errors": [{"message":message}] }
+    
+    append_to_json_file(dict,f[1])
     reported_errors.append(message)
     return message
- 
+        

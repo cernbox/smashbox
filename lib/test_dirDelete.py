@@ -6,13 +6,17 @@ __doc__ = """ This test creates a deeply nested directory structure and then rem
 
 
 import os.path
-
 NESTING_LEVELS = config.get('dirDel_nestingLevels', 50)
 
 nfiles = int(config.get('dirDel_nfiles', 100))
 
 TEST_FILES = ['test%02d.dat'%i for i in range(nfiles)]
 
+testsets = [
+        { 'dirDel_nestingLevels': 50,
+         'dirDel_nfiles': 100
+        }
+]
 @add_worker
 def workerA(step):
 

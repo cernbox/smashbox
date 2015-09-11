@@ -10,6 +10,11 @@ from smashbox.utilities.hash_files import *
 
 nfiles = int(config.get('nplustwo_nfiles',10))
 
+testsets = [
+        { 'nplustwo_nfiles': 10
+        }
+]
+
 def adder(step):
 
     # if you don't want to  cleanup server files from previous run then set oc_account_reset_procedure=keep option

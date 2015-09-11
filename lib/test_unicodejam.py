@@ -9,8 +9,13 @@ __doc__ = """ Add 1 (n) files to a directory (1 client) and check consistency ac
 from smashbox.utilities import *
 from smashbox.utilities.hash_files import *
 
-nfiles = 10
-
+nfiles = int(config.get('nfiles',10))
+testsets = [
+        { 'nfiles': 5
+        }, 
+        { 'nfiles': 10
+        }
+]
 def removeunicodejam(localdir):
     import glob
     fl = glob.glob(localdir+os.sep+'*')

@@ -14,6 +14,14 @@ nworkers = int(config.get('userload_nworkers',10))
 # Verbose flag
 verbose = bool(config.get('userload_verbose',False))
 
+testsets = [
+        { 'userload_nfiles': 5,
+         'userload_nworkers': 10,
+         'userload_verbose': False
+        }
+]
+
+
 hash_filemask = 'hash_{md5}'
 
 from smashbox.utilities import *
