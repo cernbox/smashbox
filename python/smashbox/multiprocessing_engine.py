@@ -212,6 +212,7 @@ class _smash_:
 
         for p in _smash_.all_procs:
            if p.exitcode != 0:
+              #dict = { "exec_time": str(time_now(time_zero)), "errors": [{"message":"critical error - check error log"}] }
               dict = { "exec_time": str(time_now(time_zero)) }
               append_to_json_file(dict,str(target_script))
               import sys

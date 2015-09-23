@@ -76,7 +76,7 @@ def reset_rundir(reset_procedure=None):
 
     # assert(config.rundir)
     # that's a bit dangerous... so let's try to mitiage the risk
-
+    
     if reset_procedure == 'delete':
         assert(os.path.realpath(config.rundir).startswith(os.path.realpath(config.smashdir)))
         remove_tree(config.rundir)
@@ -243,16 +243,16 @@ def oc_webdav_url(protocol='http',remote_folder="",user_num=None, local_folder=N
     else:
         username = "%s%i" % (config.oc_account_name, user_num)
     
-    if hide_password:
+    if hide_password== True:
         password = "***"
     else:
         password = config.oc_account_password
     if local_folder==None:
         path = protocol + '://' + config.oc_server + '/' + remote_path
         if option==None:
-            return config.get('curl_opts',''),config.oc_account_name,config.oc_account_password,path
+            return config.get('curl_opts',''),username,password,path
         else:
-            return config.get('curl_opts',''),config.oc_account_name,config.oc_account_password,path,option
+            return config.get('curl_opts',''),username,password,path,option
     else:
         path = ' --user '+username+' --password '+password+' '+local_folder+' ' + protocol + '://' + config.oc_server + '/' + remote_path
         return path
@@ -712,26 +712,34 @@ def curl_check_url():
     cmd = 'curl -L %s -u %s:%s -XPROPFIND %s | xmllint --format -'%oc_webdav_url(remote_folder='', user_num=None)
     process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     stdout,stderr = process.communicate()
-    return stdout
+    return (stdout,stderr)
 
-def path_check_url(url=''):
+def set_url(url=''):
     config.oc_root = url
     config.oc_webdav_endpoint = os.path.join(url,'remote.php/webdav') 
     
 def check_url():
     import xml.etree.ElementTree as ET
     import sys
-    stdout = curl_check_url()
-    if stdout:
-        root = ET.fromstring(stdout)[0][0].text
-        root.rsplit('/remote.php/webdav', 1)
-        if root:
-            url = root[0].split('/',1)
-            path_check_url(str(url[1]))
+    try:
+        (stdout,stderr) = curl_check_url()
+        if stdout:
+            root = ET.fromstring(stdout)[0][0].text
+            root.rsplit('/remote.php/webdav', 1)
+            if root:
+                url = root[0].split('/',1)
+                set_url(str(url[1]))
+            else:
+                set_url()
         else:
-            path_check_url()
-    else:
-        path_check_url()
+            set_url()
+        
+        (stdout,stderr) = curl_check_url()
+        if stdout:
+            root = ET.fromstring(stdout)[0][1][1].text
+        return root
+    except:
+        return "error - %s " % (stdout)
         
 
 def time_now(time_zero=None): 
@@ -783,4 +791,7 @@ def report_error(message,f):
     append_to_json_file(dict,f[1])
     reported_errors.append(message)
     return message
-        
+
+def delete_smashdir_tests(): 
+    process = subprocess.Popen('rm -rf '+os.path.realpath(config.smashdir), shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    process.communicate()       

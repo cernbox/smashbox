@@ -44,6 +44,7 @@ def main():
    parser.add_argument('--testset', '-t', dest="testset", action="store", default=None, type=int, help='run just one testset specified by index, starting from 0')
    parser.add_argument('--loop', '-l', dest="loop", action="store", default=1, type=int, help='number of times a test command should be executed')
    parser.add_argument('--keep-results', dest="keep_results", action="store_true", help='append the result file with new results')
+   parser.add_argument('--check-connection', dest="check_connection", action="store_true", help='used only to check the configuration')
    args = parser.parse_args()
 
    config = smashbox.script.configure(args.options,args.configs)
@@ -167,19 +168,27 @@ def main():
              sys.exit(p.returncode)
           
 
-   from smashbox.utilities import  oc_webdav_url,check_url, time_now
+   from smashbox.utilities import  oc_webdav_url,check_url, time_now, delete_smashdir_tests
 
    log_quiet('runid: %s',config.runid) # log_quiet
    log_quiet('URL: --curl_opts %s --user %s --password %s, %s'%oc_webdav_url(hide_password=True))  # log_quiet
    user_defined_oc_account_name = config.oc_account_name
    
    #check if oc_root is correct, and try to correct it using redirect response
-   check_url()
+   check_url_result = check_url()
+   if args.check_connection:
+        log_quiet('URL Check: %s',check_url_result) # log_quiet
+        sys.exit(1)  
+   #temporary delete_smashdir_tests() function to keep the directories clear
+   if (True):
+       delete_smashdir_tests()
+   
    if not args.keep_results:
        file_path='test_results.json'
        if(os.path.exists(file_path)):
            os.remove(file_path)
-           
+            
+   	      
    for t in tests:
 
       workdir = None
