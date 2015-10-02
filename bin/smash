@@ -43,7 +43,7 @@ def main():
    parser.add_argument('--all-testsets', '-a', dest="all_testsets", action="store_true", help='run all testsets defined within each test script file')
    parser.add_argument('--testset', '-t', dest="testset", action="store", default=None, type=int, help='run just one testset specified by index, starting from 0')
    parser.add_argument('--loop', '-l', dest="loop", action="store", default=1, type=int, help='number of times a test command should be executed')
-   parser.add_argument('--keep-results', dest="keep_results", action="store_true", help='append the result file with new results')
+   parser.add_argument('--reset-results', dest="reset_results", action="store_true", help='decide if to append the result file with new results')
    parser.add_argument('--check-connection', dest="check_connection", action="store_true", help='used only to check the configuration')
    args = parser.parse_args()
 
@@ -179,11 +179,9 @@ def main():
    if args.check_connection:
         log_quiet('URL Check: %s',check_url_result) # log_quiet
         sys.exit(1)  
-   #temporary delete_smashdir_tests() function to keep the directories clear
-   if (True):
-       delete_smashdir_tests()
    
-   if not args.keep_results:
+   if args.reset_results:
+       delete_smashdir_tests()
        file_path='test_results.json'
        if(os.path.exists(file_path)):
            os.remove(file_path)
@@ -228,7 +226,7 @@ def main():
          #add scenario to json
          dict = { "scenario": ts,
                  "results": {},
-                 "time": str(time_now())
+                 "runid": config.runid
          }
          append_to_json_file(dict,str(os.path.abspath(t)))  
          
