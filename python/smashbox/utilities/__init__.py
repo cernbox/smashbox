@@ -357,12 +357,6 @@ def mv(a,b):
     runcmd('mv %s %s'%(a,b))
 
 
-def list_files(path,recursive=False):
-    if recursive:
-        runcmd('ls -lR --full-time %s'%path)
-    else:
-        runcmd('ls -lh --full-time %s'%path)
-
 
 # ## DATA FILES AND VERSIONS
 
@@ -422,6 +416,12 @@ if platform.system() == 'Darwin':
         except IndexError:
             return "NO_CHECKSUM_ERROR"
 
+    def list_files(path,recursive=False):
+        if recursive:
+            runcmd('ls -lR %s'%path)
+        else:
+            runcmd('ls -lh %s'%path)
+
 else:  # linux
 
     def md5sum(fn):
@@ -432,6 +432,11 @@ else:  # linux
         except IndexError:
             return "NO_CHECKSUM_ERROR"
 
+    def list_files(path,recursive=False):
+        if recursive:
+            runcmd('ls -lR --full-time %s'%path)
+        else:
+            runcmd('ls -lh --full-time %s'%path)
 
 def hexdump(fn):
     runcmd('hexdump %s'%fn)
@@ -668,20 +673,20 @@ def check_groups(num_groups=None):
             fatal_check(result, 'Group %s not found' % group_name)
 
 
-def expect_modified(fn, md5, comment=''):
+def expect_modified(fn, md5):
     """ Compares that the checksum of two files is different
     """
     actual_md5 = md5sum(fn)
     error_check(actual_md5 != md5,
-                "md5 of modified file %s did not change%s: expected %s" % (fn, comment, md5))
+                "md5 of modified file %s did not change: expected %s, got %s" % (fn, md5, actual_md5))
 
 
-def expect_not_modified(fn, md5, comment=''):
+def expect_not_modified(fn, md5):
     """ Compares that the checksum of two files is the same
     """
     actual_md5 = md5sum(fn)
     error_check(actual_md5 == md5,
-                "md5 of modified file %s changed%s and should not have: expected %s, got %s" % (fn, comment, md5, actual_md5))
+                "md5 of modified file %s changed and should not have: expected %s, got %s" % (fn, md5, actual_md5))
 
 
 def expect_exists(fn):
