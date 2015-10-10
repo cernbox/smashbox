@@ -166,6 +166,7 @@ def file_download(filename,src_dir_url,dest_dir):
 
     return r
 
+
 def quota_check(url,depth=0):
     query="""<?xml version="1.0" ?>
   <d:propfind xmlns:d="DAV:"><d:prop>
@@ -260,8 +261,34 @@ def ls_prop_desktop18(url,depth=0):
     return r
    
 
+def get_url_path(url):
+    """ Return the path part of the url by stripping a properly formed URL (with protocol:// prefix)
+    """
+    url = url[url.find('//')+2:]
+    i = url.find('/')
+    if i == -1: return ""
+    else:
+        return url[i+1:]
 
 
+def create_directory(url,d):
+    client = smashbox.curl.Client()
+    r = client.MKCOL(os.path.join(url,d))
+
+    fatal_check('OC-FileId' in r.headers)
+    fatal_check(r.rc in [200,201,204])
+    return r
+
+
+def move(url,x,y):
+    client = smashbox.curl.Client()
+
+    src_url = os.path.join(url,os.path.basename(x))
+    dest = get_url_path(os.path.join(url,y,os.path.basename(x)))
+
+    r = client.MOVE(src_url,dest)
+    fatal_check(r.rc in [200,201,204])
+    return r
 
 
 # TODO: another important test: 409 is required if trying to upload to non-existing directory

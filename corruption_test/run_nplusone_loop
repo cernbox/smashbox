@@ -6,9 +6,18 @@ import subprocess
 thisdir = os.path.abspath(os.path.normpath(os.path.dirname(sys.argv[0])))
 smashdir=os.path.join(thisdir,'..')
 
-dirs = {'thisdir':thisdir,'smashdir':smashdir}
+conf_file = os.environ.get('SMASHBOX_CONF',os.path.join(thisdir,"smashbox.conf"))
+
+dirs = {'thisdir':thisdir,'smashdir':smashdir, 'conf_file':conf_file}
 
 os.environ['OWNCLOUD_MAX_PARALLEL'] = '10'
+
+os.environ['OWNCLOUD_USE_LEGACY_JOBS'] = '1'
+
+import datetime
+now = datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S')
+
+os.environ['SMASHBOX_NOW'] = now
 
 try:
  N = int(sys.argv[1])
@@ -24,9 +33,10 @@ N is number of test repetitions, you may specify -1 for indefinite loop
 
 i = 1
 
-dirs['options']="-o nplusone_nfiles=20 -o nplusone_filesizeKB=30000 -o nplusone_randomSize=1"
+dirs['options']="-o nplusone_nfiles=20 -o nplusone_filesize='(5.0,1.37)'" # --keep-state"
+#dirs['options']="-o nplusone_nfiles=20 -o nplusone_filesize=30000000"
 
-cmd = '%(smashdir)s/bin/smash -c %(thisdir)s/smashbox.conf %(options)s %(smashdir)s/lib/test_nplusone.py' % dirs
+cmd = '%(smashdir)s/bin/smash -c %(conf_file)s %(options)s %(smashdir)s/lib/test_nplusone.py' % dirs
 
 #print cmd
 
