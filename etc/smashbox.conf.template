@@ -9,12 +9,18 @@
 # this template should work without changes if you are running your tests directly on the owncloud application server
 #
 
-keep_log_failed=True
-keep_logs=False
-keep_test_rundir=False
+#saves log to the result json only if test failed - ommits keep_logs=False
+keep_log_failed=True 
+#saves log to the result json - always deletes logs from directory
+keep_logs=False 
+#will delete all the temporarly created files
+keep_test_rundir=False 
+
+#define remote storage for json files
 #store_results_remotely="http://localhost/smashbox.php"
 store_results_remotely=None 
 remote_storage_password=""
+
 oc_account_name=""
 oc_account_password=""
 oc_account_reset_procedure="delete"
