@@ -748,41 +748,194 @@ def time_now(time_zero=None):
         return datetime.datetime.now()
     else:
         return (datetime.datetime.now()-time_zero)
+
+def get_name_from_smash_path(target_script):
+    split = target_script.split('smashbox/lib/', 1)
+    return str(split[1])
+
+def manage_log_files(target_script, loop,scenario, keep_log):
+    from os import listdir
+    import urllib
+    output_array = []
+    try:
+        test = target_script
+        test = test.split(".py")
+        if(len(test) > 1):
+            test_name = test[0]
+            for f in listdir(config.smashdir):
+                if((f.find(config.runid) != -1) and (f.find(test_name) != -1)):
+                    if((loop==1 and (f.find("loop1") != -1)) or (loop>1 and (f.find("loop"+str(loop)) != -1)) or (loop==1 and (f.find("loop") == -1))):
+                        if((f.find("testset"+str(scenario)) != -1) or (f.find("testset") == -1)):
+                            test_path_full = str(config.smashdir)+"/"+str(f)
+                            if((f.find("log-") != -1)):
+                                if(keep_log):
+                                    with open(test_path_full,'r') as test_file:
+                                        output = (test_file.read()).decode('utf-8')
+                                    output = urllib.quote(output.encode("utf-8"))
+                                    output_array.append({"test-log" : output}) 
+                                rm_file_dir(test_path_full)
+                            elif(f.find("log-") == -1):
+                                for log_files in listdir(test_path_full):
+                                    if(log_files.find("log") != -1):
+                                        rundir_log_full_path = test_path_full+"/"+log_files
+                                        if(keep_log):
+                                            with open(rundir_log_full_path,'r') as rundir_log_file:
+                                                output = (rundir_log_file.read()).decode('utf-8')
+                                            output = urllib.quote(output.encode("utf-8"))
+                                            output_array.append({ log_files : output})
+                                        rm_file_dir(rundir_log_full_path)
+                                if (not config.keep_test_rundir):
+                                    rm_file_dir(test_path_full)
+            
+        return output_array 
+    except Exception, e:
+        return ("Failed manage logs: %s"%e)
+
+def get_pass_status(data):
+    import json
+    if (json.dumps(data)).find("error") != -1:
+       return "Failed"
+    else:
+       return "Passed"
+
+def finish_test(results_to):
+   import json
+   finish_log = [] 
+   #get data and remove temporary json
+   data = get_data_from_json(config.testresnm)  
+   #determine if passed
+   status = get_pass_status(data)
+   #set runid         
+   if results_to=="runid":
+       test_id = config.runid
+   else:
+       test_id = results_to
+   #manage rundirectory
+   rm_file_dir(config.testresnm)  
+   #prepare details for the result 
+   for key in data.keys():
+       if (key!="runid"):
+           server_name = key
+           server_dict = data[server_name]
+   #update runid
+   
+   for key in server_dict.keys():
+       test_group = data[server_name][key]
+       for i in range(0, len(test_group)):
+           test_instance = data[server_name][key][i]
+           loopid =test_instance["loopid"]
+           scenarioid = test_instance["scenarioid"]
+           data[server_name][key][i]["logs"]= manage_log_files(key,loopid,scenarioid,(config.keep_logs or (config.keep_log_failed and get_pass_status(test_instance)=="Failed")))
+   
+   if(config.store_results_remotely!=None):
+       import urllib2, base64
+       import json
+       url = config.store_results_remotely
+       body = json.JSONEncoder().encode(data)
+       header = {'Content-Type': 'application/json', 'Content-Length': len(body)}
+       request = urllib2.Request(url, body , header)
+       base64string = base64.encodestring('%s:%s' % (config.oc_server, config.remote_storage_password)).replace('\n', '')
+       request.add_header("Authorization", "Basic %s" % base64string) 
+       try:
+           f = urllib2.urlopen(request)
+           response = f.read()
+           f.close()
+           finish_log.append("REMOTE URL RESPONSE: "+response)
+           continue_localy = False  
+       except urllib2.HTTPError as e:
+           finish_log.append("REMOTE URL ERROR: "+str(e))
+           continue_localy = True
+       except urllib2.URLError as e:
+           finish_log.append("REMOTE URL ERROR: "+str(e))
+           continue_localy = True
+           
+   if(config.store_results_remotely==None or continue_localy==True):
+       test_path_full = config.smashdir+'/test_results-'+test_id+'-'+server_name+'.json'
+       for key in server_dict.keys():
+           test_group = data[server_name][key]
+           for i in range(0, len(test_group)):
+               test_instance=test_group[i]
+               append_to_json_file(test_instance,key,test_path_full)
+   
+   finish_log.append("TESTSET RESULT: "+status)
+   return finish_log
+
+def get_data_from_json(f_name):
+    import json
+    import io
+    with io.open(f_name,'r') as file:
+        data = json.load(file)    
+    return data
+
+def write_to_json_file(data, file_path):
+    import json
+    import io
     
-def append_to_json_file(dict,test_path):
+    def mkdir_p(filename):
+        import os
+        try:
+            folder=os.path.dirname(filename)  
+            if not os.path.exists(folder):  
+                os.makedirs(folder)
+            return True
+        except:
+            return False
+    
+    mkdir_p(file_path)
+    with io.open(file_path, 'w', encoding='utf-8') as file:
+        file.write(unicode(json.dumps(data, ensure_ascii=False, indent=4)))
+
+def rm_file_dir(file_path):
+    import os, shutil
+    if(os.path.exists(file_path)):
+        try:
+            if os.path.isfile(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path): 
+                shutil.rmtree(file_path)
+        except:
+            pass    
+    
+def append_to_json_file(dict,test_path, file_path = None):
     import json
     import io
     import os.path
-    file_path='test_results.json'
-    split = test_path.split('smashbox/lib/', 1)
-    test_name = str(split[1])
+    
+    if(file_path==None):
+        file_path=config.testresnm
+        test_name = get_name_from_smash_path(test_path)
+    else:
+        test_name = test_path
     
     if (os.path.exists(os.path.abspath(file_path))):
-        with io.open(file_path,'r') as file:
-            data = json.load(file)
-            serv_dict = data[str(config.oc_server)]
-            if(serv_dict.has_key(test_name)):
-                if dict.has_key("scenario"):
-                    data[str(config.oc_server)][test_name].append(dict)
-                elif dict.has_key("exec_time"):
-                    array_len = len(data[str(config.oc_server)][test_name])
-                    data[str(config.oc_server)][test_name][array_len-1]["results"].update(dict)
-                elif dict.has_key("errors"):
-                    array_len = len(data[str(config.oc_server)][test_name])
-                    results_dict = data[str(config.oc_server)][test_name][array_len-1]["results"]
-                    if results_dict.has_key("errors"):
-                        data[str(config.oc_server)][test_name][array_len-1]["results"]["errors"].append(dict["errors"][0])
-                    else:
-                        data[str(config.oc_server)][test_name][array_len-1]["results"].update(dict)
-                        
-            else:
-                data[str(config.oc_server)][test_name]=[dict]
+        data = get_data_from_json(file_path)
+        serv_dict = data[str(config.oc_server)]
+        if(serv_dict.has_key(test_name)):
+            if dict.has_key("scenario"):
+                data[str(config.oc_server)][test_name].append(dict)
+            elif dict.has_key("exec_time"):
+                array_len = len(data[str(config.oc_server)][test_name])
+                data[str(config.oc_server)][test_name][array_len-1]["results"].update(dict)
+            elif dict.has_key("errors"):
+                array_len = len(data[str(config.oc_server)][test_name])
+                results_dict = data[str(config.oc_server)][test_name][array_len-1]["results"]
+                if results_dict.has_key("errors"):
+                    data[str(config.oc_server)][test_name][array_len-1]["results"]["errors"].append(dict["errors"][0])
+                else:
+                    data[str(config.oc_server)][test_name][array_len-1]["results"].update(dict)  
+            elif dict.has_key("logs"):
+                array_len = len(data[str(config.oc_server)][test_name])
+                data[str(config.oc_server)][test_name][array_len-1]["results"].update(dict)              
+        else:
+            data[str(config.oc_server)][test_name]=[dict]
     else:
         data = { config.oc_server: { test_name: [] } }
         data[str(config.oc_server)][test_name].append(dict)
         
-    with io.open(file_path, 'w', encoding='utf-8') as file:
-        file.write(unicode(json.dumps(data, ensure_ascii=False, indent=4)))
+    if(not data.has_key("runid")):
+        data["runid"] = config.runid    
+    write_to_json_file(data, file_path)
+
     
 def report_error(message,f):
     message=" ".join([message, "%s failed in %s() [\"%s\" at line %s], %s" %(''.join(f[4]).strip(),f[3],f[1],f[2], f[5])])
@@ -792,6 +945,4 @@ def report_error(message,f):
     reported_errors.append(message)
     return message
 
-def delete_smashdir_tests(): 
-    process = subprocess.Popen('rm -rf '+os.path.realpath(config.smashdir), shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    process.communicate()       
+ 

@@ -221,8 +221,7 @@ class _smash_:
               
         #after execution of the test, append the elapsed time to json file
         dict = { "exec_time": str(time_now(time_zero)) }
-        append_to_json_file(dict,str(target_script))      
-        
+        append_to_json_file(dict,str(target_script))    
 
 def add_worker(f,name=None):
     """ Decorator for worker functions in the user-defined test
