@@ -750,7 +750,7 @@ def time_now(time_zero=None):
         return (datetime.datetime.now()-time_zero)
 
 def get_name_from_smash_path(target_script):
-    split = target_script.split('smashbox/lib/', 1)
+    split = target_script.split('/lib/', 1)
     return str(split[1])
 
 def manage_log_files(target_script, loop,scenario, keep_log):
