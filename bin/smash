@@ -217,9 +217,12 @@ def main():
          elif custom!=None:
              ts = {}
              testsets = custom.testsets[0]
-             for key in testsets.keys():
-                 val = getattr(custom,key)
-                 ts.update( { key : val } )
+             if testsets!=None:
+                 for key in testsets.keys():
+                     val = getattr(custom,key)
+                     ts.update( { key : val } )
+             else:
+                 ts = None
          log_quiet('running %s in %s as %s testset #%d %s',t,config.rundir,config.oc_account_name,i,repr(ts)) # log_quiet
          #add scenario to json
          dict = { "scenario": ts,

@@ -23,13 +23,13 @@ testsets = [ {'localDirRenameRecreate_DIRA':'DIRA',
 
 import os.path
 
-DIRA = os.path.normpath(config.get('dirMove_DIRA','DIRA'))
-DIRB = os.path.normpath(config.get('dirMove_DIRB','DIRB'))
+localDirRenameRecreate_DIRA = os.path.normpath(config.get('localDirRenameRecreate_DIRA','DIRA'))
+localDirRenameRecreate_DIRB = os.path.normpath(config.get('localDirRenameRecreate_DIRB','DIRB'))
 
-nfiles = int(config.get('localDirRenameRecreate_nfiles',10))
-moveFilesBack = bool(config.get('localDirRenameRecreate_moveFilesBack',False))
+localDirRenameRecreate_nfiles = int(config.get('localDirRenameRecreate_nfiles',10))
+localDirRenameRecreate_moveFilesBack = bool(config.get('localDirRenameRecreate_moveFilesBack',False))
 
-TEST_FILES = ['test%02d.dat'%i for i in range(nfiles)]
+TEST_FILES = ['test%02d.dat'%i for i in range(localDirRenameRecreate_nfiles)]
 
 def check_files_exist(files,d):
     for fn in files:
@@ -50,7 +50,7 @@ def workerA(step):
     syncdir = make_workdir()
 
     # create a folder and some files in it
-    d1 = mkdir(os.path.join(syncdir,DIRA))
+    d1 = mkdir(os.path.join(syncdir,localDirRenameRecreate_DIRA))
 
     for f in TEST_FILES:
         fn = os.path.join(d1,f)
@@ -60,7 +60,7 @@ def workerA(step):
 
     step(2,'move the files in the folder and sync')
 
-    d2 = os.path.join(syncdir,DIRB)
+    d2 = os.path.join(syncdir,localDirRenameRecreate_DIRB)
 
     mv(d1,d2)
 
@@ -68,7 +68,7 @@ def workerA(step):
     mkdir(d1)
 
     # optionally moves files back
-    if moveFilesBack:
+    if localDirRenameRecreate_moveFilesBack:
         for f in TEST_FILES:
             fn = os.path.join(d2,f)
             mv(fn,d1)
@@ -99,11 +99,11 @@ def workerB(step):
 
 def check_final_state(syncdir):
 
-    # we expect to find DIRB and all test files in it
-    # we expect DIRA is deleted
+    # we expect to find localDirRenameRecreate_DIRB and all test files in it
+    # we expect localDirRenameRecreate_DIRA is deleted
 
-    d1 = os.path.join(syncdir,DIRA)
-    d2 = os.path.join(syncdir,DIRB)
+    d1 = os.path.join(syncdir,localDirRenameRecreate_DIRA)
+    d2 = os.path.join(syncdir,localDirRenameRecreate_DIRB)
 
     logger.info('checking %s',d1)
     error_check(os.path.isdir(d1), "path %s should be a directory"%d1)
@@ -111,7 +111,7 @@ def check_final_state(syncdir):
     logger.info('checking %s',d2)
     error_check(os.path.isdir(d2), "path %s should be a directory"%d2)
 
-    if moveFilesBack:
+    if localDirRenameRecreate_moveFilesBack:
         check_files_exist(TEST_FILES,d1)
     else:
         check_files_exist(TEST_FILES,d2)

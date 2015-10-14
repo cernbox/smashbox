@@ -38,8 +38,8 @@ Logfile: test_pingpong/pong-ocsync.step02.cnt000.log
 
 """
 
-filesizeKB = int(config.get('pingpong_filesizeKB',5000))
-pongdelay = float(config.get('pingpong_pongdelay',0))
+pingpong_filesizeKB = int(config.get('pingpong_filesizeKB',5000))
+pingpong_pongdelay = float(config.get('pingpong_pongdelay',0))
 
 testsets = [
         { 'pingpong_filesizeKB': 5000,
@@ -61,7 +61,7 @@ def ping(step):
 
     d = make_workdir()
 
-    createfile(os.path.join(d,'BALL'),'0',count=1000,bs=filesizeKB)
+    createfile(os.path.join(d,'BALL'),'0',count=1000,bs=pingpong_filesizeKB)
 
     BALL = md5sum(os.path.join(d,'BALL'))
     logger.info('BALL: %s',BALL)
@@ -102,7 +102,7 @@ def pong(step):
     d = make_workdir()
     shared = reflection.getSharedObject()
 
-    createfile(os.path.join(d,'BALL'),'1',count=1000,bs=filesizeKB)
+    createfile(os.path.join(d,'BALL'),'1',count=1000,bs=pingpong_filesizeKB)
 
     BALL = md5sum(os.path.join(d,'BALL'))
     logger.info('BALL: %s',BALL)
@@ -111,9 +111,9 @@ def pong(step):
     seen_files.add(BALL)
 
     step(2,'first sync')
-    if pongdelay:
-        logger.info('pong delay %0.3fs',pongdelay)
-        time.sleep(pongdelay)
+    if pingpong_pongdelay:
+        logger.info('pong delay %0.3fs',pingpong_pongdelay)
+        time.sleep(pingpong_pongdelay)
 
     run_ocsync(d,n=2)
     LAST_BALL = md5sum(os.path.join(d,'BALL'))

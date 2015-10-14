@@ -773,19 +773,21 @@ def manage_log_files(target_script, loop,scenario, keep_log):
                                         output = (test_file.read()).decode('utf-8')
                                     output = urllib.quote(output.encode("utf-8"))
                                     output_array.append({"test-log" : output}) 
-                                rm_file_dir(test_path_full)
+                                if(config.store_results_remotely!=None or (not keep_log)):
+                                    rm_file_dir(test_path_full)
                             elif(f.find("log-") == -1):
                                 for log_files in listdir(test_path_full):
+                                    rundir_log_full_path = test_path_full+"/"+log_files
                                     if(log_files.find("log") != -1):
-                                        rundir_log_full_path = test_path_full+"/"+log_files
                                         if(keep_log):
                                             with open(rundir_log_full_path,'r') as rundir_log_file:
                                                 output = (rundir_log_file.read()).decode('utf-8')
                                             output = urllib.quote(output.encode("utf-8"))
                                             output_array.append({ log_files : output})
+                                        if(config.store_results_remotely!=None or (not keep_log)):
+                                            rm_file_dir(rundir_log_full_path)
+                                    elif (not config.keep_test_rundir):
                                         rm_file_dir(rundir_log_full_path)
-                                if (not config.keep_test_rundir):
-                                    rm_file_dir(test_path_full)
             
         return output_array 
     except Exception, e:

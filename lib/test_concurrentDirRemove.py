@@ -11,9 +11,9 @@ OwnCloud7? : For PUT which creates the missing directories the expected outcome 
 
 """
 
-nfiles = int(config.get('concurrentRemoveDir_nfiles',10))
-filesizeKB = int(config.get('concurrentRemoveDir_filesizeKB',9000))
-delaySeconds = int(config.get('concurrentRemoveDir_delaySeconds',3)) # if delaySeconds > 0 then remover waits; else the adder waits;
+concurrentRemoveDir_nfiles = int(config.get('concurrentRemoveDir_nfiles',10))
+concurrentRemoveDir_filesizeKB = int(config.get('concurrentRemoveDir_filesizeKB',9000))
+concurrentRemoveDir_delaySeconds = int(config.get('concurrentRemoveDir_delaySeconds',3)) # if concurrentRemoveDir_delaySeconds > 0 then remover waits; else the adder waits;
 
 testsets = [ 
     {'concurrentRemoveDir_nfiles':3,
@@ -62,12 +62,12 @@ def adder(step):
     step(3,'locally create content in the subdirectory')
     d2 = os.path.join(d,'subdir')
 
-    for i in range(nfiles):
-        create_hashfile(d2, size=filesizeKB*1000) #createfile_zero(os.path.join(d2,"test.%02d"%i),count=filesizeKB, bs=1000)
+    for i in range(concurrentRemoveDir_nfiles):
+        create_hashfile(d2, size=concurrentRemoveDir_filesizeKB*1000) #createfile_zero(os.path.join(d2,"test.%02d"%i),count=concurrentRemoveDir_filesizeKB, bs=1000)
 
     step(4,'sync the added files in parallel')
-    if delaySeconds<0:
-        sleep(-delaySeconds)
+    if concurrentRemoveDir_delaySeconds<0:
+        sleep(-concurrentRemoveDir_delaySeconds)
     run_ocsync(d)
 
     step(5,'final check')
@@ -85,8 +85,8 @@ def remover(step):
     remove_tree(d2)
 
     step(4,'sync the removed subdir in parallel')
-    if delaySeconds>0:
-        sleep(delaySeconds)
+    if concurrentRemoveDir_delaySeconds>0:
+        sleep(concurrentRemoveDir_delaySeconds)
     run_ocsync(d)
 
     step(5,'final check')
@@ -116,7 +116,7 @@ def final_check(d):
     error_check(bad_files == 0,'%s corrupted files in %s'%(bad_files,d2))
     
     #it is hard to determine how many files should be present with 409 Conflict behaviour
-    #error_check(analysed_files == nfiles,"not all files are present (%d/%d)"%(analysed_files,nfiles)) # FIXME: well, there may be other files - we don't check that yet
+    #error_check(analysed_files == concurrentRemoveDir_nfiles,"not all files are present (%d/%d)"%(analysed_files,concurrentRemoveDir_nfiles)) # FIXME: well, there may be other files - we don't check that yet
 
 
     #runcmd('find %s'%d)

@@ -9,11 +9,11 @@ __doc__ = """ Create/modify a file locally while a file with the same name gets 
 from smashbox.utilities import *
 from smashbox.utilities.hash_files import *
 
-tinker_wait = int(config.get('fileTinkerDownload_tinker_wait',2))
-filesize = int(config.get('fileTinkerDownload_filesize',300000000))
+fileTinkerDownload_tinker_wait = int(config.get('fileTinkerDownload_tinker_wait',2))
+fileTinkerDownload_filesize = int(config.get('fileTinkerDownload_filesize',300000000))
 
-if type(filesize) is type(''):
-    filesize = eval(filesize)
+if type(fileTinkerDownload_filesize) is type(''):
+    fileTinkerDownload_filesize = eval(fileTinkerDownload_filesize)
 
 testsets = [
         { 'fileTinkerDownload_filesize': 300000000, 
@@ -35,9 +35,9 @@ def worker0(step):
     run_ocsync(d)
     k0 = count_files(d)
 
-    step(2,'Add a file: filesize=%s'%filesize)
+    step(2,'Add a file: fileTinkerDownload_filesize=%s'%fileTinkerDownload_filesize)
 
-    create_hashfile(d,filemask='TINKER.DAT',size=filesize)
+    create_hashfile(d,filemask='TINKER.DAT',size=fileTinkerDownload_filesize)
 
     run_ocsync(d)
         
@@ -59,9 +59,9 @@ def tinkerer(step):
 
     step(3,'Tinker with the file while the worker1 downloads')
     
-    sleep(tinker_wait)
+    sleep(fileTinkerDownload_tinker_wait)
 
-    fn,md5 = create_hashfile2(d,filemask='TINKER.DAT',size=filesize)
+    fn,md5 = create_hashfile2(d,filemask='TINKER.DAT',size=fileTinkerDownload_filesize)
 
     step(4) # worker1 ended syncing
 

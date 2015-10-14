@@ -11,7 +11,7 @@ This is a testcase for:
 
 https://github.com/owncloud/mirall/issues/2210 (corrupted file upload if file modified during transfer)
 
-owncloudcmd will delay syncing of the file if the file is modified every 2 seconds or less (slowWrite < 2)
+owncloudcmd will delay syncing of the file if the file is modified every 2 seconds or less (slowwrite_slowWrite < 2)
 
 """
 
@@ -20,9 +20,9 @@ from smashbox.utilities.hash_files import *
 
 MB = 1024*1000
 
-filesizeKB = int(config.get('slowwrite_filesizeKB',10000))
-blockSize = int(config.get('slowwrite_blockSize',MB))
-slowWrite = int(config.get('slowwrite_slowWrite',1))
+slowwrite_filesizeKB = int(config.get('slowwrite_filesizeKB',10000))
+slowwrite_blockSize = int(config.get('slowwrite_blockSize',MB))
+slowwrite_slowWrite = int(config.get('slowwrite_slowWrite',1))
 
 nfiles=1
 
@@ -70,14 +70,14 @@ def writer(step):
 
     step(2,'Add %s files and check if we still have k1+nfiles after resync'%nfiles)
 
-    create_hashfile(d,size=filesizeKB*1000,bs=blockSize,slow_write=slowWrite) #config.hashfile_size)
+    create_hashfile(d,size=slowwrite_filesizeKB*1000,bs=slowwrite_blockSize,slow_write=slowwrite_slowWrite) #config.hashfile_size)
 
 @add_worker
 def synchronizer(step):
 
     step(2,'Sync the file as it is being written by writer')
 
-    sleep(slowWrite*2)
+    sleep(slowwrite_slowWrite*2)
     d = make_workdir('writer') # bother writer and synchronizer share the same workdir
     run_ocsync(d)
 

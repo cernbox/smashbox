@@ -13,7 +13,7 @@ Notes:
 
 """
 
-filesizeKB = int(config.get('filenames_filesizeKB',1))
+filenames_filesizeKB = int(config.get('filenames_filesizeKB',1))
 
 testsets = [
         { 'filenames_filesizeKB': 1
@@ -95,7 +95,7 @@ def creator(step):
             nn =  n.replace('space', "_"+c+"_").replace(' ',charsets[c]) 
             #print nn
             filenames.append(nn)
-            createfile(os.path.join(d,nn),'1',count=filesizeKB,bs=1000)
+            createfile(os.path.join(d,nn),'1',count=filenames_filesizeKB,bs=1000)
 
     # generic charsets -- let's take a hammer and test (almost) all ANSI characters
     # we don't test for the foward slash
@@ -109,7 +109,7 @@ def creator(step):
             if nn == '.': # skip this
                 continue 
             filenames.append(nn)
-            createfile(os.path.join(d,nn),'1',count=filesizeKB,bs=1000)
+            createfile(os.path.join(d,nn),'1',count=filenames_filesizeKB,bs=1000)
 
     files_1 = get_files(d)
     N = count_files(d)
