@@ -464,7 +464,7 @@ Request Custom Header: None
 
 Response Custom Header:
 
-`OC-FileId`: The fileId of the new file (directory).
+None.
 
 Specific error code handling:
 
@@ -527,9 +527,13 @@ Example:
 Request Custom Header:
 
 `If-Match`: ETag to be overwritten by this PUT. Server refuses to replace the file if the ETag on the server is different.
+
 `OC-ASync`:        1  - Allow a asynchronous file assembly on the server.
+
 `OC-Chunk-Size`:   longint - Size of a chunk in bytes. Ignored chunking is not happening
+
 `OC-Total-Length`: longint - File size in bytes
+
 `X-OC-Mtime`:      longint - time stamp in seconds since 1.1.1970
                            Server sets this value as modification time of
                            the new file.
@@ -623,10 +627,14 @@ Specific error code handling:
 `403`: client tried to overwrite a shared file without permission.
        The client will try to recover the file from server in a subsequent
        sync run and create a conflict file with the local changes.
+
+
 `412`:  Precondition failed: the transfer attempted to overwrite a file
         which was changed on the server meanwhile, which was not allowed.
         Client needs to mark the file for a new sync in the a subsequent
         sync run that is started.
+
+
 `202`:  Async file assembly started, see description for OC-Finish-Poll custom
         header.
 
