@@ -865,9 +865,10 @@ def finish_test(results_to):
 def get_data_from_json(f_name):
     import json
     import io
-    with io.open(f_name,'r') as file:
-        data = json.load(file)    
-    return data
+    if(os.path.exists(f_name)):
+        with io.open(f_name,'r') as file:
+            data = json.load(file)    
+        return data
 
 def write_to_json_file(data, file_path):
     import json
