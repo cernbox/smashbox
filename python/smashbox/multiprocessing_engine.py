@@ -179,7 +179,6 @@ class _smash_:
     def run(target_script):
         """ Lunch worker processes and the supervisor loop. Block until all is finished.
         """
-        time_zero = time_now()
         #append new scenario to the json and leave it blank to be filled later
         from multiprocessing import Process, Manager
 
@@ -204,7 +203,8 @@ class _smash_:
             p = Process(target=_smash_.worker_wrap,args=(i,f,fname))
             p.start()
             _smash_.all_procs.append(p)
-
+        
+        time_zero = time_now() #after the installation of workdirectories etc. 
         _smash_.supervisor(_smash_.steps)
 
         for p in _smash_.all_procs:
