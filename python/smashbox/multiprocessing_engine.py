@@ -137,12 +137,12 @@ class _smash_:
             return "(supervisor_step="+str(_smash_.supervisor_step.value)+" worker_steps="+str(_smash_.steps)+")"
 
         if _smash_.DEBUG:
-            logger.debug('step %d waiting (wi=%d)'%(i,wi,supervisor_status()))
+            logger.debug('step %d waiting (wi=%d) %s'%(i,wi,supervisor_status()))
         while _smash_.supervisor_step.value<i:
             time.sleep(0.01)
 
         if _smash_.DEBUG:
-            logger.debug('step %d entered (wi=%d)'%(i,wi,supervisor_status()))
+            logger.debug('step %d entered (wi=%d) %s'%(i,wi,supervisor_status()))
 
         if message is not None:
             sep='*'*80
