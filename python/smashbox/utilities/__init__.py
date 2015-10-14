@@ -15,6 +15,15 @@ def OWNCLOUD_CHUNK_SIZE(factor=1):
 
 ######## TEST SETUP AND PREPARATION
 
+def setup_test():
+    reset_owncloud_account(num_test_users=config.oc_number_test_users)
+    reset_rundir()
+    reset_server_log_file()
+
+def finalize_test():
+    d = make_workdir()
+    scrape_log_file(d)
+
 def reset_owncloud_account(reset_procedure=None, num_test_users=None):
     """ 
     Prepare the test account on the owncloud server (remote state). Run this once at the beginning of the test.
@@ -78,6 +87,7 @@ def reset_rundir(reset_procedure=None):
     if reset_procedure == 'delete':
         assert(os.path.realpath(config.rundir).startswith(os.path.realpath(config.smashdir)))
         remove_tree(config.rundir)
+        mkdir(config.rundir)
 
 
 def make_workdir(name=None):
@@ -501,12 +511,36 @@ def fatal_check(expr,message=""):
 
 # ###### Server Log File Scraping ############
 
+def reset_server_log_file():
+    """ Deletes the existing server log file so that there is a clean
+        log file for the test run
+    """
+
+    try:
+        if not config.oc_check_server_log:
+            return
+    except AttributeError: # allow this option not to be defined at all
+        return
+
+    logger.info('Removing existing server log file')
+    cmd = '%s rm -rf %s/owncloud.log' % (config.oc_server_shell_cmd, config.oc_server_datadirectory)
+    runcmd(cmd)
+
+
+
 def scrape_log_file(d):
     """ Copies over the server log file and searches it for specific strings
 
     :param d: The directory where the server log file is to be copied to
 
     """
+
+    try:
+        if not config.oc_check_server_log:
+            return
+    except AttributeError: # allow this option not to be defined at all
+        return
+
     cmd = 'scp -P %d root@%s:%s/owncloud.log %s/.' % (config.scp_port, config.oc_server, config.oc_server_datadirectory, d)
     rtn_code,stdout,stderr = runcmd(cmd)
 
