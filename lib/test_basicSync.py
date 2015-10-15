@@ -21,11 +21,11 @@ from smashbox.utilities import *
 
 import glob
 
-filesizeKB = int(config.get('basicSync_filesizeKB',10000))
+basicSync_filesizeKB = int(config.get('basicSync_filesizeKB',10000))
 
 # True => remove local sync db on the loser 
 # False => keep the loser 
-rmLocalStateDB = bool(config.get('basicSync_rmLocalStateDB',False))
+basicSync_rmLocalStateDB = bool(config.get('basicSync_rmLocalStateDB',False))
 
 
 testsets = [
@@ -107,13 +107,13 @@ def creator(step):
     # files *_WINNER are modified by the winner but not by the loser
     # files *_BOTH are modified both by the winner and by the loser (always conflict on the loser)
 
-    createfile(os.path.join(d,'TEST_FILE_MODIFIED_NONE.dat'),'0',count=1000,bs=filesizeKB)
-    createfile(os.path.join(d,'TEST_FILE_MODIFIED_LOSER.dat'),'0',count=1000,bs=filesizeKB)
-    createfile(os.path.join(d,'TEST_FILE_MODIFIED_WINNER.dat'),'0',count=1000,bs=filesizeKB)
-    createfile(os.path.join(d,'TEST_FILE_MODIFIED_BOTH.dat'),'0',count=1000,bs=filesizeKB)
-    createfile(os.path.join(d,'TEST_FILE_DELETED_LOSER.dat'),'0',count=1000,bs=filesizeKB)
-    createfile(os.path.join(d,'TEST_FILE_DELETED_WINNER.dat'),'0',count=1000,bs=filesizeKB)
-    createfile(os.path.join(d,'TEST_FILE_DELETED_BOTH.dat'),'0',count=1000,bs=filesizeKB)
+    createfile(os.path.join(d,'TEST_FILE_MODIFIED_NONE.dat'),'0',count=1000,bs=basicSync_filesizeKB)
+    createfile(os.path.join(d,'TEST_FILE_MODIFIED_LOSER.dat'),'0',count=1000,bs=basicSync_filesizeKB)
+    createfile(os.path.join(d,'TEST_FILE_MODIFIED_WINNER.dat'),'0',count=1000,bs=basicSync_filesizeKB)
+    createfile(os.path.join(d,'TEST_FILE_MODIFIED_BOTH.dat'),'0',count=1000,bs=basicSync_filesizeKB)
+    createfile(os.path.join(d,'TEST_FILE_DELETED_LOSER.dat'),'0',count=1000,bs=basicSync_filesizeKB)
+    createfile(os.path.join(d,'TEST_FILE_DELETED_WINNER.dat'),'0',count=1000,bs=basicSync_filesizeKB)
+    createfile(os.path.join(d,'TEST_FILE_DELETED_BOTH.dat'),'0',count=1000,bs=basicSync_filesizeKB)
 
     shared = reflection.getSharedObject()
     shared['md5_creator'] = md5sum(os.path.join(d,'TEST_FILE_MODIFIED_NONE.dat'))
@@ -145,11 +145,11 @@ def winner(step):
     remove_file(os.path.join(d,'TEST_FILE_DELETED_WINNER.dat'))
     remove_file(os.path.join(d,'TEST_FILE_DELETED_BOTH.dat'))
 
-    createfile(os.path.join(d,'TEST_FILE_MODIFIED_WINNER.dat'),'1',count=1000,bs=filesizeKB)
-    createfile(os.path.join(d,'TEST_FILE_MODIFIED_BOTH.dat'),'1',count=1000,bs=filesizeKB)
+    createfile(os.path.join(d,'TEST_FILE_MODIFIED_WINNER.dat'),'1',count=1000,bs=basicSync_filesizeKB)
+    createfile(os.path.join(d,'TEST_FILE_MODIFIED_BOTH.dat'),'1',count=1000,bs=basicSync_filesizeKB)
 
-    createfile(os.path.join(d,'TEST_FILE_ADDED_WINNER.dat'),'1',count=1000,bs=filesizeKB)
-    createfile(os.path.join(d,'TEST_FILE_ADDED_BOTH.dat'),'1',count=1000,bs=filesizeKB)
+    createfile(os.path.join(d,'TEST_FILE_ADDED_WINNER.dat'),'1',count=1000,bs=basicSync_filesizeKB)
+    createfile(os.path.join(d,'TEST_FILE_ADDED_BOTH.dat'),'1',count=1000,bs=basicSync_filesizeKB)
 
     shared = reflection.getSharedObject()
     shared['md5_winner'] = md5sum(os.path.join(d,'TEST_FILE_ADDED_WINNER.dat'))
@@ -186,22 +186,19 @@ def loser(step):
     remove_file(os.path.join(d,'TEST_FILE_DELETED_LOSER.dat'))
     remove_file(os.path.join(d,'TEST_FILE_DELETED_BOTH.dat'))
 
-    createfile(os.path.join(d,'TEST_FILE_MODIFIED_LOSER.dat'),'2',count=1000,bs=filesizeKB)
-    createfile(os.path.join(d,'TEST_FILE_MODIFIED_BOTH.dat'),'2',count=1000,bs=filesizeKB)
+    createfile(os.path.join(d,'TEST_FILE_MODIFIED_LOSER.dat'),'2',count=1000,bs=basicSync_filesizeKB)
+    createfile(os.path.join(d,'TEST_FILE_MODIFIED_BOTH.dat'),'2',count=1000,bs=basicSync_filesizeKB)
 
-    createfile(os.path.join(d,'TEST_FILE_ADDED_LOSER.dat'),'2',count=1000,bs=filesizeKB)
-    createfile(os.path.join(d,'TEST_FILE_ADDED_BOTH.dat'),'2',count=1000,bs=filesizeKB)
+    createfile(os.path.join(d,'TEST_FILE_ADDED_LOSER.dat'),'2',count=1000,bs=basicSync_filesizeKB)
+    createfile(os.path.join(d,'TEST_FILE_ADDED_BOTH.dat'),'2',count=1000,bs=basicSync_filesizeKB)
 
     shared = reflection.getSharedObject()
     shared['md5_loser'] = md5sum(os.path.join(d,'TEST_FILE_ADDED_LOSER.dat'))
     logger.info('md5_loser: %s',shared['md5_loser'])
 
 
-    #os.system('curl -v -s -k -XPROPFIND --data @/b/eos/CURL-TEST/p2.dat %s| xmllint --format -'%oc_webdav_url(remote_folder='TEST_FILE_MODIFIED_BOTH.dat'))
-    #os.system('sqlite3 -line /tmp/smashdir/test_basicSync/loser/.csync_journal.db  \'select * from metadata where path like "%TEST_FILE_MODIFIED_BOTH%"\'')
-
     # remove the sync db
-    if rmLocalStateDB:
+    if basicSync_rmLocalStateDB:
         remove_file(os.path.join(d,'.csync_journal.db'))
 
     run_ocsync(d,n=3) # conflict file will be synced to the server but it requires more than one sync run
@@ -214,7 +211,7 @@ def loser(step):
     #os.system('sqlite3 -line /tmp/smashdir/test_basicSync/loser/.csync_journal.db  \'select * from metadata where path like "%TEST_FILE_MODIFIED_BOTH%"\'')
 
     final_check(d,shared)
-    if not rmLocalStateDB:
+    if not basicSync_rmLocalStateDB:
         expect_conflict_files(d, ['TEST_FILE_ADDED_BOTH.dat', 'TEST_FILE_MODIFIED_BOTH.dat' ])
     else:
         expect_conflict_files(d, ['TEST_FILE_ADDED_BOTH.dat', 'TEST_FILE_MODIFIED_BOTH.dat', 
@@ -244,7 +241,7 @@ def final_check(d,shared):
 
     expect_content(os.path.join(d,'TEST_FILE_ADDED_LOSER.dat'), shared['md5_loser'])
 
-    if not rmLocalStateDB:
+    if not basicSync_rmLocalStateDB:
         expect_content(os.path.join(d,'TEST_FILE_MODIFIED_LOSER.dat'), shared['md5_loser'])
     else:
         expect_content(os.path.join(d,'TEST_FILE_MODIFIED_LOSER.dat'), shared['md5_creator']) # in this case, a conflict is created on the loser and file on the server stays the same
@@ -254,7 +251,7 @@ def final_check(d,shared):
     expect_content(os.path.join(d,'TEST_FILE_ADDED_BOTH.dat'), shared['md5_winner'])     # a conflict on the loser, server not changed
     expect_content(os.path.join(d,'TEST_FILE_MODIFIED_BOTH.dat'), shared['md5_winner'])  # a conflict on the loser, server not changed
 
-    if not rmLocalStateDB:
+    if not basicSync_rmLocalStateDB:
         expect_no_deleted_files(d) # normally any deleted files should not come back
     else:
         expect_deleted_files(d, ['TEST_FILE_DELETED_LOSER.dat', 'TEST_FILE_DELETED_WINNER.dat']) # but not TEST_FILE_DELETED_BOTH.dat !
@@ -264,7 +261,7 @@ def final_check(d,shared):
 ###############################################################################
 
 def final_check_1_5(d): # this logic applies for 1.5.x client and owncloud server...
-    """ Final verification: all local sync folders should look the same. We expect conflicts and handling of deleted files depending on the rmLocalStateDB option. See code for details.
+    """ Final verification: all local sync folders should look the same. We expect conflicts and handling of deleted files depending on the basicSync_rmLocalStateDB option. See code for details.
     """
     import glob
 
@@ -274,7 +271,7 @@ def final_check_1_5(d): # this logic applies for 1.5.x client and owncloud serve
 
     logger.debug('conflict files in %s: %s',d,conflict_files)
 
-    if not rmLocalStateDB:
+    if not basicSync_rmLocalStateDB:
         # we expect exactly 1 conflict file
 
         logger.warning("FIXME: currently winner gets a conflict file - exclude list should be updated and this assert modified for the winner")
@@ -286,7 +283,7 @@ def final_check_1_5(d): # this logic applies for 1.5.x client and owncloud serve
 
     for fn in conflict_files:
 
-        if not rmLocalStateDB:
+        if not basicSync_rmLocalStateDB:
             error_check('_BOTH' in fn, """only files modified in BOTH workers have a conflict -  all other files should be conflict-free""")
 
         else:
@@ -296,7 +293,7 @@ def final_check_1_5(d): # this logic applies for 1.5.x client and owncloud serve
 
     logger.debug('deleted files in %s: %s',d,deleted_files)
 
-    if not rmLocalStateDB:
+    if not basicSync_rmLocalStateDB:
         error_check(len(deleted_files) == 0, 'deleted files should not be there normally')
     else:
         # deleted files "reappear" if local sync db is lost on the loser, the only file that does not reappear is the DELETED_BOTH which was deleted on *all* local clients

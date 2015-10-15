@@ -37,17 +37,19 @@ def reset_owncloud_account(reset_procedure=None, num_test_users=None):
         logger.info('reset_owncloud_account (%s) for %d users', reset_procedure, num_test_users)
 
     if reset_procedure == 'delete':
-        delete_owncloud_account(config.oc_account_name)
-        create_owncloud_account(config.oc_account_name, config.oc_account_password)
+        #delete_owncloud_account(config.oc_account_name)
+        #create_owncloud_account(config.oc_account_name, config.oc_account_password)
         login_owncloud_account(config.oc_account_name, config.oc_account_password)
+        webdav_delete('/')
+        webdav_delete('/')
+        webdav_mkcol('/')
 
-        if num_test_users is not None:
-            for i in range(1, num_test_users + 1):
-                username = "%s%i" % (config.oc_account_name, i)
-                delete_owncloud_account(username)
-                create_owncloud_account(username, config.oc_account_password)
-                login_owncloud_account(username, config.oc_account_password)
-
+        #if num_test_users is not None:
+        #    for i in range(1, num_test_users + 1):
+        #        username = "%s%i" % (config.oc_account_name, i)
+        #        delete_owncloud_account(username)
+        #        create_owncloud_account(username, config.oc_account_password)
+        #        login_owncloud_account(username, config.oc_account_password)
         return
 
     if reset_procedure == 'webdav_delete':
@@ -74,7 +76,7 @@ def reset_rundir(reset_procedure=None):
 
     # assert(config.rundir)
     # that's a bit dangerous... so let's try to mitiage the risk
-
+    
     if reset_procedure == 'delete':
         assert(os.path.realpath(config.rundir).startswith(os.path.realpath(config.smashdir)))
         remove_tree(config.rundir)
@@ -219,7 +221,9 @@ def create_owncloud_group(group_name):
 
 ######### WEBDAV AND SYNC UTILITIES #####################
 
-def oc_webdav_url(protocol='http',remote_folder="",user_num=None,webdav_endpoint=None,hide_password=False):
+
+
+def oc_webdav_url(protocol='http',remote_folder="",user_num=None, local_folder=None,webdav_endpoint=None, hide_password=False,option=None):
     """ Protocol for sync client should be set to 'owncloud'. Protocol for generic webdav clients is http.
     """
 
@@ -228,23 +232,32 @@ def oc_webdav_url(protocol='http',remote_folder="",user_num=None,webdav_endpoint
 
     # strip-off any leading / characters to prevent 1) abspath result from the join below, 2) double // and alike...
     remote_folder = remote_folder.lstrip('/')
-
+    
     if webdav_endpoint is None:
         webdav_endpoint = config.oc_webdav_endpoint
-
+        
     remote_path = os.path.join(webdav_endpoint, config.oc_server_folder, remote_folder)
 
     if user_num is None:
         username = "%s" % config.oc_account_name
     else:
         username = "%s%i" % (config.oc_account_name, user_num)
-
-    if hide_password:
+    
+    if hide_password== True:
         password = "***"
     else:
         password = config.oc_account_password
-
-    return protocol + '://' + username + ':' + password + '@' + config.oc_server + '/' + remote_path
+    if local_folder==None:
+        path = protocol + '://' + config.oc_server + '/' + remote_path
+        if option==None:
+            return config.get('curl_opts',''),username,password,path
+        else:
+            return config.get('curl_opts',''),username,password,path,option
+    else:
+        path = ' --user '+username+' --password '+password+' '+local_folder+' ' + protocol + '://' + config.oc_server + '/' + remote_path
+        return path
+    #print str(path)
+    
 
 
 # this is a local variable for each worker that keeps track of the repeat count for the current step
@@ -269,7 +282,7 @@ def run_ocsync(local_folder, remote_folder="", n=None, user_num=None):
 
     for i in range(n):
         t0 = datetime.datetime.now()
-        cmd = config.oc_sync_cmd+' '+local_folder+' '+oc_webdav_url('owncloud',remote_folder,user_num) + " >> "+config.rundir+"/%s-ocsync.step%02d.cnt%03d.log 2>&1"%(reflection.getProcessName(),current_step,ocsync_cnt[current_step])
+        cmd = config.oc_sync_cmd + oc_webdav_url('owncloud',remote_folder, user_num,local_folder) + " >> "+config.rundir+"/%s-ocsync.step%02d.cnt%03d.log 2>&1"%(reflection.getProcessName(),current_step,ocsync_cnt[current_step])
         runcmd(cmd, ignore_exitcode=True)  # exitcode of ocsync is not reliable
         logger.info('sync cmd is: %s',cmd)
         logger.info('sync finished: %s',datetime.datetime.now()-t0)
@@ -277,27 +290,28 @@ def run_ocsync(local_folder, remote_folder="", n=None, user_num=None):
 
 
 def webdav_propfind_ls(path, user_num=None):
-    runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format -'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)))
+    runcmd('curl -s -k %s -u %s:%s -XPROPFIND %s | xmllint --format -'%oc_webdav_url(remote_folder=path, user_num=user_num))
 
 def expect_webdav_does_not_exist(path, user_num=None):
-    exitcode,stdout,stderr = runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format - | grep NotFound | wc -l'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)))
+    exitcode,stdout,stderr = runcmd('curl -s -k %s -u %s:%s -XPROPFIND %s | xmllint --format - | grep NotFound | wc -l'%oc_webdav_url(remote_folder=path, user_num=user_num))
     not_exists = stdout.rstrip() == "1"
     error_check(not_exists, "Remote path does not %s exist but should" % path)
 
 def expect_webdav_exist(path, user_num=None):
-    exitcode,stdout,stderr = runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format - | grep NotFound | wc -l'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)))
+    exitcode,stdout,stderr = runcmd('curl -s -k %s -u %s:%s  -XPROPFIND %s | xmllint --format - | grep NotFound | wc -l'%oc_webdav_url(remote_folder=path, user_num=user_num))
     exists = stdout.rstrip() == "0"
     error_check(exists, "Remote path %s exists but should not" % path)
 
 def webdav_delete(path, user_num=None):
-    runcmd('curl -k %s -X DELETE %s '%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)))
-
+    runcmd('curl -k %s -u %s:%s  -XDELETE %s '%oc_webdav_url(remote_folder=path, user_num=user_num))
+    
 def webdav_mkcol(path, silent=False, user_num=None):
     out=""
     if silent: # a workaround for super-verbose errors in case directory on the server already exists
         out = "> /dev/null 2>&1"
-    runcmd('curl -k %s -X MKCOL %s %s'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num),out))
-
+    runcmd('curl -k %s -u %s:%s -XMKCOL %s %s'%oc_webdav_url(remote_folder=path, user_num=user_num,option=out))
+    
+    
 # #### SHELL COMMANDS AND TIME FUNCTIONS
 
 def runcmd(cmd,ignore_exitcode=False,echo=True,allow_stderr=True,shell=True,log_warning=True):
@@ -476,16 +490,14 @@ def implies(p,q):
 
 reported_errors = []
 
+
 def error_check(expr,message=""):
     """ Assert expr is True. If not, then mark the test as failed but carry on the execution.
     """
-
     if not expr: 
         import inspect
         f=inspect.getouterframes(inspect.currentframe())[1]
-        message=" ".join([message, "%s failed in %s() [\"%s\" at line %s]" %(''.join(f[4]).strip(),f[3],f[1],f[2])])
-        logger.error(message)
-        reported_errors.append(message)
+        logger.error(report_error(message,f))
 
 def fatal_check(expr,message=""):
     """ Assert expr is True. If not, then mark the test as failed and stop immediately.
@@ -493,11 +505,9 @@ def fatal_check(expr,message=""):
     if not expr:
         import inspect
         f=inspect.getouterframes(inspect.currentframe())[1]
-        message=" ".join([message, "%s failed in %s() [\"%s\" at line %s]" %(''.join(f[4]).strip(),f[3],f[1],f[2])])
+        message=report_error(message,f)
         logger.fatal(message)
-        reported_errors.append(message)
         raise AssertionError(message)
-
 
 # ###### Server Log File Scraping ############
 
@@ -668,20 +678,20 @@ def check_groups(num_groups=None):
             fatal_check(result, 'Group %s not found' % group_name)
 
 
-def expect_modified(fn, md5, comment=''):
+def expect_modified(fn, md5):
     """ Compares that the checksum of two files is different
     """
     actual_md5 = md5sum(fn)
     error_check(actual_md5 != md5,
-                "md5 of modified file %s did not change%s: expected %s" % (fn, comment, md5))
+                "md5 of modified file %s did not change: expected %s, got %s" % (fn, md5, actual_md5))
 
 
-def expect_not_modified(fn, md5, comment=''):
+def expect_not_modified(fn, md5):
     """ Compares that the checksum of two files is the same
     """
     actual_md5 = md5sum(fn)
     error_check(actual_md5 == md5,
-                "md5 of modified file %s changed%s and should not have: expected %s, got %s" % (fn, comment, md5, actual_md5))
+                "md5 of modified file %s changed and should not have: expected %s, got %s" % (fn, md5, actual_md5))
 
 
 def expect_exists(fn):
@@ -695,3 +705,247 @@ def expect_does_not_exist(fn):
     """
     error_check(not os.path.exists(fn), "File %s exists but should not" % fn)
 
+def curl_check_url():
+    cmd = 'curl -L %s -u %s:%s -XMKCOL %s | xmllint --format -'%oc_webdav_url(remote_folder='', user_num=None)
+    process1 = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    process1.communicate()
+    cmd = 'curl -L %s -u %s:%s -XPROPFIND %s | xmllint --format -'%oc_webdav_url(remote_folder='', user_num=None)
+    process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    stdout,stderr = process.communicate()
+    return (stdout,stderr)
+
+def set_url(url=''):
+    config.oc_root = url
+    config.oc_webdav_endpoint = os.path.join(url,'remote.php/webdav') 
+    
+def check_url():
+    import xml.etree.ElementTree as ET
+    import sys
+    try:
+        (stdout,stderr) = curl_check_url()
+        if stdout:
+            root = ET.fromstring(stdout)[0][0].text
+            root.rsplit('/remote.php/webdav', 1)
+            if root:
+                url = root[0].split('/',1)
+                set_url(str(url[1]))
+            else:
+                set_url()
+        else:
+            set_url()
+        
+        (stdout,stderr) = curl_check_url()
+        if stdout:
+            root = ET.fromstring(stdout)[0][1][1].text
+        return root
+    except:
+        return "error - %s " % (stdout)
+        
+
+def time_now(time_zero=None): 
+    import datetime
+    if time_zero==None:
+        return datetime.datetime.now()
+    else:
+        return (datetime.datetime.now()-time_zero)
+
+def get_name_from_smash_path(target_script):
+    split = target_script.split('/lib/', 1)
+    return str(split[1])
+
+def manage_log_files(target_script, loop,scenario, keep_log):
+    from os import listdir
+    import urllib
+    output_array = []
+    try:
+        test = target_script
+        test = test.split(".py")
+        if(len(test) > 1):
+            test_name = test[0]
+            for f in listdir(config.smashdir):
+                if((f.find(config.runid) != -1) and (f.find(test_name) != -1)):
+                    if((loop==1 and (f.find("loop1") != -1)) or (loop>1 and (f.find("loop"+str(loop)) != -1)) or (loop==1 and (f.find("loop") == -1))):
+                        if((f.find("testset"+str(scenario)) != -1) or (f.find("testset") == -1)):
+                            test_path_full = str(config.smashdir)+"/"+str(f)
+                            if((f.find("log-") != -1)):
+                                if(keep_log):
+                                    with open(test_path_full,'r') as test_file:
+                                        output = (test_file.read()).decode('utf-8')
+                                    output = urllib.quote(output.encode("utf-8"))
+                                    output_array.append({"test-log" : output}) 
+                                if(config.store_results_remotely!=None or (not keep_log)):
+                                    rm_file_dir(test_path_full)
+                            elif(f.find("log-") == -1):
+                                for log_files in listdir(test_path_full):
+                                    rundir_log_full_path = test_path_full+"/"+log_files
+                                    if(log_files.find("log") != -1):
+                                        if(keep_log):
+                                            with open(rundir_log_full_path,'r') as rundir_log_file:
+                                                output = (rundir_log_file.read()).decode('utf-8')
+                                            output = urllib.quote(output.encode("utf-8"))
+                                            output_array.append({ log_files : output})
+                                        if(config.store_results_remotely!=None or (not keep_log)):
+                                            rm_file_dir(rundir_log_full_path)
+                                    elif (not config.keep_test_rundir):
+                                        rm_file_dir(rundir_log_full_path)
+            
+        return output_array 
+    except Exception, e:
+        return ("Failed manage logs: %s"%e)
+
+def get_pass_status(data):
+    import json
+    if (json.dumps(data)).find("error") != -1:
+       return "Failed"
+    else:
+       return "Passed"
+
+def finish_test(results_to):
+   import json
+   finish_log = [] 
+   #get data and remove temporary json
+   data = get_data_from_json(config.testresnm)  
+   #determine if passed
+   status = get_pass_status(data)
+   #set runid         
+   if results_to=="runid":
+       test_id = config.runid
+   else:
+       test_id = results_to
+   #manage rundirectory
+   rm_file_dir(config.testresnm)  
+   #prepare details for the result 
+   for key in data.keys():
+       if (key!="runid"):
+           server_name = key
+           server_dict = data[server_name]
+   #update runid
+   
+   for key in server_dict.keys():
+       test_group = data[server_name][key]
+       for i in range(0, len(test_group)):
+           test_instance = data[server_name][key][i]
+           loopid =test_instance["loopid"]
+           scenarioid = test_instance["scenarioid"]
+           data[server_name][key][i]["logs"]= manage_log_files(key,loopid,scenarioid,(config.keep_logs or (config.keep_log_failed and get_pass_status(test_instance)=="Failed")))
+   
+   if(config.store_results_remotely!=None):
+       import urllib2, base64
+       import json
+       url = config.store_results_remotely
+       body = json.JSONEncoder().encode(data)
+       header = {'Content-Type': 'application/json', 'Content-Length': len(body)}
+       request = urllib2.Request(url, body , header)
+       base64string = base64.encodestring('%s:%s' % (config.oc_server, config.remote_storage_password)).replace('\n', '')
+       request.add_header("Authorization", "Basic %s" % base64string) 
+       try:
+           f = urllib2.urlopen(request)
+           response = f.read()
+           f.close()
+           finish_log.append("REMOTE URL RESPONSE: "+response)
+           continue_localy = False  
+       except urllib2.HTTPError as e:
+           finish_log.append("REMOTE URL ERROR: "+str(e))
+           continue_localy = True
+       except urllib2.URLError as e:
+           finish_log.append("REMOTE URL ERROR: "+str(e))
+           continue_localy = True
+           
+   if(config.store_results_remotely==None or continue_localy==True):
+       test_path_full = config.smashdir+'/test_results-'+test_id+'-'+server_name+'.json'
+       for key in server_dict.keys():
+           test_group = data[server_name][key]
+           for i in range(0, len(test_group)):
+               test_instance=test_group[i]
+               append_to_json_file(test_instance,key,test_path_full)
+   
+   finish_log.append("TESTSET RESULT: "+status)
+   return finish_log
+
+def get_data_from_json(f_name):
+    import json
+    import io
+    if(os.path.exists(f_name)):
+        with io.open(f_name,'r') as file:
+            data = json.load(file)    
+        return data
+
+def write_to_json_file(data, file_path):
+    import json
+    import io
+    
+    def mkdir_p(filename):
+        import os
+        try:
+            folder=os.path.dirname(filename)  
+            if not os.path.exists(folder):  
+                os.makedirs(folder)
+            return True
+        except:
+            return False
+    
+    mkdir_p(file_path)
+    with io.open(file_path, 'w', encoding='utf-8') as file:
+        file.write(unicode(json.dumps(data, ensure_ascii=False, indent=4)))
+
+def rm_file_dir(file_path):
+    import os, shutil
+    if(os.path.exists(file_path)):
+        try:
+            if os.path.isfile(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path): 
+                shutil.rmtree(file_path)
+        except:
+            pass    
+    
+def append_to_json_file(dict,test_path, file_path = None):
+    import json
+    import io
+    import os.path
+    
+    if(file_path==None):
+        file_path=config.testresnm
+        test_name = get_name_from_smash_path(test_path)
+    else:
+        test_name = test_path
+    
+    if (os.path.exists(os.path.abspath(file_path))):
+        data = get_data_from_json(file_path)
+        serv_dict = data[str(config.oc_server)]
+        if(serv_dict.has_key(test_name)):
+            if dict.has_key("scenario"):
+                data[str(config.oc_server)][test_name].append(dict)
+            elif dict.has_key("exec_time"):
+                array_len = len(data[str(config.oc_server)][test_name])
+                data[str(config.oc_server)][test_name][array_len-1]["results"].update(dict)
+            elif dict.has_key("errors"):
+                array_len = len(data[str(config.oc_server)][test_name])
+                results_dict = data[str(config.oc_server)][test_name][array_len-1]["results"]
+                if results_dict.has_key("errors"):
+                    data[str(config.oc_server)][test_name][array_len-1]["results"]["errors"].append(dict["errors"][0])
+                else:
+                    data[str(config.oc_server)][test_name][array_len-1]["results"].update(dict)  
+            elif dict.has_key("logs"):
+                array_len = len(data[str(config.oc_server)][test_name])
+                data[str(config.oc_server)][test_name][array_len-1]["results"].update(dict)              
+        else:
+            data[str(config.oc_server)][test_name]=[dict]
+    else:
+        data = { config.oc_server: { test_name: [] } }
+        data[str(config.oc_server)][test_name].append(dict)
+        
+    if(not data.has_key("runid")):
+        data["runid"] = config.runid    
+    write_to_json_file(data, file_path)
+
+    
+def report_error(message,f):
+    message=" ".join([message, "%s failed in %s() [\"%s\" at line %s], %s" %(''.join(f[4]).strip(),f[3],f[1],f[2], f[5])])
+    dict = { "errors": [{"message":message}] }
+    
+    append_to_json_file(dict,f[1])
+    reported_errors.append(message)
+    return message
+
+ 

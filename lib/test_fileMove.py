@@ -10,12 +10,12 @@ testsets = [ {'dirMove_DIRA':'DIRA',
 
 import os.path
 
-DIRA = os.path.normpath(config.get('dirMove_DIRA','DIRA'))
-DIRB = os.path.normpath(config.get('dirMove_DIRB','DIRB'))
+dirMove_DIRA = os.path.normpath(config.get('dirMove_DIRA','DIRA'))
+dirMove_DIRB = os.path.normpath(config.get('dirMove_DIRB','DIRB'))
 
-nfiles = int(config.get('dirMove_nfiles',10))
+dirMove_nfiles = int(config.get('dirMove_nfiles',10))
 
-TEST_FILES = ['test%02d.dat'%i for i in range(nfiles)]
+TEST_FILES = ['test%02d.dat'%i for i in range(dirMove_nfiles)]
 
 def check_files_exist(files,d):
     for fn in files:
@@ -36,7 +36,7 @@ def workerA(step):
     syncdir = make_workdir()
 
     # create a folder and some files in it
-    d1 = mkdir(os.path.join(syncdir,DIRA))
+    d1 = mkdir(os.path.join(syncdir,dirMove_DIRA))
 
     for f in TEST_FILES:
         fn = os.path.join(d1,f)
@@ -46,7 +46,7 @@ def workerA(step):
 
     step(2,'move the files in the folder and sync')
 
-    d2 = mkdir(os.path.join(syncdir,DIRB))
+    d2 = mkdir(os.path.join(syncdir,dirMove_DIRB))
 
     mkdir(d2)
 
@@ -83,11 +83,11 @@ def workerB(step):
 
     run_ocsync(syncdir)
 
-    # we expect to find DIRB and all test files in it
-    # we expect DIRA is deleted
+    # we expect to find dirMove_DIRB and all test files in it
+    # we expect dirMove_DIRA is deleted
 
-    d1 = os.path.join(syncdir,DIRA)
-    d2 = os.path.join(syncdir,DIRB)
+    d1 = os.path.join(syncdir,dirMove_DIRA)
+    d2 = os.path.join(syncdir,dirMove_DIRB)
 
     logger.info('checking %s',d1)
     error_check(os.path.isdir(d1), "path %s should be a directory"%d1)

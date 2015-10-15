@@ -3,16 +3,24 @@ import os
 import time
 import tempfile
 
-__doc__ = """ One uploader, n downloaders. Uploader creates nfiles and syncs them at the same time to the same account. The checker verifies integrity of files and completness of sync. 
+__doc__ = """ One uploader, n downloaders. Uploader creates userload_nfiles and syncs them at the same time to the same account. The checker verifies integrity of files and completness of sync. 
 """
 
 
 # Files created by the uploader
-nfiles = int(config.get('userload_nfiles',5))
+userload_nfiles = int(config.get('userload_nfiles',5))
 # Number of downloaders
-nworkers = int(config.get('userload_nworkers',10))
+userload_nworkers = int(config.get('userload_nworkers',10))
 # Verbose flag
-verbose = bool(config.get('userload_verbose',False))
+userload_verbose = bool(config.get('userload_verbose',False))
+
+testsets = [
+        { 'userload_nfiles': 5,
+         'userload_nworkers': 10,
+         'userload_verbose': False
+        }
+]
+
 
 hash_filemask = 'hash_{md5}'
 
@@ -32,9 +40,9 @@ def uploader(step):
     logger.info('Repository has %d files', k0)
 
     step(2,'Add files')
-    logger.info('Adding %d files',nfiles)
-    for i in range(nfiles):
-        if verbose: logger.info('Prepare file %d',i)
+    logger.info('Adding %d files',userload_nfiles)
+    for i in range(userload_nfiles):
+        if userload_verbose: logger.info('Prepare file %d',i)
         create_hashfile(d,filemask=hash_filemask)
     run_ocsync(d)
     logger.info('Step 2 ends here...')
@@ -62,10 +70,10 @@ def downloader(step):
 
     (ntot,nana,nbad) = analyse_hashfiles(d,filemask=hash_filemask)
 
-    etot = k0 + nfiles
+    etot = k0 + userload_nfiles
     error_check(etot == ntot,'Missing files (files at start %d, expected %d, found %d)'%(k0,etot,ntot))
 
 
-for i in range(nworkers):
+for i in range(userload_nworkers):
     add_worker(downloader,name="downloader%02d"%(i+1))
 

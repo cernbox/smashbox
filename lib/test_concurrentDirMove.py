@@ -8,9 +8,9 @@ all added files are kept on the server and are found in the final directory.
 
 
 
-nfiles = int(config.get('concurrentMoveDir_nfiles',100))
-filesize = int(config.get('concurrentMoveDir_filesize',10))
-delaySeconds = int(config.get('concurrentMoveDir_delaySeconds',3)) # if delaySeconds > 0 then remover waits; else the adder waits;
+concurrentMoveDir_nfiles = int(config.get('concurrentMoveDir_nfiles',100))
+concurrentMoveDir_filesize = int(config.get('concurrentMoveDir_filesize',10))
+concurrentMoveDir_delaySeconds = int(config.get('concurrentMoveDir_delaySeconds',3)) # if concurrentMoveDir_delaySeconds > 0 then remover waits; else the adder waits;
 
 from smashbox.utilities import *
 
@@ -69,12 +69,12 @@ def adder(step):
     step(3,'locally create content in the subdirectory')
     d2 = os.path.join(d,'subdir')
 
-    for i in range(nfiles):
-        create_hashfile(d2, size=filesize) #createfile_zero(os.path.join(d2,"test.%02d"%i),count=filesize, bs=1000)
+    for i in range(concurrentMoveDir_nfiles):
+        create_hashfile(d2, size=concurrentMoveDir_filesize) #createfile_zero(os.path.join(d2,"test.%02d"%i),count=concurrentMoveDir_filesize, bs=1000)
 
     step(4,'sync the added files in parallel')
-    if delaySeconds<0:
-        sleep(-delaySeconds)
+    if concurrentMoveDir_delaySeconds<0:
+        sleep(-concurrentMoveDir_delaySeconds)
     run_ocsync(d,n=2)
 
     step(5,'final check')
@@ -94,8 +94,8 @@ def mover(step):
     os.rename(s1,s2)
 
     step(4,'sync the subdir2 in parallel')
-    if delaySeconds>0:
-        sleep(delaySeconds)
+    if concurrentMoveDir_delaySeconds>0:
+        sleep(concurrentMoveDir_delaySeconds)
     run_ocsync(d)
 
     step(5,'final check')
@@ -123,7 +123,7 @@ def final_check(d):
     all_files,analysed_files,bad_files = analyse_hashfiles(d2)
 
     error_check(bad_files == 0,'%s corrupted files in %s'%(bad_files,d2))
-    error_check(analysed_files == nfiles,"not all files are present (%d/%d)"%(nfiles,analysed_files)) # FIXME: well, there may be other files - we don't check that yet
+    error_check(analysed_files == concurrentMoveDir_nfiles,"not all files are present (%d/%d)"%(concurrentMoveDir_nfiles,analysed_files)) # FIXME: well, there may be other files - we don't check that yet
 
 
     #runcmd('find %s'%d)

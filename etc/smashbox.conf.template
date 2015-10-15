@@ -9,6 +9,19 @@
 # this template should work without changes if you are running your tests directly on the owncloud application server
 #
 
+#saves log to the result json only if test failed - ommits keep_logs=False. If stored remotely, deletes log from directory
+keep_log_failed=True 
+
+#saves log to the result json - if False and stored remotely, deletes logs from directory and does not save it to json
+keep_logs=False 
+
+#will delete all the temporarly created files
+keep_test_rundir=False 
+
+#define remote storage for json files e.g. >> store_results_remotely="http://localhost/smashbox.php"
+store_results_remotely=None 
+remote_storage_password=""
+
 # this is the top directory where all local working files are kept (test working direcotires, test logs, test data, temporary filesets, ..)
 smashdir = "~/smashdir"
 
@@ -59,6 +72,9 @@ oc_server_shell_cmd = ""
 # Data directory on the owncloud server.
 # 
 oc_server_datadirectory = os.path.join('/var/www/html',oc_root, 'data')
+
+#sets the place of the temporary result file
+testresnm = os.path.join(smashdir,'test_results.json')
 
 # a path to server side tools (create_user.php, ...)  
 #

@@ -32,18 +32,19 @@ def main():
    import datetime
    import smashbox.script
    import smashbox.no_engine
-
+   from smashbox.utilities import  oc_webdav_url,check_url, time_now, get_data_from_json, rm_file_dir, finish_test
    parser=smashbox.script.arg_parser(description='Run the tests and smash the box')
 
    parser.add_argument('tests', metavar='test', type=str, nargs='*',
                       help='single test (file) or test collection (directory)')
 
    parser.add_argument('--keep-state', dest="keep_state",action="store_true", help='incremental test on top of existing files: keep current state of the account both locally and on the server')
-   parser.add_argument('--keep-going',dest="keep_going",action="store_true",default=False,help='do not abort the execution on the first failed testcase')
+   parser.add_argument('--stop-going',dest="stop_going",action="store_false",default=True,help='abort the execution on the first failed testcase')
    parser.add_argument('--all-testsets', '-a', dest="all_testsets", action="store_true", help='run all testsets defined within each test script file')
    parser.add_argument('--testset', '-t', dest="testset", action="store", default=None, type=int, help='run just one testset specified by index, starting from 0')
    parser.add_argument('--loop', '-l', dest="loop", action="store", default=1, type=int, help='number of times a test command should be executed')
-
+   parser.add_argument('--results-to', dest="results_to", action="store", default="runid", type=str, help='decide where to append the new results. Specify unique name of file or leave blank and create new file with unique runid')
+   parser.add_argument('--check-connection', dest="check_connection", action="store_true", help='used only to check the configuration')
    args = parser.parse_args()
 
    config = smashbox.script.configure(args.options,args.configs)
@@ -105,7 +106,7 @@ def main():
       config.rundir_reset_procedure = 'keep'
 
    if not config.runid:
-      config.runid = datetime.datetime.now().strftime("%y%m%d-%H%M%S")
+      config.runid = time_now().strftime("%y%m%d-%H%M%S")
 
    config.smashdir = os.path.expanduser(config.smashdir)
 
@@ -120,16 +121,16 @@ def main():
 
    # relative paths are resolved wrt to <top_smash>
    # absolute paths are left as-is
-   config.oc_server_tools_path = os.path.join(top_smash,config.oc_server_tools_path)
+   #config.oc_server_tools_path = os.path.join(top_smash,config.oc_server_tools_path)
    config.oc_sync_cmd = os.path.join(top_smash,config.oc_sync_cmd)
 
    import string
 
-   try:
-      config.oc_server_shell_cmd = string.Template(config.oc_server_shell_cmd).substitute({'oc_server':config.oc_server})
-   except ValueError,x:
-      logger.critical('Malformed options oc_server_shell_cmd: %s %s'%(repr(config.oc_server_shell_cmd),repr(x)))
-      sys.exit(1)
+   #try:
+   #   config.oc_server_shell_cmd = string.Template(config.oc_server_shell_cmd).substitute({'oc_server':config.oc_server})
+   #except ValueError,x:
+   #   logger.critical('Malformed options oc_server_shell_cmd: %s %s'%(repr(config.oc_server_shell_cmd),repr(x)))
+   #   sys.exit(1)
 
 
    try:
@@ -159,7 +160,7 @@ def main():
        assert(p.returncode is not None)
 
        if p.returncode != 0:
-          if args.keep_going:
+          if args.stop_going:
              logger.error('Non-zero exit code (%s)'%p.returncode)
              global_exitcode_error = True
           else:
@@ -167,13 +168,18 @@ def main():
              sys.exit(p.returncode)
           
 
-   from smashbox.utilities import  oc_webdav_url
 
    log_quiet('runid: %s',config.runid) # log_quiet
-   log_quiet('URL: %s',oc_webdav_url(hide_password=True))  # log_quiet
-   
+   log_quiet('URL: --curl_opts %s --user %s --password %s, %s'%oc_webdav_url(hide_password=True))  # log_quiet
    user_defined_oc_account_name = config.oc_account_name
-
+   
+   #check if oc_root is correct, and try to correct it using redirect response
+   check_url_result = check_url()
+   rm_file_dir(config.testresnm)
+   log_quiet('URL Check: %s',check_url_result) # log_quiet
+   if args.check_connection:
+        sys.exit(1)              
+   	      
    for t in tests:
 
       workdir = None
@@ -200,42 +206,64 @@ def main():
 
       if config.oc_account_runid_enabled:
          config.oc_account_name += '-'+str(config.runid)
+        
+      
 
-
-      def run_test(ts,i=0):
+      def run_test(ts,i=0,j=1, custom=None):
+         from smashbox.utilities import append_to_json_file
          if ts:
             for opt,val in zip(ts.keys(),ts.values()):
                setattr(config,opt,val)
-
+         elif custom!=None:
+             ts = {}
+             testsets = custom.testsets[0]
+             if testsets!=None:
+                 for key in testsets.keys():
+                     val = getattr(custom,key)
+                     ts.update( { key : val } )
+             else:
+                 ts = None
          log_quiet('running %s in %s as %s testset #%d %s',t,config.rundir,config.oc_account_name,i,repr(ts)) # log_quiet
+         #add scenario to json
+         dict = { "scenario": ts,
+                 "scenarioid": i,
+                 "results": {},
+                 "loopid": j,
+                 "timeid": time_now().strftime("%y%m%d-%H%M%S")
+         }
+         append_to_json_file(dict,str(os.path.abspath(t)))  
+         
          if not args.dry_run:
+             #run the test
             run_multiprocessing_engine(config,os.path.abspath(t))
 
       for j in range(1,args.loop+1):
          log_quiet ("Running iteration %d" % j)
+         smashbox.no_engine.testsets=[None]
+         execfile(os.path.abspath(t),smashbox.no_engine.__dict__)
          if args.all_testsets or args.testset is not None:
-            smashbox.no_engine.testsets=[None]
-            execfile(os.path.abspath(t),smashbox.no_engine.__dict__)
-
             if args.all_testsets:
                for i,ts in enumerate(smashbox.no_engine.testsets):
                   set_rundir_name(t, config.runid, j, i)
-                  run_test(ts,i)
+                  run_test(ts,i,j)
             else:
                set_rundir_name(t, config.runid, j)
-               run_test(smashbox.no_engine.testsets[args.testset],args.testset)
+               run_test(smashbox.no_engine.testsets[args.testset],args.testset,j)
          else:
             set_rundir_name(t, config.runid, j)
-            run_test(None)
-
-            
-
+            run_test(None, j=j, custom=smashbox.no_engine)
+     
+   log_quiet ("THE END")
+   finish_log = finish_test(args.results_to)
+   for x in range(0, len(finish_log)):
+       log_quiet (finish_log[x])
+   
    if args.dry_run:
       log_quiet('*** DRY RUN ***')
 
    if global_exitcode_error:
       sys.exit(global_exitcode_error)
-
+   
 if __name__ == '__main__':
    main()
 

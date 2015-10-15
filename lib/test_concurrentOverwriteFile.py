@@ -1,4 +1,3 @@
-
 __doc__ = """ Concurrently upload the same large file by two sync clients. It may ne necessary to run mulitple times. In owncloud 5.0.10 this testcase triggers a race condition which is reported in the following way:
 
 2013-11-13 15:54:23,039 - INFO - checker - shared w0d1 af27141daa272ef2285695fe8e709d9f
@@ -19,6 +18,8 @@ import glob
 
 from smashbox.utilities import * 
 from smashbox.utilities import reflection
+
+testsets = [ None ]
 
 @add_worker
 def worker0(step):
@@ -123,7 +124,6 @@ def checker(step):
     # print the status
     logger.info('final output %s',d)
     logger.info('content as reported by webdav')
-    #runcmd('curl -s -k -XPROPFIND %s | xmllint --format -'%oc_webdav_url()) #FIXME: no request body, unsupported by EOS
 
     #DISABLED FOR NOW
     #list_versions_on_server('test.BIG')

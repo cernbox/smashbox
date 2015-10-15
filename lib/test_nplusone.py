@@ -3,17 +3,17 @@ import time
 import tempfile
 
 
-__doc__ = """ Add nfiles to a directory and check consistency.
+__doc__ = """ Add nplusone_nfiles to a directory and check consistency.
 """
 
 from smashbox.utilities import *
 from smashbox.utilities.hash_files import *
 
-nfiles = int(config.get('nplusone_nfiles',10))
-filesize = config.get('nplusone_filesize',1000)
+nplusone_nfiles = int(config.get('nplusone_nfiles',10))
+nplusone_filesize = config.get('nplusone_filesize',1000)
 
-if type(filesize) is type(''):
-    filesize = eval(filesize)
+if type(nplusone_filesize) is type(''):
+    nplusone_filesize = eval(nplusone_filesize)
 
 testsets = [
         { 'nplusone_filesize': 1000, 
@@ -52,10 +52,10 @@ def worker0(step):
     run_ocsync(d)
     k0 = count_files(d)
 
-    step(2,'Add %s files and check if we still have k1+nfiles after resync'%nfiles)
+    step(2,'Add %s files and check if we still have k1+nplusone_nfiles after resync'%nplusone_nfiles)
 
-    for i in range(nfiles):
-        create_hashfile(d,size=filesize)
+    for i in range(nplusone_nfiles):
+        create_hashfile(d,size=nplusone_filesize)
 
     run_ocsync(d)
 
@@ -63,7 +63,7 @@ def worker0(step):
     
     k1 = count_files(d)
 
-    error_check(k1-k0==nfiles,'Expecting to have %d files more: see k1=%d k0=%d'%(nfiles,k1,k0))
+    error_check(k1-k0==nplusone_nfiles,'Expecting to have %d files more: see k1=%d k0=%d'%(nplusone_nfiles,k1,k0))
 
     fatal_check(ncorrupt==0, 'Corrupted files (%s) found'%ncorrupt)
 
@@ -83,7 +83,7 @@ def worker1(step):
     ncorrupt = analyse_hashfiles(d)[2]
     k1 = count_files(d)
 
-    error_check(k1-k0==nfiles,'Expecting to have %d files more: see k1=%d k0=%d'%(nfiles,k1,k0))
+    error_check(k1-k0==nplusone_nfiles,'Expecting to have %d files more: see k1=%d k0=%d'%(nplusone_nfiles,k1,k0))
 
     fatal_check(ncorrupt==0, 'Corrupted files (%s) found'%ncorrupt)
 

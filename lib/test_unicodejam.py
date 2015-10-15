@@ -9,8 +9,13 @@ __doc__ = """ Add 1 (n) files to a directory (1 client) and check consistency ac
 from smashbox.utilities import *
 from smashbox.utilities.hash_files import *
 
-nfiles = 10
-
+nfiles = int(config.get('nfiles',10))
+testsets = [
+        { 'nfiles': 5
+        }, 
+        { 'nfiles': 10
+        }
+]
 def removeunicodejam(localdir):
     import glob
     fl = glob.glob(localdir+os.sep+'*')
@@ -128,8 +133,7 @@ def worker0(step):
 
     (ngood,nbad) = checkunicodejam(d)
 
-    error_check(ngood==nfiles,'Not all files are OK! good=%d, bad=%d, expected=%d'%(ngood,nbad,nfiles))
-    error_check(nbad==0,'After synch corrupted files found good=%d, bad%d, expected=%d'%(ngood,nbad,nfiles))
+    error_check(ngood==nfiles,'After synch missing or corrupted files found: good=%d, bad=%d, expected=%d'%(ngood,nbad,nfiles))
 
     if ngood==nfiles and nbad==0: logger.info('SUCCESS: %d files found',ngood)
 
@@ -150,8 +154,7 @@ def worker1(step):
 
     (ngood,nbad) = checkunicodejam(d)
 
-    error_check(ngood==nfiles,'Not all files are OK! good=%d, bad=%d, expected=%d'%(ngood,nbad,nfiles))
-    error_check(nbad==0,'After synch corrupted files found: good=%d, bad=%d, expected=%d'%(ngood,nbad,nfiles))
+    error_check(ngood==nfiles,'After synch missing or corrupted files found: good=%d, bad=%d, expected=%d'%(ngood,nbad,nfiles))
 
     if ngood==nfiles and nbad==0: logger.info('SUCCESS: %d files found',ngood)
 
