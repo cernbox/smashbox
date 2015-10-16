@@ -16,13 +16,35 @@ def OWNCLOUD_CHUNK_SIZE(factor=1):
 ######## TEST SETUP AND PREPARATION
 
 def setup_test():
+    """ Setup hooks run before any worker kicks-in. 
+    This is run under the name of the "supervisor" worker.
+
+    The behaviour of these hooks is entirely controlled by config
+    options. It should be possible to disable optional hooks by
+    configuration.
+
+    If exception is raised then the testcase execution is aborted and smashbox terminates with non-zero exit code,
+
+    """
     reset_owncloud_account(num_test_users=config.oc_number_test_users)
     reset_rundir()
     reset_server_log_file()
+    
 
 def finalize_test():
+    """ Finalize hooks run after last worker terminated.
+    This is run under the name of the "supervisor" worker.
+
+    The behaviour of these hooks is entirely controlled by config
+    options. It should be possible to disable optional hooks by
+    configuration.
+    
+    If exception is raised then smashbox terminates with non-zero exit code,
+    """
     d = make_workdir()
     scrape_log_file(d)
+
+######### HELPERS
 
 def reset_owncloud_account(reset_procedure=None, num_test_users=None):
     """ 
