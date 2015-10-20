@@ -403,13 +403,16 @@ Response body example:
 Explanation of the `PROPFIND` result attributes:
 
 * `oc:id`: FileID of file or directory
-* `oc:permissions`: Permissions of the file or directory
+* `oc:permissions`: Permissions of the file or directory (see: https://github.com/owncloud/client/blob/master/doc/architecture.rst#server-side--permissions)
+* `oc:size`: Size in bytes of file or directory (recursive size of the directory tree)
 * `oc:getetag`: ETag 
 * `oc:downloadURL`: Direct download URL (extension)
 * `oc:dDC`: Direct download cookie (extension)
 * `d:resourcetype`: either sub element `collection` or empty for files
 * `d:getlastmodified`: Last modified date of the resource
 * `d:getcontentlength`: size in bytes
+
+More details on custom webdav properties : https://github.com/owncloud/client/blob/master/doc/architecture.rst#custom-webdav-properties
 
     
 ### Create directory
