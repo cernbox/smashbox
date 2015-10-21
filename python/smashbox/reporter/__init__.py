@@ -68,7 +68,7 @@ def check_owncloudcmd(config):
     process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     process.wait()
     #check if owncloudcmd is correct or if path to owncloudcmd is not correct
-    cmd = config.oc_sync_cmd+' '+'tests'+' '+oc_webdav_url('owncloud',remote_folder='', user_num=None)
+    cmd = config.oc_sync_cmd+' '+'tests'+' '+oc_webdav_url('owncloud',remote_folder='test', user_num=None)
     process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     stdout,stderr = process.communicate()
     if((stderr).find("not found") != -1):
@@ -83,11 +83,11 @@ def curl_check_url(config):
     import subprocess
     from smashbox.utilities import  oc_webdav_url
     #create oc_server_folder 
-    cmd = 'curl -k %s -X MKCOL %s %s'%(config.get('curl_opts',''),oc_webdav_url(remote_folder='', user_num=None),"")
+    cmd = 'curl -k %s -X MKCOL %s %s'%(config.get('curl_opts',''),oc_webdav_url(remote_folder='test', user_num=None),"")
     process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     process.wait()
     #curl the server 
-    cmd = 'curl -s -k %s -XPROPFIND %s'%(config.get('curl_opts',''),oc_webdav_url(remote_folder='', user_num=None))
+    cmd = 'curl -s -k %s -XPROPFIND %s'%(config.get('curl_opts',''),oc_webdav_url(remote_folder='test', user_num=None))
     process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     stdout,stderr = process.communicate()
     import xml.etree.ElementTree as ET
