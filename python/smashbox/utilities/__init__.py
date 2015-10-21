@@ -243,7 +243,12 @@ def oc_webdav_url(protocol='http',remote_folder="",user_num=None,webdav_endpoint
         password = "***"
     else:
         password = config.oc_account_password
-
+        
+    import urllib    
+    username = urllib.quote(username.encode("utf-8"))
+    password = urllib.quote(password.encode("utf-8"))   
+    oc_server = urllib.quote((config.oc_server).encode("utf-8"))  
+    
     return protocol + '://' + username + ':' + password + '@' + config.oc_server + '/' + remote_path
 
 
