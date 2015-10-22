@@ -81,7 +81,6 @@ class _smash_:
            import time
            tmp_name = os.path.join(self._dir,'tmp.%s.%s._attr_%s'%(os.getpid(),time.time(),key))
            dest_name = os.path.join(self._dir,'_attr_'+key)
-                           
            pickle.dump(val,file(tmp_name,'w'))
 
            import shutil
@@ -89,6 +88,7 @@ class _smash_:
 
         def keys(self):
            import glob
+           self._makedir()
            attrs = [os.path.basename(a)[len('_attr_'):] for a in glob.glob(os.path.join(self._dir,'_attr_*'))]
            return attrs
 
@@ -105,6 +105,7 @@ class _smash_:
 
     @staticmethod
     def supervisor(steps):
+
         import time
         #print "SU",steps
         #print 'SU',[s for s in steps]
@@ -124,6 +125,8 @@ class _smash_:
             #print "supervisor step completed:",supervisor_step.value,steps
 
             _smash_.supervisor_step.value += 1
+
+        
 
         if _smash_.DEBUG:
             log('stop',_smash_.supervisor_step.value,_smash_.steps)
@@ -181,6 +184,9 @@ class _smash_:
         """
         from multiprocessing import Process, Manager
 
+        import smashbox.utilities
+        smashbox.utilities.setup_test()        
+
         manager = Manager()
 
         _smash_.shared_object = _smash_.SmashSharedObject(os.path.join(config.rundir,'_shared_objects'))
@@ -207,6 +213,8 @@ class _smash_:
 
         for p in _smash_.all_procs:
             p.join()
+
+        smashbox.utilities.finalize_test()
 
         for p in _smash_.all_procs:
            if p.exitcode != 0:
