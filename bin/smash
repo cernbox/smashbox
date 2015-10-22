@@ -149,14 +149,19 @@ def main():
       logger.warning("No tests specified to run...")
       sys.exit(1)
 
-   def run_multiprocessing_engine(config,t):
+   def run_multiprocessing_engine(config,t,reporter):
        global global_exitcode_error
        import subprocess, pickle
+       t0=datetime.datetime.now()
        cmd = ['python2',os.path.join(os.path.dirname(os.path.dirname(__file__)),'python/smashbox/multiprocessing_engine.py'), t, pickle.dumps(config)]
        p = subprocess.Popen(cmd)
        p.communicate()
-       
+       t1=datetime.datetime.now()
+       log_quiet("Elapsed time: %ss (%s)",(t1-t0).seconds,str(t1-t0))
+
        assert(p.returncode is not None)
+
+       reporter.testcase_stop(p.returncode)
 
        if p.returncode != 0:
           if args.keep_going:
@@ -173,6 +178,11 @@ def main():
    log_quiet('URL: %s',oc_webdav_url(hide_password=True))  # log_quiet
    
    user_defined_oc_account_name = config.oc_account_name
+
+   # report persistent information
+   import smashbox.reporter
+   reporter = smashbox.reporter.Reporter()
+   reporter.smashbox_start(args,config)
 
    for t in tests:
 
@@ -202,39 +212,56 @@ def main():
          config.oc_account_name += '-'+str(config.runid)
 
 
-      def run_test(ts,i=0):
-         if ts:
+      def run_test(t,j,i):
+         set_rundir_name(t, config.runid, j, i)
+         
+         if i is None:
+            ts = None
+            log_quiet('running %s in %s as %s default',t,config.rundir,config.oc_account_name) # log_quiet
+         else:
+            ts = smashbox.no_engine.testsets[i]
             for opt,val in zip(ts.keys(),ts.values()):
                setattr(config,opt,val)
+         
+            log_quiet('running %s in %s as %s testset #%s %s',t,config.rundir,config.oc_account_name,i,repr(ts)) # log_quiet
 
-         log_quiet('running %s in %s as %s testset #%d %s',t,config.rundir,config.oc_account_name,i,repr(ts)) # log_quiet
+         reporter.testcase_start(barename(t),j,i,smashbox.no_engine)
+
          if not args.dry_run:
-            run_multiprocessing_engine(config,os.path.abspath(t))
+            run_multiprocessing_engine(config,os.path.abspath(t),reporter)
+
+      # get introspection information from the test-case itself: all
+      # symbols defined by the test-case are loaded into the namespace
+      # object (no_engine)
+      
+      smashbox.no_engine.testsets=[]
+      execfile(os.path.abspath(t),smashbox.no_engine.__dict__)
+
+      # basic verification
+      if args.testset and args.testset>=len(smashbox.no_engine.testsets):
+         logger.critical("Wrong testset specification: %d index out of range for %s",args.testset,barename(t))
+         sys.exit(1)
 
       for j in range(1,args.loop+1):
          log_quiet ("Running iteration %d" % j)
-         if args.all_testsets or args.testset is not None:
-            smashbox.no_engine.testsets=[None]
-            execfile(os.path.abspath(t),smashbox.no_engine.__dict__)
 
-            if args.all_testsets:
-               for i,ts in enumerate(smashbox.no_engine.testsets):
-                  set_rundir_name(t, config.runid, j, i)
-                  run_test(ts,i)
-            else:
-               set_rundir_name(t, config.runid, j)
-               run_test(smashbox.no_engine.testsets[args.testset],args.testset)
+         if not smashbox.no_engine.testsets:
+            run_test(t,j,None)
          else:
-            set_rundir_name(t, config.runid, j)
-            run_test(None)
-
-            
+            if args.all_testsets:
+               for i in range(len(smashbox.no_engine.testsets)):
+                  run_test(t,j,i)
+            else:
+               i = args.testset # this may be None if no testset indicated
+               run_test(t,j,i)
 
    if args.dry_run:
       log_quiet('*** DRY RUN ***')
 
    if global_exitcode_error:
       sys.exit(global_exitcode_error)
+
+   # FIXME: add finally clause with reporter.smashbox_stop()
 
 if __name__ == '__main__':
    main()
