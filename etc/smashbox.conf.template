@@ -124,6 +124,13 @@ del os
 # 
 pycurl_verbose = None
 
-#
 # scp port to be used in scp commands, used primarily when copying over the server log file
-scp_port=22
+scp_port = 22
+
+# user that can r+w the owncloud.log file (needs to be configured for passwordless login)
+oc_server_log_user = "www-data"
+
+#
+# Reset the server log file and verify that no exceptions and other known errors have been logged
+#
+oc_check_server_log = True
