@@ -390,10 +390,15 @@ def mv(a,b):
 
 
 def list_files(path,recursive=False):
-    if recursive:
-        runcmd('ls -lR --full-time %s'%path)
+    if platform.system() == 'Darwin':
+        opts = ""
     else:
-        runcmd('ls -lh --full-time %s'%path)
+        opts = "--full-time"
+
+    if recursive:
+        runcmd('ls -lR %s %s'%(opts,path))
+    else:
+        runcmd('ls -lh %s %s'%(opts,path))
 
 
 # ## DATA FILES AND VERSIONS

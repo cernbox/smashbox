@@ -16,7 +16,7 @@ def helloA(step):
     step(1)
 
     logger.info("My A=%d",A)
-
+    list_files('.')
 
 @add_worker
 def helloB(step):
