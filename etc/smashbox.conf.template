@@ -133,4 +133,4 @@ oc_server_log_user = "www-data"
 #
 # Reset the server log file and verify that no exceptions and other known errors have been logged
 #
-oc_check_server_log = True
+oc_check_server_log = False
