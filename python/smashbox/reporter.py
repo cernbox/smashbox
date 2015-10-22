@@ -3,7 +3,7 @@ class Reporter:
     """
 
     def __init__(self):
-        self.DEMO=True
+        self.DEMO=False
 
     def smashbox_start(self,args,config):
         """
