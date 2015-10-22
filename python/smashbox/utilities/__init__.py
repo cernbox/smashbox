@@ -571,7 +571,8 @@ def scrape_log_file(d):
         except AttributeError:  # allow this option not to be defined at all
             log_user = 'root'
         cmd = 'scp -P %d %s@%s:%s/owncloud.log %s/.' % (config.scp_port, log_user, config.oc_server, config.oc_server_datadirectory, d)
-    runcmd(cmd)
+    rtn_code,stdout,stderr = runcmd(cmd)
+    error_check(rtn_code > 0, 'Could not copy the log file from the server, command returned %s' % rtn_code)
 
     # search logfile for string (1 == not found; 0 == found):
     cmd = "grep -i \"integrity constraint violation\" %s/owncloud.log" % d
