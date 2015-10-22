@@ -389,12 +389,6 @@ def mv(a,b):
     runcmd('mv %s %s'%(a,b))
 
 
-def list_files(path,recursive=False):
-    if recursive:
-        runcmd('ls -lR --full-time %s'%path)
-    else:
-        runcmd('ls -lh --full-time %s'%path)
-
 
 # ## DATA FILES AND VERSIONS
 
@@ -454,6 +448,13 @@ if platform.system() == 'Darwin':
         except IndexError:
             return "NO_CHECKSUM_ERROR"
 
+    def list_files(path,recursive=False):
+        if recursive:
+            runcmd('ls -lR %s'%path)
+        else:
+            runcmd('ls -lh %s'%path)
+
+
 else:  # linux
 
     def md5sum(fn):
@@ -463,6 +464,12 @@ else:  # linux
             return out.split()[0]
         except IndexError:
             return "NO_CHECKSUM_ERROR"
+
+    def list_files(path,recursive=False):
+        if recursive:
+            runcmd('ls -lR --full-time %s'%path)
+        else:
+            runcmd('ls -lh --full-time %s'%path)
 
 
 def hexdump(fn):
@@ -750,4 +757,3 @@ def expect_does_not_exist(fn):
     """ Checks that a file does not exist, as expected
     """
     error_check(not os.path.exists(fn), "File %s exists but should not" % fn)
-
