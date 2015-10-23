@@ -1,3 +1,4 @@
+from owncloud import HTTPResponseError, OCSResponseError
 from smashbox.script import config
 
 import os.path
@@ -37,6 +38,20 @@ def setup_test():
         exit(1)
 
     logger.info('Client version: "%s"', stdout)
+
+    oc_api = get_oc_api()
+
+    try:
+        oc_api.login(config.oc_admin_user, config.oc_admin_password)
+    except HTTPResponseError:
+        error_check(False, 'Could not login with admin account "%s"' % config.oc_admin_user)
+        exit(1)
+
+    try:
+        oc_api.get_apps()
+    except OCSResponseError:
+        error_check(False, 'Provisioning app is not enabled')
+        exit(1)
 
     reset_owncloud_account(num_test_users=config.oc_number_test_users)
     reset_rundir()
