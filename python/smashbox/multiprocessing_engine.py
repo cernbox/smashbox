@@ -174,7 +174,6 @@ class _smash_:
                 logger.error('%s error(s) reported',len(smashbox.utilities.reported_errors))   
                 import sys
                 sys.exit(2)
-                 
 
     @staticmethod
     def run():
@@ -214,7 +213,6 @@ class _smash_:
 
         _smash_.supervisor(_smash_.steps)
         
-        import json
         for p in _smash_.all_procs:
             p.join()
         
