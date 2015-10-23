@@ -157,7 +157,7 @@ def main():
        p = subprocess.Popen(cmd)
        p.communicate()
        t1=datetime.datetime.now()
-       log_quiet("Elapsed time: %ss (%s)",(t1-t0).seconds,str())
+       log_quiet("Elapsed time: %ss (%s)",(t1-t0).seconds,str(t1-t0))
 
        assert(p.returncode is not None)
 
