@@ -151,10 +151,8 @@ def check_owncloudcmd(config):
     remove_tree('test')
     
 def curl_check_url(config):
-    import subprocess
     from smashbox.utilities import  oc_webdav_url
-    import protocol
-    import smashbox.curl,os
+    import smashbox.curl
     
     url = oc_webdav_url(remote_folder='', user_num=None)
     query="""<?xml version="1.0" ?>
