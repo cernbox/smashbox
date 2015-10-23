@@ -72,8 +72,8 @@ class Reporter:
         }
         self.data = append_to_json(dict,barename,self.data,self.config)
         
-        #curl_check_url(self.config)
-        #check_owncloudcmd(self.config)
+        curl_check_url(self.config)
+        check_owncloudcmd(self.config)
         
     def testcase_stop(self):
         if self.LOG:
@@ -137,70 +137,57 @@ def log_results(result,resultfile,config,test_name):
             
 def check_owncloudcmd(config):
     import subprocess
-    from smashbox.utilities import  oc_webdav_url
+    from smashbox.utilities import  oc_webdav_url,mkdir,remove_tree
     #create tmp directory localy
-    cmd = 'mkdir -p test'
-    process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    process.wait()
+    mkdir('test')
     #check if owncloudcmd is correct or if path to owncloudcmd is not correct
     cmd = config.oc_sync_cmd+' '+'tests'+' '+oc_webdav_url('owncloud',remote_folder='test', user_num=None)
     process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     stdout,stderr = process.communicate()
     if((stderr).find("not found") != -1):
-        print stderr
+        logger.debug(stderr)
         sys.exit()
     #delete tmp directory localy
-    cmd = 'rm -rf test'
-    process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    process.wait()
+    remove_tree('test')
     
 def curl_check_url(config):
     import subprocess
     from smashbox.utilities import  oc_webdav_url
-    #create oc_server_folder 
-    cmd = 'curl -k %s -X MKCOL %s %s'%(config.get('curl_opts',''),oc_webdav_url(remote_folder='test', user_num=None),"")
-    process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    process.wait()
-    #curl the server 
-    cmd = 'curl -s -k %s -XPROPFIND %s'%(config.get('curl_opts',''),oc_webdav_url(remote_folder='test', user_num=None))
-    process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    stdout,stderr = process.communicate()
-    import xml.etree.ElementTree as ET
+    import protocol
+    import smashbox.curl,os
+    
+    url = oc_webdav_url(remote_folder='', user_num=None)
+    query="""<?xml version="1.0" ?>
+<d:propfind xmlns:d="DAV:">
+  <d:prop>
+  </d:prop>
+</d:propfind>
+"""
+    client = smashbox.curl.Client()
+    
     exit_flag = False
-    if len(stdout) and stderr=='':
-        #stdout found, no errors
-        try:
-            root = ET.fromstring(stdout)
-            for i in range(0, len(root)):
-                child=root[i]
-                if len(child) and i==0 and (child.tag).find("response") != -1:
-                    #standard output of webdav
-                    print "SMASHBOX_CHECK OK: %s"%child[0].text
-                else:
-                    if((child.tag).find("message") != -1):
-                        print "\nSMASHBOX_CHECK WARNING: %s"%child.text
-                        #some server error, print message
-                        exit_flag = True
-                    elif((child.tag).find("exception") != -1):
-                        #some server error, print reason
-                        print "\nSMASHBOX_CHECK WARNING: %s"%child.text
-                        exit_flag = True
-        except Exception, e:
+    try:
+        r = client.PROPFIND(url,query,depth=0,parse_check=False)
+        if r.body_stream.getvalue() == "":
+            print ("\n%s\n\nSMASHBOX_CHECK ERROR: %s, Empty response\nCHECK CONFIGURATION - oc_root, oc_ssl_enabled, oc_server, oc_server_shell_cmd etc.\nCHECK HEADERS e.g. for 302 - Location=%s\n"%(r.headers,r.rc,str(r.headers['Location'])))
             exit_flag = True
-            print e
-            print stdout
-        finally:
-            #exit if needed
-            if(exit_flag):
-                sys.exit()
-                
-    else:
-        #critical error, check the configuration
-        cmd = 'curl -I -s -k %s'%(oc_webdav_url(remote_folder='', user_num=None))
-        process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-        print process.communicate()
-        print "SMASHBOX_CHECK ERROR: "+(stderr)+"\n CHECK CONFIGURATION - oc_root, oc_ssl_enabled, oc_server, oc_server_shell_cmd etc."
-        sys.exit()
+        else:
+            import xml.etree.ElementTree as ET
+            try:
+                root = ET.fromstring(r.body_stream.getvalue())
+                if root.tag.find("error") != -1:
+                    raise Exception
+                else:
+                    print "SMASHBOX_CHECK OK"
+            except:
+                print "SMASHBOX_CHECK ERROR: %s"%r.body_stream.getvalue()  
+                exit_flag = True
+    except Exception, e:
+        exit_flag = True
+        print e
+    finally:
+        if(exit_flag):
+            sys.exit()
         
 def time_now(time_zero=None): 
     import datetime
