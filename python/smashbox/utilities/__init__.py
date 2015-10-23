@@ -26,6 +26,18 @@ def setup_test():
     If exception is raised then the testcase execution is aborted and smashbox terminates with non-zero exit code,
 
     """
+    cmd = config.oc_sync_cmd
+    if cmd[0 - len(' --trust'):] == ' --trust':
+        cmd = cmd[:0 - len(' --trust')]
+    cmd += ' --version'
+    returncode, stdout, stderr = runcmd(cmd, ignore_exitcode=True)  # exitcode of ocsync is not reliable
+
+    if returncode == 127:
+        error_check(False, 'Could not find the client in "%s"' % config.oc_sync_cmd)
+        exit(1)
+
+    logger.info('Client version: "%s"', stdout)
+
     reset_owncloud_account(num_test_users=config.oc_number_test_users)
     reset_rundir()
     reset_server_log_file()
