@@ -209,9 +209,14 @@ def shareeTwo(step):
     step (2, 'Sharee Two creates workdir')
     d = make_workdir()
 
-    procName = reflection.getProcessName()
-    dirName = "%s/%s"%(procName, 'localShareDir')
-    localDir = make_workdir(dirName)
+    # create a folder so we get a naming conflict later when the folder is shared
+    dirName = os.path.join(d,'localShareDir')
+    make_workdir(dirName)
+
+    # Do we want to test the client's conflict resolution or the server's?
+    # Currently we test the server, to test the client comment out the sync below
+    run_ocsync(d,user_num=3)
+    list_files(d)
 
     step (13, 'Sharee two validates share file')
 
@@ -220,25 +225,40 @@ def shareeTwo(step):
 
     sharedFile = os.path.join(d,'TEST_FILE_USER_RESHARE.dat')
     logger.info ('Checking that %s is present in local directory for Sharee Two', sharedFile)
-    error_check(os.path.exists(sharedFile), "File %s should exist" %sharedFile)
+    expect_exists(sharedFile)
 
     step (15, 'Sharee two validates directory re-share')
 
     run_ocsync(d,user_num=3)
     list_files(d)
 
-    sharedFile = os.path.join(d,'localShareDir')
-    logger.info ('Checking that %s is present in local directory for Sharee Two', sharedFile)
-    error_check(os.path.exists(sharedFile), "File %s should exist" %sharedFile)
+    localDir = os.path.join(d,'localShareDir')
+    logger.info ('Checking that local dir %s is still present in local directory for Sharee Two', localDir)
+    expect_exists(localDir)
+
+    localDirFile = os.path.join(d,'localShareDir/TEST_FILE_USER_SHARE.dat')
+    logger.info ('Checking that local dir does not contain the shared file %s for Sharee Two', localDirFile)
+    expect_does_not_exist(localDirFile)
+
+    sharedDir = os.path.join(d, 'localShareDir (2)')
+    logger.info ('Checking that shared dir %s is present in local directory for Sharee Two', sharedDir)
+    expect_exists(sharedDir)
+
+    sharedDirFile = os.path.join(d, 'localShareDir (2)/TEST_FILE_USER_SHARE.dat')
+    logger.info ('Checking that shared dir does contain the shared file %s for Sharee Two', sharedDirFile)
+    expect_exists(sharedDirFile)
 
     step (18, 'Sharee two syncs and validates directory does not exist')
 
     run_ocsync(d,user_num=3)
     list_files(d)
 
-    sharedFile = os.path.join(d,'localShareDir')
-    logger.info ('Checking that %s is not present in sharee local directory', sharedFile)
-    expect_does_not_exist(sharedFile)
+    localDir = os.path.join(d, 'localShareDir')
+    logger.info ('Checking that local directory %s is still present in sharee local directory', localDir)
+    expect_exists(localDir)
+
+    sharedDir = os.path.join(d, 'localShareDir (2)')
+    logger.info ('Checking that %s is not present in sharee local directory', sharedDir)
+    expect_does_not_exist(sharedDir)
 
     step (19, 'Sharee Two final step')
-
