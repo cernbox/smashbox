@@ -53,9 +53,8 @@ def reset_owncloud_account(reset_procedure=None, num_test_users=None):
     if reset_procedure == 'webdav_delete':
         webdav_delete('/') # delete the complete webdav endpoint associated with the remote account
         webdav_delete('/') # FIXME: workaround current bug in EOS (https://savannah.cern.ch/bugs/index.php?104661) 
-
+        webdav_mkcol('/')
     # if create if does not exist (for keep or webdav_delete options)
-    webdav_mkcol('/')
 
 
 def reset_rundir(reset_procedure=None):
@@ -255,6 +254,7 @@ def oc_webdav_url(protocol='http',remote_folder="",user_num=None,webdav_endpoint
 # this is a local variable for each worker that keeps track of the repeat count for the current step
 ocsync_cnt = {}
 
+sync_exec_time_array = []
 
 def run_ocsync(local_folder, remote_folder="", n=None, user_num=None):
     """ Run the ocsync for local_folder against remote_folder (or the main folder on the owncloud account if remote_folder is None).
@@ -276,10 +276,11 @@ def run_ocsync(local_folder, remote_folder="", n=None, user_num=None):
         t0 = datetime.datetime.now()
         cmd = config.oc_sync_cmd+' '+local_folder+' '+oc_webdav_url('owncloud',remote_folder,user_num) + " >> "+config.rundir+"/%s-ocsync.step%02d.cnt%03d.log 2>&1"%(reflection.getProcessName(),current_step,ocsync_cnt[current_step])
         runcmd(cmd, ignore_exitcode=True)  # exitcode of ocsync is not reliable
+        sync_exec_time = str((datetime.datetime.now()-t0))
         logger.info('sync cmd is: %s',cmd)
-        logger.info('sync finished: %s',datetime.datetime.now()-t0)
+        logger.info('sync finished: %s',sync_exec_time)
         ocsync_cnt[current_step]+=1
-
+    sync_exec_time_array.append(sync_exec_time)    
 
 def webdav_propfind_ls(path, user_num=None):
     runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format -'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)))

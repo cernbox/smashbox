@@ -149,19 +149,19 @@ def main():
       logger.warning("No tests specified to run...")
       sys.exit(1)
 
-   def run_multiprocessing_engine(config,t,reporter):
+   def run_multiprocessing_engine(config,t,j,i,test_doc):
        global global_exitcode_error
-       import subprocess, pickle
+       import subprocess, pickle,json
        t0=datetime.datetime.now()
-       cmd = ['python2',os.path.join(os.path.dirname(os.path.dirname(__file__)),'python/smashbox/multiprocessing_engine.py'), t, pickle.dumps(config)]
+       cmd = ['python2',os.path.join(os.path.dirname(os.path.dirname(__file__)),'python/smashbox/multiprocessing_engine.py'), t, pickle.dumps(config),str(j),str(i), str(test_doc)]
        p = subprocess.Popen(cmd)
        p.communicate()
        t1=datetime.datetime.now()
-       log_quiet("Elapsed time: %ss (%s)",(t1-t0).seconds,str(t1-t0))
+       log_quiet("Elapsed time: %ss (%s)",(t1-t0).seconds,str())
 
        assert(p.returncode is not None)
 
-       reporter.testcase_stop(p.returncode)
+       #reporter.testcase_stop(p.returncode)
 
        if p.returncode != 0:
           if args.keep_going:
@@ -178,11 +178,6 @@ def main():
    log_quiet('URL: %s',oc_webdav_url(hide_password=True))  # log_quiet
    
    user_defined_oc_account_name = config.oc_account_name
-
-   # report persistent information
-   import smashbox.reporter
-   reporter = smashbox.reporter.Reporter()
-   reporter.smashbox_start(args,config)
 
    for t in tests:
 
@@ -225,10 +220,8 @@ def main():
          
             log_quiet('running %s in %s as %s testset #%s %s',t,config.rundir,config.oc_account_name,i,repr(ts)) # log_quiet
 
-         reporter.testcase_start(barename(t),j,i,smashbox.no_engine)
-
          if not args.dry_run:
-            run_multiprocessing_engine(config,os.path.abspath(t),reporter)
+            run_multiprocessing_engine(config,os.path.abspath(t),j,i,smashbox.no_engine.__doc__)
 
       # get introspection information from the test-case itself: all
       # symbols defined by the test-case are loaded into the namespace

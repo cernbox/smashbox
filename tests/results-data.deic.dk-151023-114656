@@ -1,0 +1,55 @@
+{
+    "data.deic.dk": {
+        "fileTinkerDownload": [
+            {
+                "scenario": "default", 
+                "scenarioid": "None", 
+                "results": [
+                    {
+                        "worker": "worker0", 
+                        "sync_time": "0:00:14.524000"
+                    }, 
+                    {
+                        "worker": "worker1", 
+                        "sync_time": "0:00:12.228000"
+                    }, 
+                    {
+                        "errors": [
+                            " error_check(md5sum(fn) == md5) failed in tinkerer() [\"/home/piotr/DeIC/smashbox-reporter/lib/test_fileTinkerDownload.py\" at line 68]"
+                        ], 
+                        "worker": "tinkerer", 
+                        "sync_time": "0:00:00.000000"
+                    }
+                ], 
+                "timeid": "151023-114656", 
+                "loopid": "1", 
+                "total_exec_time": "0:00:29.094512"
+            }, 
+            {
+                "timeid": "151023-114725", 
+                "scenario": "default", 
+                "loopid": "2", 
+                "scenarioid": "None", 
+                "results": [
+                    {
+                        "worker": "worker0", 
+                        "sync_time": "0:00:15.529000"
+                    }, 
+                    {
+                        "worker": "worker1", 
+                        "sync_time": "0:00:12.305000"
+                    }, 
+                    {
+                        "errors": [
+                            " error_check(md5sum(fn) == md5) failed in tinkerer() [\"/home/piotr/DeIC/smashbox-reporter/lib/test_fileTinkerDownload.py\" at line 68]"
+                        ], 
+                        "worker": "tinkerer", 
+                        "sync_time": "0:00:00.000000"
+                    }
+                ], 
+                "total_exec_time": "0:00:31.174840"
+            }
+        ]
+    }, 
+    "runid": "151023-114656"
+}

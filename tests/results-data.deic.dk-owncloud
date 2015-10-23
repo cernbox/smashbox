@@ -1,0 +1,240 @@
+{
+    "data.deic.dk": {
+        "nplusone": [
+            {
+                "scenario": {
+                    "nplusone_nfiles": 100, 
+                    "nplusone_filesize": 1000
+                }, 
+                "scenarioid": "0", 
+                "results": [
+                    {
+                        "worker": "worker0", 
+                        "sync_time": "0:00:12.785000"
+                    }, 
+                    {
+                        "worker": "worker1", 
+                        "sync_time": "0:00:04.974000"
+                    }
+                ], 
+                "timeid": "151023-115428", 
+                "loopid": "1", 
+                "total_exec_time": "0:00:38.954328"
+            }, 
+            {
+                "scenario": {
+                    "nplusone_nfiles": 10, 
+                    "nplusone_filesize": 6291456
+                }, 
+                "scenarioid": "1", 
+                "results": [
+                    {
+                        "worker": "worker0", 
+                        "sync_time": "0:00:04.578000"
+                    }, 
+                    {
+                        "worker": "worker1", 
+                        "sync_time": "0:00:02.098000"
+                    }
+                ], 
+                "timeid": "151023-115507", 
+                "loopid": "1", 
+                "total_exec_time": "0:00:10.176879"
+            }, 
+            {
+                "scenario": {
+                    "nplusone_nfiles": 2, 
+                    "nplusone_filesize": 27262976
+                }, 
+                "scenarioid": "2", 
+                "results": [
+                    {
+                        "worker": "worker0", 
+                        "sync_time": "0:00:04.376000"
+                    }, 
+                    {
+                        "worker": "worker1", 
+                        "sync_time": "0:00:01.577000"
+                    }
+                ], 
+                "timeid": "151023-115517", 
+                "loopid": "1", 
+                "total_exec_time": "0:00:08.023682"
+            }, 
+            {
+                "scenario": {
+                    "nplusone_nfiles": 1, 
+                    "nplusone_filesize": 73400320
+                }, 
+                "scenarioid": "3", 
+                "results": [
+                    {
+                        "worker": "worker0", 
+                        "sync_time": "0:00:05.125000"
+                    }, 
+                    {
+                        "worker": "worker1", 
+                        "sync_time": "0:00:01.887000"
+                    }
+                ], 
+                "timeid": "151023-115525", 
+                "loopid": "1", 
+                "total_exec_time": "0:00:08.906437"
+            }, 
+            {
+                "scenario": {
+                    "nplusone_nfiles": 10, 
+                    "nplusone_filesize": [
+                        3.5, 
+                        1.37
+                    ]
+                }, 
+                "scenarioid": "4", 
+                "results": [
+                    {
+                        "worker": "worker0", 
+                        "sync_time": "0:00:02.114000"
+                    }, 
+                    {
+                        "worker": "worker1", 
+                        "sync_time": "0:00:01.043000"
+                    }
+                ], 
+                "timeid": "151023-115534", 
+                "loopid": "1", 
+                "total_exec_time": "0:00:06.617067"
+            }, 
+            {
+                "timeid": "151023-115627", 
+                "scenario": {
+                    "nplusone_nfiles": 100, 
+                    "nplusone_filesize": 1000
+                }, 
+                "loopid": "1", 
+                "scenarioid": "0", 
+                "results": [
+                    {
+                        "worker": "worker0", 
+                        "sync_time": "0:00:13.392000"
+                    }, 
+                    {
+                        "worker": "worker1", 
+                        "sync_time": "0:00:05.011000"
+                    }
+                ], 
+                "total_exec_time": "0:00:38.781332"
+            }
+        ], 
+        "fileTinkerDownload": [
+            {
+                "scenario": {
+                    "fileTinkerDownload_filesize": 300000000, 
+                    "fileTinkerDownload_tinker_wait": 1
+                }, 
+                "scenarioid": "0", 
+                "results": [
+                    {
+                        "worker": "worker0", 
+                        "sync_time": "0:00:14.961000"
+                    }, 
+                    {
+                        "worker": "worker1", 
+                        "sync_time": "0:00:12.329000"
+                    }, 
+                    {
+                        "errors": [
+                            " error_check(md5sum(fn) == md5) failed in tinkerer() [\"/home/piotr/DeIC/smashbox-reporter/lib/test_fileTinkerDownload.py\" at line 68]"
+                        ], 
+                        "worker": "tinkerer", 
+                        "sync_time": "0:00:00.000000"
+                    }
+                ], 
+                "timeid": "151023-115204", 
+                "loopid": "1", 
+                "total_exec_time": "0:00:30.773227"
+            }, 
+            {
+                "scenario": {
+                    "fileTinkerDownload_filesize": 300000000, 
+                    "fileTinkerDownload_tinker_wait": 1
+                }, 
+                "scenarioid": "0", 
+                "results": [
+                    {
+                        "worker": "worker0", 
+                        "sync_time": "0:00:14.190000"
+                    }, 
+                    {
+                        "worker": "worker1", 
+                        "sync_time": "0:00:11.101000"
+                    }, 
+                    {
+                        "errors": [
+                            " error_check(md5sum(fn) == md5) failed in tinkerer() [\"/home/piotr/DeIC/smashbox-reporter/lib/test_fileTinkerDownload.py\" at line 68]"
+                        ], 
+                        "worker": "tinkerer", 
+                        "sync_time": "0:00:00.000000"
+                    }
+                ], 
+                "timeid": "151023-115235", 
+                "loopid": "2", 
+                "total_exec_time": "0:00:28.756346"
+            }
+        ], 
+        "basicSync": [
+            {
+                "scenario": {
+                    "basicSync_filesizeKB": 1, 
+                    "basicSync_rmLocalStateDB": false
+                }, 
+                "scenarioid": "0", 
+                "results": [
+                    {
+                        "worker": "creator", 
+                        "sync_time": "0:00:02.249000"
+                    }, 
+                    {
+                        "worker": "winner"
+                    }, 
+                    {
+                        "worker": "loser"
+                    }, 
+                    {
+                        "worker": "checker", 
+                        "sync_time": "1900-01-01 00:00:00.250157"
+                    }
+                ], 
+                "timeid": "151023-115322", 
+                "loopid": "1", 
+                "total_exec_time": "0:00:11.586448"
+            }, 
+            {
+                "scenario": {
+                    "basicSync_filesizeKB": 1, 
+                    "basicSync_rmLocalStateDB": false
+                }, 
+                "scenarioid": "0", 
+                "results": [
+                    {
+                        "worker": "creator", 
+                        "sync_time": "0:00:02.489000"
+                    }, 
+                    {
+                        "worker": "winner"
+                    }, 
+                    {
+                        "worker": "loser"
+                    }, 
+                    {
+                        "worker": "checker", 
+                        "sync_time": "1900-01-01 00:00:00.256434"
+                    }
+                ], 
+                "timeid": "151023-115334", 
+                "loopid": "2", 
+                "total_exec_time": "0:00:10.943611"
+            }
+        ]
+    }, 
+    "runid": "owncloud"
+}

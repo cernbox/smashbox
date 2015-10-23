@@ -149,9 +149,7 @@ class _smash_:
             logger.info( 'entering new step \n'+sep+'\n'+'(%d) %s:  %s\n'%(i,_smash_.process_name,message.upper())+sep)
 
     @staticmethod
-    def worker_wrap(wi,f,fname):
-        if fname is None:
-            fname = f.__name__
+    def worker_wrap(wi,f,fname,reporter):
         _smash_.process_name=fname
         _smash_.process_number = wi
         def step(i,message=""):
@@ -169,18 +167,20 @@ class _smash_:
             step(_smash_.N_STEPS-1,None) # don't print any message
 
             import smashbox.utilities
+            
+            reporter.append_results((smashbox.utilities.sync_exec_time_array), (smashbox.utilities.reported_errors),fname)
+            
             if smashbox.utilities.reported_errors:
-               logger.error('%s error(s) reported',len(smashbox.utilities.reported_errors))
-               import sys
-               sys.exit(2)
-                  
+                logger.error('%s error(s) reported',len(smashbox.utilities.reported_errors))   
+                import sys
+                sys.exit(2)
+                 
 
     @staticmethod
     def run():
         """ Lunch worker processes and the supervisor loop. Block until all is finished.
         """
         from multiprocessing import Process, Manager
-
         manager = Manager()
 
         _smash_.shared_object = _smash_.SmashSharedObject(os.path.join(config.rundir,'_shared_objects'))
@@ -194,20 +194,33 @@ class _smash_:
         _smash_.process_name = "supervisor"
 
         _smash_.steps = manager.list([0 for x in range(len(_smash_.workers))])
+        
+        #report persistent information
+        import smashbox.reporter
+        reporter = smashbox.reporter.Reporter()
+        reporter.smashbox_start(config)
+        reporter.testcase_start(os.path.basename(_smash_.args.test_target),_smash_.args.loop_i,_smash_.args.testset_i,_smash_.args.test_doc)
 
         # first worker => process number == 0
         for i,f_n in enumerate(_smash_.workers):
             f = f_n[0]
             fname = f_n[1]
-            p = Process(target=_smash_.worker_wrap,args=(i,f,fname))
+            if fname is None:
+                fname = f.__name__
+            reporter.shared_results_manager(manager,fname)
+            p = Process(target=_smash_.worker_wrap,args=(i,f,fname,reporter))
             p.start()
             _smash_.all_procs.append(p)
 
         _smash_.supervisor(_smash_.steps)
-
+        
+        import json
         for p in _smash_.all_procs:
             p.join()
-
+        
+        #finish the reporter
+        reporter.testcase_stop()
+        
         for p in _smash_.all_procs:
            if p.exitcode != 0:
               import sys
@@ -230,7 +243,9 @@ if __name__ == "__main__":
     _smash_.parser = smashbox.compatibility.argparse.ArgumentParser()
     _smash_.parser.add_argument('test_target')
     _smash_.parser.add_argument('config_blob')
-
+    _smash_.parser.add_argument('loop_i')
+    _smash_.parser.add_argument('testset_i')
+    _smash_.parser.add_argument('test_doc')
     _smash_.args = _smash_.parser.parse_args()
 
     # this is OK: config and logger will be visible symbols in the user's test code
@@ -296,7 +311,7 @@ if __name__ == "__main__":
     
     # load test case file directly into the global namespace of this script
     execfile(_smash_.args.test_target)
-
+    
     # start the framework and dispatch workers
     _smash_.run()
 
