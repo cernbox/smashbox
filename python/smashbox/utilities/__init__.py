@@ -80,7 +80,6 @@ def reset_rundir(reset_procedure=None):
         assert(os.path.realpath(config.rundir).startswith(os.path.realpath(config.smashdir)))
         remove_tree(config.rundir)
 
-
 def make_workdir(name=None):
     """ Create a worker directory in the current run directory for the test (by default the name is derived from 
     the worker's name). 
@@ -703,8 +702,7 @@ def expect_does_not_exist(fn):
     """ Checks that a file does not exist, as expected
     """
     error_check(not os.path.exists(fn), "File %s exists but should not" % fn)        
-
-            
+         
 def curl_check_url(config):
     from smashbox.utilities import  oc_webdav_url
     import smashbox.curl, sys
@@ -740,3 +738,5 @@ def curl_check_url(config):
     finally:
         if(exit_flag):
             sys.exit() 
+    
+    
