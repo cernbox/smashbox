@@ -1,40 +1,23 @@
-import sys,os
 
 class Reporter:
     """ Report execution state of smashbox.
     """
 
-    def __init__(self):
+    def __init__(self,name,config):
         self.LOG=True
         self.data = None
         self.shared_result = []
         self.shared_result_i=0
         self.shared_result_j=0
         self.shared_result_workers = {}
+        self.config=config
+        barename=name.replace("test_","")
+        barename=barename.replace(".py","")
+        self.test_name = barename
+        from smashbox.utilities import curl_check_url
+        curl_check_url(config)
         
-    def smashbox_start(self,config):
-        """
-        Smashbox is starting.
-        Arguments:
-         - args: Namespace object with all the options passed when invoking smash executable
-         - config: global configuration object 
-        """
-
-        if self.LOG:
-            print "SMASHBOX_START",config
-            self.config=config
-        self.resultfile = config.smashdir +"/results-"+config.oc_server+"-"+config.runid
-        self.start_date = time_now()    
-    def smashbox_stop(self):
-        """
-        Smashbox is about to stop.
-        """
-
-        if self.LOG:
-            print "SMASHBOX_STOP"
-
-    
-    def testcase_start(self,name,loop_i,testset_i,namespace):
+    def testcase_start(self):
         """
         Testcase is about to start.
         Arguments:
@@ -50,13 +33,13 @@ class Reporter:
            print "Testsets not defined"
 
         """
-        
+        barename = self.test_name
+        config = self.config
         if self.LOG:
-            print "TESTCASE_START",name,loop_i,testset_i,namespace
-
-        barename=name.replace("test_","")
-        barename=barename.replace(".py","")
-        self.test_name = barename
+            print "TESTCASE_START",barename,config.loop_i,config.testset_i,config.test_doc
+            
+        self.resultfile = config.smashdir +"/results-"+config.oc_server+"-"+config.runid
+        self.start_date = time_now() 
         scenario = {}
         for c in self.config.__dict__:
             if c.startswith(barename+"_"):
@@ -65,15 +48,12 @@ class Reporter:
         if(scenario=={}):
             scenario = "default"            
         dict = { "scenario": scenario,
-                 "scenarioid": testset_i,
+                 "scenarioid": config.testset_i,
                  "results": [],
-                 "loopid": loop_i,
+                 "loopid": config.loop_i,
                  "timeid": time_now().strftime("%y%m%d-%H%M%S")
         }
         self.data = append_to_json(dict,barename,self.data,self.config)
-        
-        curl_check_url(self.config)
-        check_owncloudcmd(self.config)
         
     def testcase_stop(self):
         if self.LOG:
@@ -129,58 +109,7 @@ def log_results(result,resultfile,config,test_name):
     else:
         #file(data) exists
         data = append_to_json(result,test_name,data,config)
-    write_to_json_file(data, resultfile)        
-            
-def check_owncloudcmd(config):
-    import subprocess
-    from smashbox.utilities import  oc_webdav_url,mkdir,remove_tree
-    #create tmp directory localy
-    mkdir('test')
-    #check if owncloudcmd is correct or if path to owncloudcmd is not correct
-    cmd = config.oc_sync_cmd+' '+'tests'+' '+oc_webdav_url('owncloud',remote_folder='test', user_num=None)
-    process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    stdout,stderr = process.communicate()
-    if((stderr).find("not found") != -1):
-        logger.debug(stderr)
-        sys.exit()
-    #delete tmp directory localy
-    remove_tree('test')          
-                
-def curl_check_url(config):
-    from smashbox.utilities import  oc_webdav_url
-    import smashbox.curl
-    
-    url = oc_webdav_url(remote_folder='', user_num=None)
-    query="""<?xml version="1.0" ?>
-<d:propfind xmlns:d="DAV:">
-  <d:prop>
-  </d:prop>
-</d:propfind>
-"""
-    client = smashbox.curl.Client()
-    exit_flag = False
-    try:
-        r = client.PROPFIND(url,query,depth=0,parse_check=False)
-        if r.body_stream.getvalue() == "":
-            print ("\n%s\n\nSMASHBOX_CHECK ERROR: %s, Empty response\nCHECK CONFIGURATION - oc_root, oc_ssl_enabled, oc_server, oc_server_shell_cmd etc.\nCHECK HEADERS e.g. for 302 - Location=%s\n"%(r.headers,r.rc,str(r.headers['Location'])))
-            exit_flag = True
-        else:
-            import xml.etree.ElementTree as ET
-            try:
-                root = ET.fromstring(r.body_stream.getvalue())
-                if root.tag.find("error") != -1:
-                    raise Exception
-                else:
-                    print "SMASHBOX_CHECK OK"
-            except:
-                print "SMASHBOX_CHECK ERROR: %s"%r.body_stream.getvalue()  
-                exit_flag = True
-    except Exception, e:
-        exit_flag = True
-        print e
-    finally:
-        if(exit_flag):
-            sys.exit()
+    write_to_json_file(data, resultfile)         
         
 def time_now(time_zero=None): 
     import datetime
@@ -234,6 +163,7 @@ def get_data_from_json_file(f_name):
         with io.open(f_name,'r') as file:
             data = json.load(file)    
         return data  
+    
 def write_to_json_file(data, file_path):
     import json
     import io
@@ -252,13 +182,3 @@ def write_to_json_file(data, file_path):
     with io.open(file_path, 'w', encoding='utf-8') as file:
         file.write(unicode(json.dumps(data, ensure_ascii=False, indent=4)))
 
-def rm_file_dir(file_path):
-    import os, shutil
-    if(os.path.exists(file_path)):
-        try:
-            if os.path.isfile(file_path):
-                os.unlink(file_path)
-            elif os.path.isdir(file_path): 
-                shutil.rmtree(file_path)
-        except:
-            pass

@@ -196,9 +196,8 @@ class _smash_:
         
         #report persistent information
         import smashbox.reporter
-        reporter = smashbox.reporter.Reporter()
-        reporter.smashbox_start(config)
-        reporter.testcase_start(os.path.basename(_smash_.args.test_target),_smash_.args.loop_i,_smash_.args.testset_i,_smash_.args.test_doc)
+        reporter = smashbox.reporter.Reporter(os.path.basename(_smash_.args.test_target),config)
+        reporter.testcase_start()
 
         # first worker => process number == 0
         for i,f_n in enumerate(_smash_.workers):
@@ -241,9 +240,6 @@ if __name__ == "__main__":
     _smash_.parser = smashbox.compatibility.argparse.ArgumentParser()
     _smash_.parser.add_argument('test_target')
     _smash_.parser.add_argument('config_blob')
-    _smash_.parser.add_argument('loop_i')
-    _smash_.parser.add_argument('testset_i')
-    _smash_.parser.add_argument('test_doc')
     _smash_.args = _smash_.parser.parse_args()
 
     # this is OK: config and logger will be visible symbols in the user's test code

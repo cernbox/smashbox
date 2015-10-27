@@ -27,6 +27,7 @@ def reset_owncloud_account(reset_procedure=None, num_test_users=None):
     If reset_procedure is set to 'keep' than the account is not deleted, so the state from the previous run is kept.
 
     """
+    
     if reset_procedure is None:
         reset_procedure = config.oc_account_reset_procedure
 
@@ -49,11 +50,12 @@ def reset_owncloud_account(reset_procedure=None, num_test_users=None):
                 login_owncloud_account(username, config.oc_account_password)
 
         return
-
-    if reset_procedure == 'webdav_delete':
+    
+    elif reset_procedure == 'webdav_delete':
         webdav_delete('/') # delete the complete webdav endpoint associated with the remote account
         webdav_delete('/') # FIXME: workaround current bug in EOS (https://savannah.cern.ch/bugs/index.php?104661) 
         webdav_mkcol('/')
+        
     # if create if does not exist (for keep or webdav_delete options)
 
 
@@ -277,10 +279,10 @@ def run_ocsync(local_folder, remote_folder="", n=None, user_num=None):
         cmd = config.oc_sync_cmd+' '+local_folder+' '+oc_webdav_url('owncloud',remote_folder,user_num) + " >> "+config.rundir+"/%s-ocsync.step%02d.cnt%03d.log 2>&1"%(reflection.getProcessName(),current_step,ocsync_cnt[current_step])
         runcmd(cmd, ignore_exitcode=True)  # exitcode of ocsync is not reliable
         sync_exec_time = (datetime.datetime.now()-t0).total_seconds() 
+        sync_exec_time_array.append(sync_exec_time)  
         logger.info('sync cmd is: %s',cmd)
         logger.info('sync finished: %s s',sync_exec_time)
-        ocsync_cnt[current_step]+=1
-    sync_exec_time_array.append(sync_exec_time)    
+        ocsync_cnt[current_step]+=1  
 
 def webdav_propfind_ls(path, user_num=None):
     runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format -'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)))
@@ -306,6 +308,8 @@ def webdav_mkcol(path, silent=False, user_num=None):
 
 # #### SHELL COMMANDS AND TIME FUNCTIONS
 
+reported_errors = []
+
 def runcmd(cmd,ignore_exitcode=False,echo=True,allow_stderr=True,shell=True,log_warning=True):
     logger.info('running %s', repr(cmd))
 
@@ -324,6 +328,7 @@ def runcmd(cmd,ignore_exitcode=False,echo=True,allow_stderr=True,shell=True,log_
     if process.returncode != 0:
         msg = "Non-zero exit code %d from command %s" % (ignore_exitcode,repr(cmd))
         if log_warning:
+            reported_errors.append(msg)
             logger.warning(msg)
         if not ignore_exitcode:
             raise subprocess.CalledProcessError(process.returncode,cmd)
@@ -479,8 +484,6 @@ def implies(p,q):
     return not p or q
 
 # ###### ERROR REPORTING ############
-
-reported_errors = []
 
 def error_check(expr,message=""):
     """ Assert expr is True. If not, then mark the test as failed but carry on the execution.
@@ -699,5 +702,41 @@ def expect_exists(fn):
 def expect_does_not_exist(fn):
     """ Checks that a file does not exist, as expected
     """
-    error_check(not os.path.exists(fn), "File %s exists but should not" % fn)
+    error_check(not os.path.exists(fn), "File %s exists but should not" % fn)        
 
+            
+def curl_check_url(config):
+    from smashbox.utilities import  oc_webdav_url
+    import smashbox.curl, sys
+    
+    url = oc_webdav_url(remote_folder='', user_num=None)
+    query="""<?xml version="1.0" ?>
+<d:propfind xmlns:d="DAV:">
+  <d:prop>
+  </d:prop>
+</d:propfind>
+"""
+    client = smashbox.curl.Client()
+    exit_flag = False
+    try:
+        r = client.PROPFIND(url,query,depth=0,parse_check=False)
+        if r.body_stream.getvalue() == "":
+            print ("\n%s\n\nSMASHBOX_CHECK ERROR: %s, Empty response\nCHECK CONFIGURATION - oc_root, oc_ssl_enabled, oc_server, oc_server_shell_cmd etc.\nCHECK HEADERS e.g. for 302 - Location=%s\n"%(r.headers,r.rc,str(r.headers['Location'])))
+            exit_flag = True
+        else:
+            import xml.etree.ElementTree as ET
+            try:
+                root = ET.fromstring(r.body_stream.getvalue())
+                if root.tag.find("error") != -1:
+                    raise Exception
+                else:
+                    print "SMASHBOX_CHECK OK"
+            except:
+                print "SMASHBOX_CHECK ERROR: %s"%r.body_stream.getvalue()  
+                exit_flag = True
+    except Exception, e:
+        exit_flag = True
+        print e
+    finally:
+        if(exit_flag):
+            sys.exit() 

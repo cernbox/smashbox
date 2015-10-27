@@ -149,11 +149,11 @@ def main():
       logger.warning("No tests specified to run...")
       sys.exit(1)
 
-   def run_multiprocessing_engine(config,t,j,i,test_doc):
+   def run_multiprocessing_engine(config,t):
        global global_exitcode_error
        import subprocess, pickle
        t0=datetime.datetime.now()
-       cmd = ['python2',os.path.join(os.path.dirname(os.path.dirname(__file__)),'python/smashbox/multiprocessing_engine.py'), t, pickle.dumps(config),str(j),str(i), str(test_doc)]
+       cmd = ['python2',os.path.join(os.path.dirname(os.path.dirname(__file__)),'python/smashbox/multiprocessing_engine.py'), t, pickle.dumps(config)]
        p = subprocess.Popen(cmd)
        p.communicate()
        t1=datetime.datetime.now()
@@ -221,7 +221,10 @@ def main():
             log_quiet('running %s in %s as %s testset #%s %s',t,config.rundir,config.oc_account_name,i,repr(ts)) # log_quiet
 
          if not args.dry_run:
-            run_multiprocessing_engine(config,os.path.abspath(t),j,i,smashbox.no_engine.__doc__)
+            setattr(config, "loop_i",j) 
+            setattr(config, "testset_i",i) 
+            setattr(config, "test_doc",smashbox.no_engine.__doc__) 
+            run_multiprocessing_engine(config,os.path.abspath(t))
 
       # get introspection information from the test-case itself: all
       # symbols defined by the test-case are loaded into the namespace
