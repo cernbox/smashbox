@@ -276,9 +276,9 @@ def run_ocsync(local_folder, remote_folder="", n=None, user_num=None):
         t0 = datetime.datetime.now()
         cmd = config.oc_sync_cmd+' '+local_folder+' '+oc_webdav_url('owncloud',remote_folder,user_num) + " >> "+config.rundir+"/%s-ocsync.step%02d.cnt%03d.log 2>&1"%(reflection.getProcessName(),current_step,ocsync_cnt[current_step])
         runcmd(cmd, ignore_exitcode=True)  # exitcode of ocsync is not reliable
-        sync_exec_time = str((datetime.datetime.now()-t0))
+        sync_exec_time = (datetime.datetime.now()-t0).total_seconds() 
         logger.info('sync cmd is: %s',cmd)
-        logger.info('sync finished: %s',sync_exec_time)
+        logger.info('sync finished: %s s',sync_exec_time)
         ocsync_cnt[current_step]+=1
     sync_exec_time_array.append(sync_exec_time)    
 

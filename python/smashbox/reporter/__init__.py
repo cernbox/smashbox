@@ -1,4 +1,4 @@
-import sys
+import sys,os
 
 class Reporter:
     """ Report execution state of smashbox.
@@ -110,20 +110,16 @@ class Reporter:
             self.shared_result[i]["errors"] = reported_errors
             
 def sync_exec_time(sync_exec_time_array):
-    import datetime  
+    import datetime 
     if sync_exec_time_array != None:
         exec_time =  sync_exec_time_array[0]
-        exec_time = datetime.datetime.strptime(exec_time, '%H:%M:%S.%f')
         for i in range(1, len(sync_exec_time_array)):
             sync_exec_time =  sync_exec_time_array[i]
-            sync_exec_time = datetime.datetime.strptime(sync_exec_time, '%H:%M:%S.%f')
-                    #exec_time = datetime.datetime.strptime(data[0], '%H:%M:%S.%f')
-            sync_exec_time = datetime.timedelta(hours=sync_exec_time.hour, minutes=sync_exec_time.minute, seconds=sync_exec_time.second, milliseconds=(sync_exec_time.microsecond/1000))
-            exec_time = datetime.timedelta(hours=exec_time.hour, minutes=exec_time.minute, seconds=exec_time.second, milliseconds=(exec_time.microsecond/1000))
             exec_time = (exec_time + sync_exec_time)
     else:
-        exec_time = datetime.timedelta(hours=0, minutes=0, seconds=0, milliseconds=0)
-    return str(exec_time)       
+        exec_time = datetime.timedelta(hours=0, minutes=0, seconds=0, milliseconds=0).total_seconds()
+    
+    return str(datetime.timedelta(seconds=exec_time))
 
 def log_results(result,resultfile,config,test_name):
     data = get_data_from_json_file(resultfile)
@@ -148,8 +144,8 @@ def check_owncloudcmd(config):
         logger.debug(stderr)
         sys.exit()
     #delete tmp directory localy
-    remove_tree('test')
-    
+    remove_tree('test')          
+                
 def curl_check_url(config):
     from smashbox.utilities import  oc_webdav_url
     import smashbox.curl
@@ -162,7 +158,6 @@ def curl_check_url(config):
 </d:propfind>
 """
     client = smashbox.curl.Client()
-    
     exit_flag = False
     try:
         r = client.PROPFIND(url,query,depth=0,parse_check=False)
