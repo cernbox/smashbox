@@ -104,7 +104,7 @@ class _smash_:
     all_procs = []
 
     @staticmethod
-    def supervisor(steps):
+    def supervisor(steps, test_manager):
         import time
         #print "SU",steps
         #print 'SU',[s for s in steps]
@@ -122,7 +122,7 @@ class _smash_:
                     break
 
             #print "supervisor step completed:",supervisor_step.value,steps
-
+            test_manager.finalize_step( _smash_.supervisor_step.value)
             _smash_.supervisor_step.value += 1
 
         if _smash_.DEBUG:
@@ -150,6 +150,8 @@ class _smash_:
 
     @staticmethod
     def worker_wrap(wi,f,fname,test_manager):
+        if fname is None:
+            fname = f.__name__
         _smash_.process_name=fname
         _smash_.process_number = wi
         def step(i,message=""):
@@ -164,17 +166,14 @@ class _smash_:
                 sys.exit(1)
         finally:
             # worker finish
-            import smashbox.utilities
-            
-            test_manager.finalize_step((smashbox.utilities.sync_exec_time_array), (smashbox.utilities.reported_errors),fname)
-            
             step(_smash_.N_STEPS-1,None) # don't print any message
-
+            
+            import smashbox.utilities
+            test_manager.finalize_worker((smashbox.utilities.sync_exec_time_array), (smashbox.utilities.reported_errors),fname)
             if smashbox.utilities.reported_errors:
-                logger.error('%s error(s) reported',len(smashbox.utilities.reported_errors))   
-                import sys
-                sys.exit(2)
-
+               logger.error('%s error(s) reported',len(smashbox.utilities.reported_errors))
+               import sys
+               sys.exit(2)
     @staticmethod
     def run():
         """ Lunch worker processes and the supervisor loop. Block until all is finished.
@@ -196,32 +195,28 @@ class _smash_:
 
         import smashbox.test_manager
         test_manager = smashbox.test_manager.Test_Manager(os.path.basename(_smash_.args.test_target),config)
-        test_manager.setup_test()
+        test_manager.setup_test(_smash_.workers,manager)
 
         # first worker => process number == 0
         for i,f_n in enumerate(_smash_.workers):
             f = f_n[0]
             fname = f_n[1]
-            if fname is None:
-                fname = f.__name__
-            test_manager.setup_worker(manager,fname)
             p = Process(target=_smash_.worker_wrap,args=(i,f,fname,test_manager))
             p.start()
             _smash_.all_procs.append(p)
 
-        _smash_.supervisor(_smash_.steps)
+        _smash_.supervisor(_smash_.steps, test_manager)
         
         for p in _smash_.all_procs:
             p.join()
         
-        #finish the reporter
         test_manager.finalize_test()
         
         for p in _smash_.all_procs:
            if p.exitcode != 0:
               import sys
               sys.exit(p.exitcode)
-
+              
 def add_worker(f,name=None):
     """ Decorator for worker functions in the user-defined test
     scripts: workers execute in parallel and may use 'step(N)' syntax

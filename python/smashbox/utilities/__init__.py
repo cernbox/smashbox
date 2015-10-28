@@ -7,6 +7,25 @@ import time
 
 # Utilities to be used in the test-cases.
 
+def oc_engine_dependence(func):
+    global ocsync_cnt,sync_exec_time_array,config
+    def checker(*args, **kwargs): 
+        import importlib
+        #check if there was specified any additional engine using e.g. --option engine=dropbox
+        try:
+            getattr(config, "engine")
+            imported_mod = importlib.import_module('smashbox.test_manager.non_native_engine')
+            imported_sync_class = getattr(imported_mod, config.engine)
+            imported_class_function = getattr(imported_sync_class, func.__name__)
+            print "non-native function %s"%(func.__name__)
+            from smashbox.utilities import reflection
+            worker_name = reflection.getProcessName()
+            return imported_class_function(args,config,worker_name) #print "executing sync engine custom function %s"%func.__name__
+        except Exception, e:
+            print "executing sync engine native function %s, %s"%(func.__name__,e)
+            return func(*args, **kwargs) #
+    return checker 
+
 def OWNCLOUD_CHUNK_SIZE(factor=1):
     """Calculate file size as a fraction of owncloud client's default chunk size.
     """
@@ -15,6 +34,7 @@ def OWNCLOUD_CHUNK_SIZE(factor=1):
 
 ######## TEST SETUP AND PREPARATION
 
+@oc_engine_dependence
 def reset_owncloud_account(reset_procedure=None, num_test_users=None):
     """ 
     Prepare the test account on the owncloud server (remote state). Run this once at the beginning of the test.
@@ -79,7 +99,8 @@ def reset_rundir(reset_procedure=None):
     if reset_procedure == 'delete':
         assert(os.path.realpath(config.rundir).startswith(os.path.realpath(config.smashdir)))
         remove_tree(config.rundir)
-
+        
+@oc_engine_dependence
 def make_workdir(name=None):
     """ Create a worker directory in the current run directory for the test (by default the name is derived from 
     the worker's name). 
@@ -257,32 +278,38 @@ ocsync_cnt = {}
 
 sync_exec_time_array = []
 
+@oc_engine_dependence  
+def sync_engine(cmd):
+    t0 = datetime.datetime.now()
+    runcmd(cmd, ignore_exitcode=True)  # exitcode of ocsync is not reliable
+    sync_exec_time = (datetime.datetime.now()-t0).total_seconds()
+    logger.info('sync cmd is: %s',cmd) 
+    return sync_exec_time  
+
 def run_ocsync(local_folder, remote_folder="", n=None, user_num=None):
     """ Run the ocsync for local_folder against remote_folder (or the main folder on the owncloud account if remote_folder is None).
     Repeat the sync n times. If n given then n -> config.oc_sync_repeat (default 1).
     """
-    global ocsync_cnt
+    
+    global ocsync_cnt,sync_exec_time_array
     from smashbox.utilities import reflection
 
     if n is None:
         n = config.oc_sync_repeat
 
     current_step = reflection.getCurrentStep()
-
+    
     ocsync_cnt.setdefault(current_step,0)
 
     local_folder += '/' # FIXME: HACK - is a trailing slash really needed by 1.6 owncloudcmd client?
 
     for i in range(n):
-        t0 = datetime.datetime.now()
         cmd = config.oc_sync_cmd+' '+local_folder+' '+oc_webdav_url('owncloud',remote_folder,user_num) + " >> "+config.rundir+"/%s-ocsync.step%02d.cnt%03d.log 2>&1"%(reflection.getProcessName(),current_step,ocsync_cnt[current_step])
-        runcmd(cmd, ignore_exitcode=True)  # exitcode of ocsync is not reliable
-        sync_exec_time = (datetime.datetime.now()-t0).total_seconds() 
+        sync_exec_time = sync_engine(cmd)
         sync_exec_time_array.append(sync_exec_time)  
-        logger.info('sync cmd is: %s',cmd)
         logger.info('sync finished: %s s',sync_exec_time)
         ocsync_cnt[current_step]+=1  
-
+    
 def webdav_propfind_ls(path, user_num=None):
     runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format -'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)))
 
@@ -701,8 +728,9 @@ def expect_exists(fn):
 def expect_does_not_exist(fn):
     """ Checks that a file does not exist, as expected
     """
-    error_check(not os.path.exists(fn), "File %s exists but should not" % fn)        
-         
+    error_check(not os.path.exists(fn), "File %s exists but should not" % fn)     
+       
+@oc_engine_dependence         
 def curl_check_url(config):
     from smashbox.utilities import  oc_webdav_url
     import smashbox.curl, sys
