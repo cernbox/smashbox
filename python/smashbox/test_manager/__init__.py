@@ -12,18 +12,15 @@ class Test_Manager:
         import smashbox.test_manager.reporter
         self.reporter = smashbox.test_manager.reporter.Reporter(name,config)
         
-    def setup_test(self):
+    def setup_test(self, smash_workers, manager):
         if self.LOG:
             print "TESTCASE_START",self.name,self.config.loop_i,self.config.testset_i,self.config.test_doc
-        self.reporter.reporter_setup_test()
+        self.reporter.reporter_setup_test(smash_workers,manager)
     
     def finalize_test(self):
         if self.LOG:
             print "TESTCASE_STOP"
         self.reporter.reporter_finalize_test()
-        
-    def setup_worker(self,manager,fname):
-        self.reporter.reporter_setup_worker(manager,fname)
         
     def finalize_step(self,supervisor_step):
         pass

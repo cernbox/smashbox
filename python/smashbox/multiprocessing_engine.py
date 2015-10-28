@@ -150,6 +150,8 @@ class _smash_:
 
     @staticmethod
     def worker_wrap(wi,f,fname,test_manager):
+        if fname is None:
+            fname = f.__name__
         _smash_.process_name=fname
         _smash_.process_number = wi
         def step(i,message=""):
@@ -193,15 +195,12 @@ class _smash_:
 
         import smashbox.test_manager
         test_manager = smashbox.test_manager.Test_Manager(os.path.basename(_smash_.args.test_target),config)
-        test_manager.setup_test()
+        test_manager.setup_test(_smash_.workers,manager)
 
         # first worker => process number == 0
         for i,f_n in enumerate(_smash_.workers):
             f = f_n[0]
             fname = f_n[1]
-            if fname is None:
-                fname = f.__name__
-            test_manager.setup_worker(manager,fname)
             p = Process(target=_smash_.worker_wrap,args=(i,f,fname,test_manager))
             p.start()
             _smash_.all_procs.append(p)
@@ -211,13 +210,13 @@ class _smash_:
         for p in _smash_.all_procs:
             p.join()
         
-        #finish the reporter
         test_manager.finalize_test()
         
         for p in _smash_.all_procs:
            if p.exitcode != 0:
               import sys
               sys.exit(p.exitcode)
+              
 def add_worker(f,name=None):
     """ Decorator for worker functions in the user-defined test
     scripts: workers execute in parallel and may use 'step(N)' syntax

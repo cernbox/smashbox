@@ -13,7 +13,7 @@ class Reporter:
         barename=barename.replace(".py","")
         self.test_name = barename
     
-    def reporter_setup_test(self):
+    def reporter_setup_test(self,smash_workers,manager):
         #prepare configurations
         barename = self.test_name
         config = self.config
@@ -35,6 +35,17 @@ class Reporter:
                  "timeid": time_now().strftime("%y%m%d-%H%M%S")
         }
         self.data = append_to_json(dict,barename,self.data,self.config)
+        for i,f_n in enumerate(smash_workers):
+            f = f_n[0]
+            fname = f_n[1]
+            if fname is None:
+                fname = f.__name__
+            self.shared_result.append(None)
+            shared_result_i=self.shared_result_i
+            self.shared_result_workers.update({ fname : shared_result_i })
+            self.shared_result[shared_result_i] = manager.dict()
+            self.shared_result[shared_result_i]["worker"] = fname
+            self.shared_result_i +=1
     
     def reporter_finalize_test(self):
         dict = { "results" : [] }
@@ -45,14 +56,6 @@ class Reporter:
         log_results(data,self.resultfile,self.config,self.test_name)
         #print json.dumps(self.data, ensure_ascii=False, indent=4)
         
-    def reporter_setup_worker(self,manager,fname):
-        self.shared_result.append(None)
-        shared_result_i=self.shared_result_i
-        self.shared_result_workers.update({ fname : shared_result_i })
-        self.shared_result[shared_result_i] = manager.dict()
-        self.shared_result[shared_result_i]["worker"] = fname
-        self.shared_result_i +=1
-        #return self.shared_result[shared_result_i]
         
     def get_shared_results(self):
         shared_result_j=self.shared_result_j
@@ -67,7 +70,17 @@ class Reporter:
             self.shared_result[i]["sync_time"] = '0:00:00.000000'
         if reported_errors:
             self.shared_result[i]["errors"] = reported_errors
-            
+
+
+"""
+for i,f_n in enumerate(_smash_.workers):
+            f = f_n[0]
+            fname = f_n[1]
+            if fname is None:
+                fname = f.__name__
+            test_manager.setup_worker(manager,fname)
+
+"""           
 def sync_exec_time(sync_exec_time_array):
     import datetime 
     if sync_exec_time_array != None:
