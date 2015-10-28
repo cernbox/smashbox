@@ -149,7 +149,7 @@ class _smash_:
             logger.info( 'entering new step \n'+sep+'\n'+'(%d) %s:  %s\n'%(i,_smash_.process_name,message.upper())+sep)
 
     @staticmethod
-    def worker_wrap(wi,f,fname,reporter):
+    def worker_wrap(wi,f,fname,test_manager):
         _smash_.process_name=fname
         _smash_.process_number = wi
         def step(i,message=""):
@@ -164,12 +164,12 @@ class _smash_:
                 sys.exit(1)
         finally:
             # worker finish
-            step(_smash_.N_STEPS-1,None) # don't print any message
-
             import smashbox.utilities
             
-            reporter.append_results((smashbox.utilities.sync_exec_time_array), (smashbox.utilities.reported_errors),fname)
+            test_manager.finalize_step((smashbox.utilities.sync_exec_time_array), (smashbox.utilities.reported_errors),fname)
             
+            step(_smash_.N_STEPS-1,None) # don't print any message
+
             if smashbox.utilities.reported_errors:
                 logger.error('%s error(s) reported',len(smashbox.utilities.reported_errors))   
                 import sys
@@ -193,11 +193,10 @@ class _smash_:
         _smash_.process_name = "supervisor"
 
         _smash_.steps = manager.list([0 for x in range(len(_smash_.workers))])
-        
-        #report persistent information
-        import smashbox.reporter
-        reporter = smashbox.reporter.Reporter(os.path.basename(_smash_.args.test_target),config)
-        reporter.testcase_start()
+
+        import smashbox.test_manager
+        test_manager = smashbox.test_manager.Test_Manager(os.path.basename(_smash_.args.test_target),config)
+        test_manager.setup_test()
 
         # first worker => process number == 0
         for i,f_n in enumerate(_smash_.workers):
@@ -205,8 +204,8 @@ class _smash_:
             fname = f_n[1]
             if fname is None:
                 fname = f.__name__
-            reporter.shared_results_manager(manager,fname)
-            p = Process(target=_smash_.worker_wrap,args=(i,f,fname,reporter))
+            test_manager.setup_worker(manager,fname)
+            p = Process(target=_smash_.worker_wrap,args=(i,f,fname,test_manager))
             p.start()
             _smash_.all_procs.append(p)
 
@@ -216,7 +215,7 @@ class _smash_:
             p.join()
         
         #finish the reporter
-        reporter.testcase_stop()
+        test_manager.finalize_test()
         
         for p in _smash_.all_procs:
            if p.exitcode != 0:
