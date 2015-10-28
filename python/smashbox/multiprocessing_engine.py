@@ -170,7 +170,7 @@ class _smash_:
             
             step(_smash_.N_STEPS-1,None) # don't print any message
             if smashbox.utilities.reported_errors:
-               logger.error('%s error(s) reported',len(smashbox.utilities.reported_errors))   
+               logger.error('%s error(s) reported',len(smashbox.utilities.reported_errors))
                import sys
                sys.exit(2)
     @staticmethod
@@ -219,7 +219,6 @@ class _smash_:
            if p.exitcode != 0:
               import sys
               sys.exit(p.exitcode)
-
 def add_worker(f,name=None):
     """ Decorator for worker functions in the user-defined test
     scripts: workers execute in parallel and may use 'step(N)' syntax
