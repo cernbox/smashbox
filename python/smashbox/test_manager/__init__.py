@@ -25,8 +25,10 @@ class Test_Manager:
     def setup_worker(self,manager,fname):
         self.reporter.reporter_setup_worker(manager,fname)
         
+    def finalize_step(self,supervisor_step):
+        pass
     
-    def finalize_step(self,sync_exec_time_array, reported_errors,fname): 
-        self.reporter.reporter_finalize_step(sync_exec_time_array, reported_errors,fname)
+    def finalize_worker(self,sync_exec_time_array, reported_errors,fname): 
+        self.reporter.reporter_finalize_worker(sync_exec_time_array, reported_errors,fname)
             
 

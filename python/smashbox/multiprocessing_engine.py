@@ -104,7 +104,7 @@ class _smash_:
     all_procs = []
 
     @staticmethod
-    def supervisor(steps):
+    def supervisor(steps, test_manager):
         import time
         #print "SU",steps
         #print 'SU',[s for s in steps]
@@ -122,7 +122,7 @@ class _smash_:
                     break
 
             #print "supervisor step completed:",supervisor_step.value,steps
-
+            test_manager.finalize_step( _smash_.supervisor_step.value)
             _smash_.supervisor_step.value += 1
 
         if _smash_.DEBUG:
@@ -164,11 +164,10 @@ class _smash_:
                 sys.exit(1)
         finally:
             # worker finish
-            import smashbox.utilities
-            
-            test_manager.finalize_step((smashbox.utilities.sync_exec_time_array), (smashbox.utilities.reported_errors),fname)
-            
             step(_smash_.N_STEPS-1,None) # don't print any message
+            
+            import smashbox.utilities
+            test_manager.finalize_worker((smashbox.utilities.sync_exec_time_array), (smashbox.utilities.reported_errors),fname)
             if smashbox.utilities.reported_errors:
                logger.error('%s error(s) reported',len(smashbox.utilities.reported_errors))
                import sys
@@ -207,7 +206,7 @@ class _smash_:
             p.start()
             _smash_.all_procs.append(p)
 
-        _smash_.supervisor(_smash_.steps)
+        _smash_.supervisor(_smash_.steps, test_manager)
         
         for p in _smash_.all_procs:
             p.join()

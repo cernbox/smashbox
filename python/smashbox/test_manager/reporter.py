@@ -59,7 +59,7 @@ class Reporter:
         self.shared_result_j +=1
         return eval(str(self.shared_result[shared_result_j]))
     
-    def reporter_finalize_step(self,sync_exec_time_array, reported_errors,fname): 
+    def reporter_finalize_worker(self,sync_exec_time_array, reported_errors,fname): 
         i = self.shared_result_workers[fname]
         if sync_exec_time_array:
             self.shared_result[i]["sync_time"] = sync_exec_time(sync_exec_time_array)
