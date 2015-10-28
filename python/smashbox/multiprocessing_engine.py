@@ -169,12 +169,10 @@ class _smash_:
             test_manager.finalize_step((smashbox.utilities.sync_exec_time_array), (smashbox.utilities.reported_errors),fname)
             
             step(_smash_.N_STEPS-1,None) # don't print any message
-
             if smashbox.utilities.reported_errors:
-                logger.error('%s error(s) reported',len(smashbox.utilities.reported_errors))   
-                import sys
-                sys.exit(2)
-
+               logger.error('%s error(s) reported',len(smashbox.utilities.reported_errors))   
+               import sys
+               sys.exit(2)
     @staticmethod
     def run():
         """ Lunch worker processes and the supervisor loop. Block until all is finished.
