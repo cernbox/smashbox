@@ -48,8 +48,28 @@ def time_now(time_zero=None):
         return datetime.datetime.now()
     else:
         return (datetime.datetime.now()-time_zero) 
+
+def install_dropbox():
+    from os.path import expanduser
+    import platform,sys
+    def is_32bit():
+        if ((platform.architecture()[0]).find("32") != -1):
+            return "x86_64"
+        else:
+            return "x86"
+    home = expanduser("~")
+    directory = home + "/.dropbox-dist"
+    if not os.path.exists(directory):
+        print "%s does not exists, begin installation.."%directory
+        dist = 'http://www.dropbox.com/download/?plat=lnx.%s'%is_32bit()
+        import subprocess
+        subprocess.call(["wget", "-O", "dropbox.tar.gz",dist], cwd=home)
+        print "downloaded, unpack"
+        subprocess.call(["tar", "-xvzf", "dropbox.tar.gz"], cwd=home)
+        print "dropbox installed"
        
 def setup_dropbox(smashdir, smash_workers):
+    install_dropbox()
     check_if_dropbox_stopped()
     rm_file_dir("test.conf")
     boss="boss"
