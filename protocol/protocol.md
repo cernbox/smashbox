@@ -531,7 +531,7 @@ Request Custom Header:
 
 `If-Match`: ETag to be overwritten by this PUT. Server refuses to replace the file if the ETag on the server is different.
 
-`OC-ASync`:        1  - Allow a asynchronous file assembly on the server.
+`OC-ASync`:        1  - Allow a asynchronous file assembly on the server. This is an optional server feature. Reference: https://github.com/owncloud/core/issues/12097
 
 `OC-Chunk-Size`:   longint - Size of a chunk in bytes. Ignored chunking is not happening
 
@@ -623,7 +623,7 @@ of the server in case something went wrong.
                    reads an URL from the optional header OC-Finish-Poll which is
                    polled regularly by client until it becomes valid and contains
                    the meta data of this transfer, ie. ETag etc. Note that this
-                   is not yet implemented on the ownCloud server.
+                   is not yet implemented on the ownCloud server. Reference: https://github.com/owncloud/core/issues/12097
 
 Specific error code handling:
 
