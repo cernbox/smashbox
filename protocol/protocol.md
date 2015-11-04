@@ -192,9 +192,6 @@ Reponse body example:
         <d:href>/remote.php/webdav/</d:href>
         <d:propstat>
           <d:prop>
-            <oc:id>00000003ocobzus5kn6s</oc:id>
-            <oc:permissions>RDNVCK</oc:permissions>
-            <oc:size>592610518</oc:size>
             <d:quota-available-bytes>14883876864</d:quota-available-bytes>
             <d:quota-used-bytes>592610518</d:quota-used-bytes>
           </d:prop>
