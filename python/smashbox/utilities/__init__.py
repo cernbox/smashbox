@@ -279,16 +279,17 @@ ocsync_cnt = {}
 sync_exec_time_array = []
 
 @oc_engine_dependence  
-def sync_engine(cmd):
+def sync_engine(cmd,option):
     t0 = datetime.datetime.now()
     runcmd(cmd, ignore_exitcode=True)  # exitcode of ocsync is not reliable
-    sync_exec_time = (datetime.datetime.now()-t0).total_seconds()
+    t1 = datetime.datetime.now()
     logger.info('sync cmd is: %s',cmd) 
-    return sync_exec_time  
+    return [t0,t1]  
 
-def run_ocsync(local_folder, remote_folder="", n=None, user_num=None):
+def run_ocsync(local_folder, remote_folder="", n=None, user_num=None, option = None):
     """ Run the ocsync for local_folder against remote_folder (or the main folder on the owncloud account if remote_folder is None).
     Repeat the sync n times. If n given then n -> config.oc_sync_repeat (default 1).
+    Option parameters is used in case of non-native engine and could specify specific behaviour of sync in the specific step. 
     """
     
     global ocsync_cnt,sync_exec_time_array
@@ -305,9 +306,9 @@ def run_ocsync(local_folder, remote_folder="", n=None, user_num=None):
 
     for i in range(n):
         cmd = config.oc_sync_cmd+' '+local_folder+' '+oc_webdav_url('owncloud',remote_folder,user_num) + " >> "+config.rundir+"/%s-ocsync.step%02d.cnt%03d.log 2>&1"%(reflection.getProcessName(),current_step,ocsync_cnt[current_step])
-        sync_exec_time = sync_engine(cmd)
+        sync_exec_time = sync_engine(cmd,option)
         sync_exec_time_array.append(sync_exec_time)  
-        logger.info('sync finished: %s s',sync_exec_time)
+        logger.info('sync finished: %s s',(sync_exec_time[1]-sync_exec_time[0]).total_seconds())
         ocsync_cnt[current_step]+=1  
     
 def webdav_propfind_ls(path, user_num=None):

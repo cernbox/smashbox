@@ -54,16 +54,30 @@ class Reporter:
             self.shared_result[shared_result_i]["worker"] = fname
             self.shared_result_i +=1
     
+    def reporter_log_results(self):
+        result = append_to_json(self.test_result_dict,self.test_name,self.data,self.config)
+        data = get_data_from_json_file(self.resultfile)
+        if data==None:
+            #new file
+            data = result
+        else:
+            #file(data) exists
+            data = append_to_json(result,self.test_name,data,self.config)
+        write_to_json_file(data, self.resultfile)         
+    
     def reporter_finalize_test(self):
         dict = { "results" : [] }
         for i in range(0, len(self.shared_result_workers)):
             dict["results"].append(self.get_shared_results())
         dict["total_exec_time"]=str(time_now(self.start_date))
-        data = append_to_json(dict,self.test_name,self.data,self.config)
-        log_results(data,self.resultfile,self.config,self.test_name)
-        #print json.dumps(self.data, ensure_ascii=False, indent=4)
-        
-        
+        self.test_result_dict = dict
+    
+    def reporter_get_test_results(self):  
+        return self.test_result_dict
+    
+    def reporter_set_test_results(self, dict):  
+        self.test_result_dict = dict
+       
     def get_shared_results(self):
         shared_result_j=self.shared_result_j
         self.shared_result_j +=1
@@ -73,11 +87,11 @@ class Reporter:
         i = self.shared_result_workers[fname]
         if sync_exec_time_array:
             self.shared_result[i]["sync_time"] = sync_exec_time(sync_exec_time_array)
+            self.shared_result[i]["sync_time_intervals"] = set_sync_intervals(sync_exec_time_array)
         else:
             self.shared_result[i]["sync_time"] = '0:00:00.000000'
         if reported_errors:
             self.shared_result[i]["errors"] = reported_errors
-
 
 """
 for i,f_n in enumerate(_smash_.workers):
@@ -87,28 +101,23 @@ for i,f_n in enumerate(_smash_.workers):
                 fname = f.__name__
             test_manager.setup_worker(manager,fname)
 
-"""           
+"""   
+def set_sync_intervals(sync_exec_time_array):
+    sync_intervals = []
+    for i in range(1, len(sync_exec_time_array)):
+        sync_intervals.append([str(sync_exec_time_array[i][0]),str(sync_exec_time_array[i][1])])
+    return sync_intervals  
 def sync_exec_time(sync_exec_time_array):
     import datetime 
     if sync_exec_time_array != None:
-        exec_time =  sync_exec_time_array[0]
+        exec_time =  (sync_exec_time_array[0][1]-sync_exec_time_array[0][0]).total_seconds()
         for i in range(1, len(sync_exec_time_array)):
-            sync_exec_time =  sync_exec_time_array[i]
+            sync_exec_time =  (sync_exec_time_array[i][1]-sync_exec_time_array[i][0]).total_seconds()
             exec_time = (exec_time + sync_exec_time)
     else:
         exec_time = datetime.timedelta(hours=0, minutes=0, seconds=0, milliseconds=0).total_seconds()
     
-    return str(datetime.timedelta(seconds=exec_time))
-
-def log_results(result,resultfile,config,test_name):
-    data = get_data_from_json_file(resultfile)
-    if data==None:
-        #new file
-        data = result
-    else:
-        #file(data) exists
-        data = append_to_json(result,test_name,data,config)
-    write_to_json_file(data, resultfile)         
+    return str(datetime.timedelta(seconds=exec_time))        
         
 def time_now(time_zero=None): 
     import datetime
