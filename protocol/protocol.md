@@ -316,6 +316,7 @@ Syntax:
         <oc:downloadURL/>
         <oc:dDC/>
         <oc:permissions/>
+        <oc:size/>
       </d:prop>
     </d:propfind>
     
