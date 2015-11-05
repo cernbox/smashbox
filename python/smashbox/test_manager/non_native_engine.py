@@ -369,7 +369,6 @@ def get_running_seafile(fname, smashdir):
     
 def setup_seafile(smashdir, smash_workers,config):
     import time
-    rm_file_dir(smashdir+"/test-log.log")
     directory = install_seafile(smashdir,config.version)
     start_seafile("boss", smashdir,directory,config)
     seafile_clean_directory(smashdir, "boss")
