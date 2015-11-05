@@ -221,9 +221,7 @@ def main():
             log_quiet('running %s in %s as %s testset #%s %s',t,config.rundir,config.oc_account_name,i,repr(ts)) # log_quiet
 
          if not args.dry_run:
-            setattr(config, "loop_i",j) 
             setattr(config, "testset_i",i) 
-            setattr(config, "test_doc",smashbox.no_engine.__doc__) 
             run_multiprocessing_engine(config,os.path.abspath(t))
 
       # get introspection information from the test-case itself: all

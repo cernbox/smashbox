@@ -22,7 +22,7 @@ class Test_Manager:
         
     def setup_test(self, smash_workers, manager):
         if self.LOG:
-            print "TESTCASE_START",self.name,self.config.loop_i,self.config.testset_i,self.config.test_doc
+            print "TESTCASE_START",self.name, self.config.testset_i
         self.reporter.reporter_setup_test(smash_workers,manager)
         if self.NON_NATIVE_ENGINE:
             if self.engine == "dropbox":

@@ -1,7 +1,7 @@
 import os,subprocess, datetime,sys
 
 """ dropbox section """
-
+                
 class dropbox:
     def __init__(self):
         pass
@@ -225,16 +225,16 @@ def dropbox_add_workers_to_conf(fname, smashdir):
 class seafile:
     def __init__(self):
         pass
-    
+        
     @staticmethod
-    def sync_engine(args,config,fname):
+    def sync_engine(args,config,worker_name):
         smashdir = config.smashdir
-        run_seafile(smashdir, fname)
-        get_running_seafile(fname, smashdir)
+        run_seafile(smashdir, worker_name)
+        get_running_seafile(worker_name, smashdir)
         t0 = datetime.datetime.now()
-        log = get_synced_seafile(fname, smashdir)
+        log = get_synced_seafile(worker_name, smashdir)
         t1 = datetime.datetime.now()
-        stop_seafile(fname, smashdir)
+        stop_seafile(worker_name, smashdir)
         log_test(smashdir,log)
         return [t0,t1] 
     

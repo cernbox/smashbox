@@ -38,7 +38,6 @@ class Reporter:
                  "scenarioid": config.testset_i,
                  "results": [],
                  "engine": engine,
-                 "loopid": config.loop_i,
                  "timeid": time_now().strftime("%y%m%d-%H%M%S")
         }
         self.data = append_to_json(dict,barename,self.data,self.config)

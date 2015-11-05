@@ -13,16 +13,14 @@ def oc_engine_dependence(func):
         import importlib
         #check if there was specified any additional engine using e.g. --option engine=dropbox
         try:
-            getattr(config, "engine")
+            engine = getattr(config, "engine")
             imported_mod = importlib.import_module('smashbox.test_manager.non_native_engine')
             imported_sync_class = getattr(imported_mod, config.engine)
             imported_class_function = getattr(imported_sync_class, func.__name__)
-            print "non-native function %s"%(func.__name__)
             from smashbox.utilities import reflection
             worker_name = reflection.getProcessName()
             return imported_class_function(args,config,worker_name) #print "executing sync engine custom function %s"%func.__name__
         except Exception, e:
-            print "executing sync engine native function %s, %s"%(func.__name__,e)
             return func(*args, **kwargs) #
     return checker 
 
