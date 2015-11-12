@@ -1,30 +1,50 @@
 {  
     "config" : [
-     "remote=(true | false)",
-     "sniffer=(true | false)",
-     "remote_storage_server=http://(IP):(PORT)",
-     "remote_database=DATABASE-NAME",
-     "remote_storage_user=DATABASE-USER",
-     "remote_storage_password=DATABASE-PSW",
+     "remote=true",
+     "sniffer=true",
+     "remote_storage_server=http://130.226.137.140:8086",
+     "remote_database=deic-main",
+     "remote_storage_user=deic",
+     "remote_storage_password=smashbox",
     ],
     "sync_engines" : [
         [
-         "engine=(owncloud | seafile | dropbox)",
-         "oc_server=(OWNCLOUD SERVER | https://seacloud.cc | dropbox.com)",
-         "oc_account_name=USER",
-         "oc_account_password=PASSWORD",
-         "oc_server_folder=(SEACLOUD LIB | OWNCLOUD-REMOTE-FOLDER | '')",
-         "oc_sync_cmd=('' | OWNCLOUD-CMD-DIRECTORY)",
-         "oc_webdav_endpoint=('' | OWNCLOUD-WEBDAV | SEACLOUD CLIENT VERSION - e.g. 4.3.2)",
-         "oc_account_reset_procedure=('' | OWNCLOUD_RESET_PROCEDURE)"
+         "engine=owncloud",
+         "oc_server=test.data.deic.dk",
+         "oc_account_name=test",
+         "oc_account_password=dummy",
+         "oc_server_folder=testfolder",
+         "oc_sync_cmd=/home/piotr/client-build/bin/owncloudcmd --trust",
+         "oc_webdav_endpoint=remote.php/mydav",
+         "oc_account_reset_procedure=webdav_delete"
+        ],
+        [
+         "engine=dropbox",
+         "oc_server=dropbox.com",
+         "oc_account_name=''",
+         "oc_account_password=''",
+         "oc_server_folder=''",
+         "oc_sync_cmd=''",
+         "oc_webdav_endpoint=''",
+         "oc_account_reset_procedure=''"
+        ],
+        [
+         "engine=seafile",
+         "oc_server=https://seacloud.cc",
+         "oc_account_name=pimr@dtu.dk",
+         "oc_account_password=dummy",
+         "oc_server_folder=1ba5703c-c3b9-403e-ac3c-dec836076ce2",
+         "oc_sync_cmd=''",
+         "oc_webdav_endpoint=4.3.2",
+         "oc_account_reset_procedure=''"
         ]
     ],
     "tests" : [
         {
-         "runid" : "TEST-PREDEFINED-AGGRAGATION-ID",
-         "test_name" : "TEST-LOCATION-IN-LIB-FOLDER",
-         "testset" : "(all | TEST-ID)"
+         "runid" : "test",
+         "test_name" : "performance/test_syncperf.py",
+         "testset" : "all"
         }
     ],
     "loop" : 1
-}
+} 

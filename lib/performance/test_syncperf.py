@@ -29,7 +29,27 @@ testsets = [
           'syncperf_fullsyncdir':None,
           'syncperf_excludetime':True
         },
+        { 'syncperf_filesize': 5000000, 
+          'syncperf_nfiles':1,
+          'syncperf_fullsyncdir':None,
+          'syncperf_excludetime':True
+        },
+        { 'syncperf_filesize': 500000000, 
+          'syncperf_nfiles':1,
+          'syncperf_fullsyncdir':None,
+          'syncperf_excludetime':True
+        },
         { 'syncperf_filesize': 1000, 
+          'syncperf_nfiles':1,
+          'syncperf_fullsyncdir':full_dir_size,
+          'syncperf_excludetime':True
+        },
+        { 'syncperf_filesize': 5000000, 
+          'syncperf_nfiles':1,
+          'syncperf_fullsyncdir':full_dir_size,
+          'syncperf_excludetime':True
+        },
+        { 'syncperf_filesize': 500000000, 
           'syncperf_nfiles':1,
           'syncperf_fullsyncdir':full_dir_size,
           'syncperf_excludetime':True
