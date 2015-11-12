@@ -1,3 +1,44 @@
+import io,subprocess,os
+
+class InfluxDBClient:
+    import io,subprocess,os
+    def __init__(self,config):
+        self.tmp_file = "measurement.txt"
+        SERVER_URL = config.remote_storage_server
+        DB_NAME = config.remote_database
+        DB_USER = config.remote_storage_user
+        DB_PASSWORD = config.remote_storage_password
+        self.CURL_CMD = "curl -i -u %s:%s -XPOST %s/write?db=%s --data-binary @%s"%(DB_USER,DB_PASSWORD,SERVER_URL,DB_NAME,self.tmp_file)
+        self.result_array = []
+        
+    def initialize_keys(self,engine, server_name, scenario):
+        self.tags = ["engine=%s"%engine,"server_name=%s"%server_name]
+        
+        if scenario != "default":
+            for the_key, the_value in (scenario).iteritems():
+                self.tags.append(str(the_key)+"="+str(the_value))
+            
+    def write(self,measurement_name,tags,value,timestamp):
+        CURL_TAG = ""
+        tags = tags + self.tags
+        for i in range(0, len(tags)):
+            CURL_TAG+=",%s"%tags[i]
+        data_binary = "%s%s value=%s %s000\n"%(measurement_name,CURL_TAG,value,timestamp) 
+        self.result_array.append(data_binary)
+       
+    def send(self):
+        rm_file_dir(self.tmp_file)
+        try:    
+            with io.open(self.tmp_file,'w', encoding='utf-8') as file_write:
+                result_string = ''.join(self.result_array)
+                file_write.write(unicode(result_string))
+                  
+            with open(os.devnull, "w") as fnull:
+                subprocess.call(self.CURL_CMD, shell=True,stdout=fnull,stderr=fnull)
+        except Exception,e:
+            print e
+              
+                  
 class Reporter:
     """ Report execution state of smashbox.
     """
@@ -14,6 +55,7 @@ class Reporter:
         self.test_name = barename
     
     def reporter_setup_test(self,smash_workers,manager):
+        import datetime
         #prepare configurations
         barename = self.test_name
         config = self.config
@@ -38,7 +80,7 @@ class Reporter:
                  "scenarioid": config.testset_i,
                  "results": [],
                  "engine": engine,
-                 "timeid": time_now().strftime("%y%m%d-%H%M%S")
+                 "timeid": (datetime.datetime.now()).strftime('%s%f')
         }
         self.data = append_to_json(dict,barename,self.data,self.config)
         for i,f_n in enumerate(smash_workers):
@@ -55,20 +97,18 @@ class Reporter:
     
     def reporter_log_results(self):
         result = append_to_json(self.test_result_dict,self.test_name,self.data,self.config)
-        data = get_data_from_json_file(self.resultfile)
-        if data==None:
-            #new file
-            data = result
-        else:
-            #file(data) exists
-            data = append_to_json(result,self.test_name,data,self.config)
-        write_to_json_file(data, self.resultfile)         
+        try:
+            if getattr(self.config, "remote")=="true":
+                self.remote_storage(result)
+        except Exception,e:
+            print "%s: continue and save results localy"%e
+            self.local_storage(result)         
     
     def reporter_finalize_test(self):
         dict = { "results" : [] }
         for i in range(0, len(self.shared_result_workers)):
             dict["results"].append(self.get_shared_results())
-        dict["total_exec_time"]=str(time_now(self.start_date))
+        dict["total_exec_time"]=(time_now(self.start_date)).total_seconds()
         self.test_result_dict = dict
     
     def reporter_get_test_results(self):  
@@ -88,35 +128,109 @@ class Reporter:
             self.shared_result[i]["sync_time"] = sync_exec_time(sync_exec_time_array)
             self.shared_result[i]["sync_time_intervals"] = set_sync_intervals(sync_exec_time_array)
         else:
-            self.shared_result[i]["sync_time"] = '0:00:00.000000'
+            self.shared_result[i]["sync_time"] = 0
+            self.shared_result[i]["sync_time_intervals"] = []
         if reported_errors:
             self.shared_result[i]["errors"] = reported_errors
+    
+    def remote_storage(self,result):
+        
+        def process_packets():
+            
+            def in_sync_period(packet_time):
+                for i in range(0, len(test_results)):
+                    sync_array = test_results[i]["sync_time_intervals"]
+                    for j in range(0, len(sync_array)):
+                        if packet_time >= sync_array[j][0] and packet_time <= sync_array[j][1]:
+                            return True
+                return False    
+            for j in range(0, len(packet_trace)):
+                packet = packet_trace[j]
+                send_packet_tag = []
+                send_packet_tag.append("ip=%s"%packet["ip"])
+                send_packet_tag.append("incoming=%s"%packet["incoming"])
+                if in_sync_period(packet["time"]):
+                    send_packet_tag.append("sync_packet=true")
+                else:
+                    send_packet_tag.append("sync_packet=false")
+                
+                influxdb_client.write(("%s-pkt"%RUNID), send_packet_tag, packet["size"],str(packet["time"])) 
+            TIMEID = str(packet["time"])
+            
+        def process_results():
+            total_sync_time = 0
+            sync_time_array = []
+            for i in range(0, len(test_results)):
+                test_result = test_results[i]
+                if test_result.has_key("errors"): 
+                    error_flag = 1
+                else:
+                    error_flag = 0
+                    
+                influxdb_client.write(("%s-err"%RUNID), [("worker_name=%s"%test_result["worker"])], str(error_flag) ,TIMEID)
+                
+            if error_flag==0:    
+                for j in range(0, len(test_results)):
+                    test_result = test_results[j]
+                    if(test_result["sync_time"]!=0):
+                        total_sync_time += test_result["sync_time"]
+                        influxdb_client.write(("%s-syn"%RUNID), [("worker_name=%s"%test_result["worker"])], test_result["sync_time"] ,TIMEID)     
+                #total sync has to be calculated due to grouping of values at grafana, no option to calculate it in query 
+                if(total_sync_time!=0):
+                    influxdb_client.write(("%s-total-syn"%RUNID),[],total_sync_time,TIMEID)
+                    influxdb_client.write(("%s-total-exec"%RUNID),[],TOTAL_EXEC,TIMEID)
+            
+        influxdb_client = InfluxDBClient(self.config)    
+        SERVER_NAME = self.config.oc_server
+        TEST_NAME=self.test_name
+        RUNID = result["runid"]+"-"+TEST_NAME
+        result_raw = result[SERVER_NAME][TEST_NAME][0] #function remote_storage is called always after the test, so it is only result avaiable at that iteration
+        
+        test_results = result_raw.pop("results")
+        TIMEID = str(result_raw["timeid"])
+        TOTAL_EXEC = result_raw["total_exec_time"]
+         
+        influxdb_client.initialize_keys(result_raw["engine"], SERVER_NAME, result_raw["scenario"])
+        
+        if result_raw.has_key("packet_trace"):
+            packet_trace = result_raw["packet_trace"]
+            print len(packet_trace)
+            process_packets()
+        process_results()
+        influxdb_client.send()
+        
+    def local_storage(self,result):
+        data = get_data_from_json_file(self.resultfile)
+        if data==None:
+            #new file
+            data = result
+        else:
+            #file(data) exists
+            data = append_to_json(result,self.test_name,data,self.config)
+        write_to_json_file(data, self.resultfile) 
 
-"""
-for i,f_n in enumerate(_smash_.workers):
-            f = f_n[0]
-            fname = f_n[1]
-            if fname is None:
-                fname = f.__name__
-            test_manager.setup_worker(manager,fname)
-
-"""   
 def set_sync_intervals(sync_exec_time_array):
+    import calendar
     sync_intervals = []
     for i in range(1, len(sync_exec_time_array)):
-        sync_intervals.append([str(sync_exec_time_array[i][0]),str(sync_exec_time_array[i][1])])
+        if sync_exec_time_array[i]!=None:
+            t0=int((sync_exec_time_array[i][0]).strftime('%s%f'))
+            t1=int((sync_exec_time_array[i][1]).strftime('%s%f'))
+            sync_intervals.append([t0,t1])
     return sync_intervals  
+
 def sync_exec_time(sync_exec_time_array):
     import datetime 
-    if sync_exec_time_array != None:
-        exec_time =  (sync_exec_time_array[0][1]-sync_exec_time_array[0][0]).total_seconds()
-        for i in range(1, len(sync_exec_time_array)):
+    if sync_exec_time_array[0]!=None:
+        exec_time = (sync_exec_time_array[0][1]-sync_exec_time_array[0][0]).total_seconds()
+    else:
+        exec_time = 0
+    for i in range(1, len(sync_exec_time_array)):
+        if sync_exec_time_array[i]!=None:
             sync_exec_time =  (sync_exec_time_array[i][1]-sync_exec_time_array[i][0]).total_seconds()
             exec_time = (exec_time + sync_exec_time)
-    else:
-        exec_time = datetime.timedelta(hours=0, minutes=0, seconds=0, milliseconds=0).total_seconds()
     
-    return str(datetime.timedelta(seconds=exec_time))        
+    return exec_time     
         
 def time_now(time_zero=None): 
     import datetime
@@ -162,15 +276,25 @@ def append_to_json(dict,test_name,data,config):
         data["runid"] = config.runid    
     return data
 
-def get_data_from_json_file(f_name):
+def get_data_from_json_file(file_path):
     import json
     import io
     import os
-    if(os.path.exists(f_name)):
-        with io.open(f_name,'r') as file:
+    if(os.path.exists(file_path)):
+        with io.open(file_path,'r') as file:
             data = json.load(file)    
         return data  
     
+def rm_file_dir(file_path):
+    import os, shutil
+    if(os.path.exists(file_path)):
+        try:
+            if os.path.isfile(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path): 
+                shutil.rmtree(file_path)
+        except:
+            pass         
 def write_to_json_file(data, file_path):
     import json
     import io

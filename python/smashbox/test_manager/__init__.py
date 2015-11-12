@@ -28,10 +28,11 @@ class Test_Manager:
             if self.engine == "dropbox":
                 self.worker_name_array=smashbox.test_manager.non_native_engine.setup_dropbox(self.config.smashdir,smash_workers)
             elif self.engine == "seafile":
-                setattr(self.config, "version", "4.3.2")
-                setattr(self.config, "seafile_lib", "1ba5703c-c3b9-403e-ac3c-dec836076ce2")
-                setattr(self.config, "seafile_user", "pimr@dtu.dk")
-                setattr(self.config, "seafile_password", "dummy")
+                setattr(self.config, "version", self.config.oc_webdav_endpoint)
+                setattr(self.config, "seafile_lib", self.config.oc_server_folder)
+                setattr(self.config, "seafile_user", self.config.oc_account_name)
+                setattr(self.config, "seafile_password", self.config.oc_account_password)
+                setattr(self.config, "seafile_server",self.config.oc_server)
                 self.worker_name_array=smashbox.test_manager.non_native_engine.setup_seafile(self.config.smashdir,smash_workers,self.config)
                 setattr(self.config, "worker_name_array", self.worker_name_array)
         if self.SNIFFER:
@@ -52,9 +53,8 @@ class Test_Manager:
          
         if self.NON_NATIVE_ENGINE:
             if self.engine == "dropbox":
-                smashbox.test_manager.non_native_engine.finish_dropbox(self.config.smashdir,self.worker_name_array)
-            elif self.engine == "seafile":
-                smashbox.test_manager.non_native_engine.finish_seafile(self.config,self.worker_name_array)
+                smashbox.test_manager.non_native_engine.finish_dropbox()
+                
     def finalize_step(self,supervisor_step):
         if self.NON_NATIVE_ENGINE:
             if self.engine == "dropbox":

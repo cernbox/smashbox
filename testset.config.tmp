@@ -1,0 +1,30 @@
+{  
+    "config" : [
+     "remote=(true | false)",
+     "sniffer=(true | false)",
+     "remote_storage_server=http://(IP):(PORT)",
+     "remote_database=DATABASE-NAME",
+     "remote_storage_user=DATABASE-USER",
+     "remote_storage_password=DATABASE-PSW",
+    ],
+    "sync_engines" : [
+        [
+         "engine=(owncloud | seafile | dropbox)",
+         "oc_server=(OWNCLOUD SERVER | https://seacloud.cc | dropbox.com)",
+         "oc_account_name=USER",
+         "oc_account_password=PASSWORD",
+         "oc_server_folder=(SEACLOUD LIB | OWNCLOUD-REMOTE-FOLDER | '')",
+         "oc_sync_cmd=('' | OWNCLOUD-CMD-DIRECTORY)",
+         "oc_webdav_endpoint=('' | OWNCLOUD-WEBDAV | SEACLOUD CLIENT VERSION - e.g. 4.3.2)",
+         "oc_account_reset_procedure=('' | OWNCLOUD_RESET_PROCEDURE)"
+        ]
+    ],
+    "tests" : [
+        {
+         "runid" : "TEST-PREDEFINED-AGGRAGATION-ID",
+         "test_name" : "TEST-LOCATION-IN-LIB-FOLDER",
+         "testset" : "(all | TEST-ID)"
+        }
+    ],
+    "loop" : 1
+}

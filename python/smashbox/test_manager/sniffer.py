@@ -44,14 +44,17 @@ class SnifferThread(threading.Thread):
                     s_addr = socket.inet_ntoa(iph[8]);
                     d_addr = socket.inet_ntoa(iph[9]);
                     incoming = None
-                    if (str(s_addr) == localhost  or str(s_addr) == '127.0.0.1'):
+                    if (str(s_addr) == str(d_addr)):
+                        ip = "localhost"
+                        incoming = False
+                    elif (str(s_addr) == localhost  or str(s_addr) == '127.0.0.1'):
                         ip = str(d_addr)
                         incoming = False
                     elif (str(d_addr) == localhost or str(d_addr) == '127.0.0.1'):
                         ip = str(s_addr)
                         incoming = True
                     
-                    dict = { "time": str(datetime.datetime.now()), "ip": ip, "incoming": incoming,"size" : str(len(packet)) }
+                    dict = { "time": int((datetime.datetime.now()).strftime('%s%f')), "ip": ip, "incoming": incoming,"size" : str(len(packet)) }
                     self.packet_traces.append(dict)
             
     def stop(self):

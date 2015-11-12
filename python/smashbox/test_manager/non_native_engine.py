@@ -12,6 +12,7 @@ class dropbox:
     
     @staticmethod
     def sync_engine(args,config,worker_name):
+        option = args[1]
         local_folder = os.path.abspath(os.path.join(config.smashdir,"dropbox-"+worker_name+"/Dropbox/"))
         dropbox_restart(config.smashdir, worker_name, local_folder)
         t0 = datetime.datetime.now()
@@ -20,7 +21,11 @@ class dropbox:
             t1 = datetime.datetime.now()
             stop_dropbox(worker_name, config.smashdir)  
             log_test(config.smashdir,log)
-            return [t0,t1] 
+            
+            if option == "exclude_time":
+                return None
+            else:
+                return [t0,t1]
           
     @staticmethod    
     def make_workdir(args,config,worker_name):
@@ -98,14 +103,8 @@ def clean_directory(smashdir, fname):
     process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     process.wait()
              
-def finish_dropbox(smashdir,worker_name_array):
-    #print "START FINISHING DROPBOX"
-    for i in range(0, len(worker_name_array)):
-        fname = worker_name_array[i]
-        start_dropbox(fname, smashdir)
-        clean_directory(smashdir, fname) 
-        if(get_running_dropbox(str(fname), smashdir) != None):
-            stop_dropbox(fname, smashdir)
+def finish_dropbox():
+    print "START FINISHING DROPBOX"
     check_if_dropbox_stopped()
 
 def check_if_dropbox_stopped():
@@ -172,10 +171,6 @@ def get_running_dropbox(fname, smashdir,status="Up to date"):
             up_to_date_flag += 1
         else:
             up_to_date_flag = 0
-            timeout_flag +=1
-            if(timeout_flag>10000):
-                e = ("%s get running timeout - ignore, not important!"%(fname))
-                raise Exception, e
         time.sleep(0.01)
         
     return { fname : stdout_array } 
@@ -228,6 +223,7 @@ class seafile:
         
     @staticmethod
     def sync_engine(args,config,worker_name):
+        option = args[1]
         smashdir = config.smashdir
         run_seafile(smashdir, worker_name)
         get_running_seafile(worker_name, smashdir)
@@ -236,7 +232,10 @@ class seafile:
         t1 = datetime.datetime.now()
         stop_seafile(worker_name, smashdir)
         log_test(smashdir,log)
-        return [t0,t1] 
+        if option == "exclude_time":
+            return None
+        else:
+            return [t0,t1]
     
     @staticmethod    
     def reset_owncloud_account(args,config,worker_name):
@@ -324,7 +323,7 @@ def start_seafile(fname, smashdir,directory,config):
         subprocess.call(["mkdir", os.path.abspath(smashdir+"/seafile-c-"+fname)], cwd=home) 
         subprocess.call(["./seaf-cli", "init", "-c",workerconfdir,"-d", parentdir], cwd=parentdir)
         subprocess.call(["./seaf-cli", "start", "-c",workerconfdir], cwd=parentdir)
-        cmd_arr = ["./seaf-cli", "sync", "-c",workerconfdir, "-l",config.seafile_lib,"-s","https://seacloud.cc","-u",config.seafile_user,"-p",config.seafile_password,"-d",workerdir]
+        cmd_arr = ["./seaf-cli", "sync", "-c",workerconfdir, "-l",config.seafile_lib,"-s",config.seafile_server,"-u",config.seafile_user,"-p",config.seafile_password,"-d",workerdir]
         subprocess.call(cmd_arr, cwd=parentdir)
     else:
         subprocess.call(["./seaf-cli", "start", "-c",workerconfdir], cwd=parentdir)
@@ -337,12 +336,6 @@ def stop_seafile(fname, smashdir):
     workerconfdir = os.path.abspath(smashdir+"/seafile-c-"+fname+"/.ccnet")
     subprocess.call(["./seaf-cli", "stop", "-c",workerconfdir], cwd=parentdir)
     
-def finish_seafile(config,worker_name_array):
-    for i in range(0, len(worker_name_array)):
-        fname = worker_name_array[i]
-        seafile.sync_engine((),config,fname)
-        seafile_clean_directory(config.smashdir, fname)
-        seafile.sync_engine((),config,fname)
 
 def check_status_seafile(fname, smashdir):
     parentdir = os.path.abspath(smashdir+"/seafile-w-"+fname)
@@ -387,9 +380,9 @@ def seafile_clean_directory(smashdir, fname):
     import glob
     workerdir = os.path.abspath(smashdir+"/seafile-"+fname)
     if os.path.exists(workerdir):
-        files = glob.glob(workerdir+"/*")
-        for f in files:
-            os.remove(f) 
+        cmd = ('rm -rf '+(workerdir+"/*"))
+        process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        process.wait()
 
 def check_if_stopped(service):
     import time

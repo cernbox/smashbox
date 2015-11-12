@@ -282,7 +282,11 @@ def sync_engine(cmd,option):
     runcmd(cmd, ignore_exitcode=True)  # exitcode of ocsync is not reliable
     t1 = datetime.datetime.now()
     logger.info('sync cmd is: %s',cmd) 
-    return [t0,t1]  
+    
+    if option == "exclude_time":
+        return None
+    else:
+        return [t0,t1]  
 
 def run_ocsync(local_folder, remote_folder="", n=None, user_num=None, option = None):
     """ Run the ocsync for local_folder against remote_folder (or the main folder on the owncloud account if remote_folder is None).
@@ -306,7 +310,7 @@ def run_ocsync(local_folder, remote_folder="", n=None, user_num=None, option = N
         cmd = config.oc_sync_cmd+' '+local_folder+' '+oc_webdav_url('owncloud',remote_folder,user_num) + " >> "+config.rundir+"/%s-ocsync.step%02d.cnt%03d.log 2>&1"%(reflection.getProcessName(),current_step,ocsync_cnt[current_step])
         sync_exec_time = sync_engine(cmd,option)
         sync_exec_time_array.append(sync_exec_time)  
-        logger.info('sync finished: %s s',(sync_exec_time[1]-sync_exec_time[0]).total_seconds())
+        logger.info('sync finished: %s s'%sync_exec_time)
         ocsync_cnt[current_step]+=1  
     
 def webdav_propfind_ls(path, user_num=None):

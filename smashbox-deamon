@@ -1,0 +1,99 @@
+#!/usr/bin/python
+import sys,os,socket
+import subprocess,time,signal
+
+class SmashboxCLI:
+    def __init__(self,config):
+        self.pid_file = "smashbox.pid"
+        self.SMASHBOX_CMD_BASIC = ["bin/smash","--keep-going"]
+        for i in range(0, len(config)):
+            self.SMASHBOX_CMD_BASIC += ["-o",config[i]]
+    def start(self,sync_engine,testset,test_name,runid): 
+        SMASHBOX_CMD = self.SMASHBOX_CMD_BASIC[:]
+        for j in range(0, len(sync_engine)):
+            SMASHBOX_CMD += ["-o",sync_engine[j]]
+        if (testset == "all"):
+            SMASHBOX_CMD += ["-a"]
+        else:
+            SMASHBOX_CMD += ["-t",str(testset)] 
+        SMASHBOX_CMD += ["-o","runid=%s"%runid,"lib/%s"%test_name] 
+        process = subprocess.Popen(SMASHBOX_CMD,stdout=subprocess.PIPE,stderr=subprocess.PIPE, preexec_fn=os.setsid)
+        self.pid = os.getpgid(process.pid)
+        print self.pid
+        completed = False
+        start = time.time()
+        while not completed:
+            time.sleep(2)
+            if process.poll() is not None:
+                completed = True
+            if int(time.time() - start) > 1800:
+                stop_execution(self.pid)
+        print process.communicate()
+
+def stop_execution(pid):
+    pid = int(pid)
+    try:
+        os.killpg(pid, signal.SIGTERM)
+        time.sleep(2)
+        try:
+            os.killpg(pid, signal.SIGKILL)
+        except:
+            pass
+        time.sleep(2)
+        print ("ok")
+    except Exception, e:
+        print (e)
+  
+def get_config(path):
+    import io    
+    path = os.path.abspath(path)    
+    if (os.path.exists(path)):
+        with io.open(path,'r') as file:
+            data = eval(file.read())
+        return data 
+    else:
+        print "path does not exists %s"%path
+        sys.exit()
+        
+def check_smashbox_basic_conf():
+    if not (os.path.exists('etc/smashbox.conf')):
+        subprocess.call(["cp","etc/smashbox.conf.template","etc/smashbox.conf"],cwd=os.path.dirname(os.path.realpath(__file__)))
+            
+def run(arguments):
+    check_smashbox_basic_conf()
+    if len(arguments)>1:
+        testset_config = get_config(arguments[1])
+        client = SmashboxCLI(testset_config["config"])
+        sync_engines = testset_config["sync_engines"]
+        tests = testset_config["tests"]
+        for k in range(0, int(testset_config["loop"])):
+            for i in range(0, len(sync_engines)):
+                for j in range(0, len(tests)):
+                    test_name = tests[j]["test_name"]
+                    testset = tests[j]["testset"]
+                    runid = tests[j]["runid"]
+                    client.start(sync_engines[i],testset,test_name,runid)
+    else:
+        print "Please specify path to smashbox-deamon configuration"                
+		
+def get_lock():
+	process_name = 'running_test'		
+	global lock_socket   # Without this our lock gets garbage collected
+	lock_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+	try:
+		lock_socket.bind('\0' + process_name)
+		return 1
+	except socket.error:
+		return 0
+
+if __name__ == '__main__':
+	"""    """
+	arguments = sys.argv
+	if (get_lock()==1):
+		run(arguments)
+	else:
+		print ("Aborting - wait for the end of the previous smashbox run")
+		sys.exit()
+
+
+
