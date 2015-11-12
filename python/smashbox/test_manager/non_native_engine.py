@@ -380,7 +380,7 @@ def seafile_clean_directory(smashdir, fname):
     import glob
     workerdir = os.path.abspath(smashdir+"/seafile-"+fname)
     if os.path.exists(workerdir):
-        cmd = ('rm -rf '+(workerdir+"/*"))
+        cmd = ('rm -rf %s/*'%workerdir)
         process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         process.wait()
 
