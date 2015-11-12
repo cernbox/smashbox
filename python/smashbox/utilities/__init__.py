@@ -762,7 +762,10 @@ def curl_check_url(config):
                     print "SMASHBOX_CHECK OK"
             except:
                 print "SMASHBOX_CHECK ERROR: %s"%r.body_stream.getvalue()  
-                exit_flag = True
+                if str(r.body_stream.getvalue()).find("HTML") != -1:
+                    exit_flag=False
+                else:
+                    exit_flag = True
     except Exception, e:
         exit_flag = True
         print e

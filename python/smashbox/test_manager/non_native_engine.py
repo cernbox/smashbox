@@ -57,7 +57,7 @@ def install_dropbox():
         subprocess.call(["wget", "-O", "dropbox.tar.gz",dist], cwd=home)
         print "downloaded, unpack"
         subprocess.call(["tar", "-xvzf", "dropbox.tar.gz"], cwd=home)
-        print "dropbox installed"
+    print "dropbox installed"
        
 def setup_dropbox(smashdir, smash_workers):
     install_dropbox()
@@ -295,7 +295,7 @@ def install_seafile(smashdir,version):
     from os.path import expanduser
     import platform
     def is_32bit():
-        if ((platform.architecture()[0]).find("32") != -1):
+        if ((platform.architecture()[0]).find("32") != -1 or (platform.architecture()[0]).find("64") != -1):
             return "seafile-cli_"+version+"_x86_64"
         else:
             return "seafile-cli_"+version+"_i386"

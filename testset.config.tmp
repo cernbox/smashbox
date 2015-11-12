@@ -41,7 +41,7 @@
     ],
     "tests" : [
         {
-         "runid" : "test",
+         "runid" : "testrun",
          "test_name" : "performance/test_syncperf.py",
          "testset" : "all"
         }
