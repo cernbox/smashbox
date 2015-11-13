@@ -44,7 +44,7 @@ def install_dropbox():
     from os.path import expanduser
     import platform,sys
     def is_32bit():
-        if ((platform.architecture()[0]).find("32") != -1):
+        if (platform.architecture()[0]).find("32") != -1 or (platform.architecture()[0]).find("64") != -1:
             return "x86_64"
         else:
             return "x86"
