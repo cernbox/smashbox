@@ -1,5 +1,7 @@
 from smashbox.utilities import *
 
+import smashbox.utilities.structures
+
 class Response:
     def __init__(self):
         self.rc = None
@@ -148,7 +150,7 @@ class Client:
         
         response_obj.rc=c.getinfo(c.HTTP_CODE)
 
-        response_obj.headers = {}
+        response_obj.headers = smashbox.utilities.structures.CaseInsensitiveDict()
         for h in ret_headers:
             h = h.strip()
             if not h:
