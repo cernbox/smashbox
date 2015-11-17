@@ -26,17 +26,17 @@ full_dir_size = "10/100/10000"
 testsets = [
         { 'syncperf_filesize': 1000, 
           'syncperf_nfiles':1,
-          'syncperf_fullsyncdir':None,
+          'syncperf_fullsyncdir':False,
           'syncperf_excludetime':True
         },
         { 'syncperf_filesize': 5000000, 
           'syncperf_nfiles':1,
-          'syncperf_fullsyncdir':None,
+          'syncperf_fullsyncdir':False,
           'syncperf_excludetime':True
         },
         { 'syncperf_filesize': 500000000, 
           'syncperf_nfiles':1,
-          'syncperf_fullsyncdir':None,
+          'syncperf_fullsyncdir':False,
           'syncperf_excludetime':True
         },
         { 'syncperf_filesize': 1000, 
@@ -114,7 +114,7 @@ def worker1(step):
 
 def prepare_workdir(d):
     cdir = d
-    if fullsyncdir!=None:
+    if fullsyncdir!=False:
         conf = fullsyncdir.split('/')
         if len(conf)==3 and int(conf[0])>0:
             cdir = os.path.join(d,"0")
@@ -127,7 +127,7 @@ def prepare_workdir(d):
 
 def get_workdir(d):
     cdir = d
-    if fullsyncdir!=None:
+    if fullsyncdir!=False:
         conf = fullsyncdir.split('/')
         if len(conf)==3 and int(conf[0])>0:
             cdir = os.path.join(d,"0")

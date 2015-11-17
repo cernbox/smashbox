@@ -9,6 +9,7 @@ class SmashboxCLI:
         for i in range(0, len(config)):
             self.SMASHBOX_CMD_BASIC += ["-o",config[i]]
     def start(self,sync_engine,testset,test_name,runid): 
+        parentdir = os.path.dirname(os.path.realpath(__file__))    
         SMASHBOX_CMD = self.SMASHBOX_CMD_BASIC[:]
         for j in range(0, len(sync_engine)):
             SMASHBOX_CMD += ["-o",sync_engine[j]]
@@ -17,18 +18,21 @@ class SmashboxCLI:
         else:
             SMASHBOX_CMD += ["-t",str(testset)] 
         SMASHBOX_CMD += ["-o","runid=%s"%runid,"lib/%s"%test_name] 
-        process = subprocess.Popen(SMASHBOX_CMD,stdout=subprocess.PIPE,stderr=subprocess.PIPE, preexec_fn=os.setsid)
+        process = subprocess.Popen(SMASHBOX_CMD,stdout=subprocess.PIPE, stderr=subprocess.STDOUT, preexec_fn=os.setsid, cwd=parentdir)
         self.pid = os.getpgid(process.pid)
         print self.pid
         completed = False
         start = time.time()
-        while not completed:
-            time.sleep(2)
-            if process.poll() is not None:
-                completed = True
+        stdout = []
+        while True:
             if int(time.time() - start) > 1800:
                 stop_execution(self.pid)
-        print process.communicate()
+                break
+            line = process.stdout.readline()
+            stdout.append(line)
+            print line,
+            if line == '' and process.poll() != None:
+                break         
 
 def stop_execution(pid):
     pid = int(pid)
@@ -67,8 +71,8 @@ def run(arguments):
         sync_engines = testset_config["sync_engines"]
         tests = testset_config["tests"]
         for k in range(0, int(testset_config["loop"])):
-            for i in range(0, len(sync_engines)):
-                for j in range(0, len(tests)):
+            for j in range(0, len(tests)):
+                for i in range(0, len(sync_engines)):
                     test_name = tests[j]["test_name"]
                     testset = tests[j]["testset"]
                     runid = tests[j]["runid"]
