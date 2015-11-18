@@ -129,6 +129,16 @@ NEXT, you shoudl create file testrun.config by ``nano smashbox/testrun.config`` 
          "oc_webdav_endpoint=4.3.2",
          "oc_account_reset_procedure=seafile"
         ],
+        [
+         "engine=owncloud",
+         "oc_server=YOUR_SERVER",
+         "oc_account_name=YOUR_ACC",
+         "oc_account_password=YOUR_PSW",
+         "oc_server_folder=YOUR_REMOTE_FOLDER",
+         "oc_sync_cmd=YOUR_CMD_DIR e.g. /usr/bin/owncloudcmd --trust",
+         "oc_webdav_endpoint=YOUR_WEBDAV e.g. remote.php/webdav",
+         "oc_account_reset_procedure=webdav_delete"
+        ],
     ],
     "tests" : [
         {
