@@ -4,12 +4,9 @@ import tempfile
 
 
 __doc__ = """ Add nfiles to a directory and check consistency.
-
-    "syncperf_fullsyncdir" is defined as (number of directories) / (number of files) / (size of files) 
-        - if not in the correct format, it will execute with empty directory.
-    
     "excludetime" is information if to count preparation sync to the total sync time.
-    
+    Due to several engines being used, and possible running of other performance tests, 
+    there is need for so called sync_directory d and count directory count_dir
 """
 
 from smashbox.utilities import *
@@ -17,50 +14,25 @@ from smashbox.utilities.hash_files import *
 
 nfiles = int(config.get('syncperf_nfiles',1))
 filesize = config.get('syncperf_filesize',1000)
-excludetime = config.get('syncperf_excludetime',True)
-fullsyncdir = config.get('syncperf_fullsyncdir',False)
+excludetime = True
 
 if type(filesize) is type(''):
     filesize = eval(filesize)
-full_dir_size = "10/100/10000"
+    
 testsets = [
         { 'syncperf_filesize': 1000, 
           'syncperf_nfiles':1,
-          'syncperf_fullsyncdir':False,
-          'syncperf_excludetime':True
         },
         { 'syncperf_filesize': 5000000, 
           'syncperf_nfiles':1,
-          'syncperf_fullsyncdir':False,
-          'syncperf_excludetime':True
         },
         { 'syncperf_filesize': 500000000, 
           'syncperf_nfiles':1,
-          'syncperf_fullsyncdir':False,
-          'syncperf_excludetime':True
-        },
-        { 'syncperf_filesize': 1000, 
-          'syncperf_nfiles':1,
-          'syncperf_fullsyncdir':full_dir_size,
-          'syncperf_excludetime':True
-        },
-        { 'syncperf_filesize': 5000000, 
-          'syncperf_nfiles':1,
-          'syncperf_fullsyncdir':full_dir_size,
-          'syncperf_excludetime':True
-        },
-        { 'syncperf_filesize': 500000000, 
-          'syncperf_nfiles':1,
-          'syncperf_fullsyncdir':full_dir_size,
-          'syncperf_excludetime':True
         },
 ]
 
 @add_worker
 def worker0(step): 
-    
-    exclude_time = eval_excudetime(excludetime)
-    
     step(1,'Preparation')
     d = make_workdir()
     array = prepare_workdir(d)
@@ -90,9 +62,6 @@ def worker0(step):
         
 @add_worker
 def worker1(step):
-    
-    exclude_time = eval_excudetime(excludetime)
-    
     step(2,'Preparation')
     d = make_workdir()
     array = get_workdir(d)
@@ -116,16 +85,6 @@ def worker1(step):
 def prepare_workdir(d):
     cdir = os.path.join(d,"0")
     remove_tree(cdir)
-    if fullsyncdir!=False:
-        conf = fullsyncdir.split('/')
-        if len(conf)==3 and int(conf[0])>0:
-            for i in range(0, int(conf[0])):
-                dir = os.path.join(d,str(i)) 
-                if (not (os.path.exists(dir))) or i==0:
-                    mkdir(dir)
-                    for i in range(int(conf[1])):
-                        create_hashfile(dir,size=int(conf[2]))
-            return [cdir,d]
     reset_owncloud_account()
     mkdir(cdir)
     d = cdir
@@ -135,8 +94,7 @@ def get_workdir(d):
     cdir = os.path.join(d,"0")
     remove_tree(cdir)  
     mkdir(cdir)
-    if fullsyncdir==False:
-        d = cdir  
+    d = cdir  
     return [cdir,d]
 
 def eval_excudetime(excludetime):
