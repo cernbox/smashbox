@@ -139,9 +139,11 @@ NEXT, you shoudl create file testrun.config by ``nano smashbox/testrun.config`` 
     ],
     "loop" : 1
 } 
+</pre>
 
 or just 
 
+<pre>
 {  
     "config" : [
      "remote=false",
