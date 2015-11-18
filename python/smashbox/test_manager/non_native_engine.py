@@ -130,14 +130,34 @@ def stop_dropbox(fname, smashdir):
     process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     process.wait() 
     #print "%s stop dropbox"%fname 
+
+
+def get_output_from_start(process):
+    while True:
+        line = process.stdout.readline()
+        stdout.append(line)
+        print line,
+        if line == '' and process.poll() != None:
+            break
     
 def start_dropbox(fname, smashdir, get_running=True):
     import os
     from os.path import expanduser
+    from multiprocessing import Process
     d = os.path.abspath(os.path.join(smashdir,"dropbox-"+str(fname)))
     cmd = os.path.dirname(__file__)+"/./mdroboxinstances.sh "+expanduser("~")+" "+ d
-    process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    if(get_running and get_running_dropbox(str(fname), smashdir) != None):
+    process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,universal_newlines=True,)
+    if(get_running==True):
+        import time
+        while True:
+            stdout = check_status_dropbox(str(fname), smashdir)
+            if((stdout.find("Up to date") != -1)):
+                break
+            elif((stdout.find("link") != -1)):
+                print stdout
+            time.sleep(1)
+            
+                
         cmd = os.path.dirname(__file__)+"/./dropbox.py --set "+d+"/.dropbox lansync n"  
         process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         process.wait() 
@@ -179,17 +199,11 @@ def dropbox_restart(smashdir, worker_name, local_folder):
     import time
     def dropbox_check_resume_sync(smashdir, worker_name):
         indexing_flag=True  
-        indexing_timeout=0
         while(indexing_flag):
             stdout = check_status_dropbox(worker_name, smashdir)
             #(stdout.find("Connecting") != -1) or 
             if((stdout.find("Indexing") != -1) or (stdout.find("Downloading") != -1) or (stdout.find("Up to date") != -1)):
                 indexing_flag = False
-            else:
-                indexing_timeout+=1
-                if(indexing_timeout==1000):
-                    #print "indexing timeout"
-                    return False
         return time_now()
     #main
     start_dropbox(worker_name, smashdir, get_running=False)
@@ -201,10 +215,7 @@ def dropbox_restart(smashdir, worker_name, local_folder):
     process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     process.wait() 
     indexing = dropbox_check_resume_sync(smashdir, worker_name)
-    if(indexing==False):
-        raise Exception, "indexing timeout"
-    else:
-        return indexing
+    return indexing
     
 def dropbox_add_workers_to_conf(fname, smashdir):
     clean_directory(smashdir, fname) 
@@ -412,4 +423,4 @@ def time_now(time_zero=None):
         return datetime.datetime.now()
     else:
         return (datetime.datetime.now()-time_zero)  
-    
+  

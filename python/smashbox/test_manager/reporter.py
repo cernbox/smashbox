@@ -9,7 +9,9 @@ class InfluxDBClient:
         DB_USER = config.remote_storage_user
         DB_PASSWORD = config.remote_storage_password
         self.CURL_CMD = "curl -i -u %s:%s -XPOST %s/write?db=%s --data-binary @%s"%(DB_USER,DB_PASSWORD,SERVER_URL,DB_NAME,self.tmp_file)
-        self.result_array = []
+        self.result_array = [[]]
+        self.result_array_len = 0
+        self.tmp_result_array_len = 0
         
     def initialize_keys(self,engine, server_name, scenario):
         self.tags = ["engine=%s"%engine,"server_name=%s"%server_name]
@@ -23,18 +25,27 @@ class InfluxDBClient:
         tags = tags + self.tags
         for i in range(0, len(tags)):
             CURL_TAG+=",%s"%tags[i]
-        data_binary = "%s%s value=%s %s000\n"%(measurement_name,CURL_TAG,value,timestamp) 
-        self.result_array.append(data_binary)
+        data_binary = "%s%s value=%s %s000\n"%(measurement_name,CURL_TAG,value,timestamp)
+        if(self.tmp_result_array_len>50000):
+            self.result_array.append([])
+            self.result_array_len += 1 
+            self.tmp_result_array_len = 0
+        self.result_array[self.result_array_len].append(data_binary)
+        self.tmp_result_array_len += 1
        
     def send(self):
-        rm_file_dir(self.tmp_file)
-        try:    
-            with io.open(self.tmp_file,'w', encoding='utf-8') as file_write:
-                result_string = ''.join(self.result_array)
-                file_write.write(unicode(result_string))
-                  
-            with open(os.devnull, "w") as fnull:
-                subprocess.call(self.CURL_CMD, shell=True,stdout=fnull,stderr=fnull)
+        try:
+            for i in range(0, self.result_array_len+1):    
+                with io.open(self.tmp_file,'w', encoding='utf-8') as file_write:
+                    result_string = ''.join(self.result_array[i])
+                    file_write.write(unicode(result_string))
+                    
+                with open(os.devnull, "w") as fnull:
+                    #process = subprocess.Popen(self.CURL_CMD, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                    #output = process.communicate()
+                    #print (output[0]).encode('ascii','ignore')
+                    #print (output[1]).encode('ascii','ignore')
+                    subprocess.call(self.CURL_CMD, shell=True,stdout=fnull,stderr=fnull)
         except Exception,e:
             print e
               
@@ -162,12 +173,14 @@ class Reporter:
             sync_time_array = []
             for i in range(0, len(test_results)):
                 test_result = test_results[i]
+                err_tags = [("worker_name=%s"%test_result["worker"])]
                 if test_result.has_key("errors"): 
+                    import urllib
+                    err_tags.append("errors=%s"%urllib.quote(str(test_result["errors"])))
                     error_flag = 1
                 else:
                     error_flag = 0
-                    
-                influxdb_client.write(("%s-err"%RUNID), [("worker_name=%s"%test_result["worker"])], str(error_flag) ,TIMEID)
+                influxdb_client.write(("%s-err"%RUNID), err_tags, str(error_flag) ,TIMEID)
                 
             if error_flag==0:    
                 for j in range(0, len(test_results)):
@@ -284,17 +297,7 @@ def get_data_from_json_file(file_path):
         with io.open(file_path,'r') as file:
             data = json.load(file)    
         return data  
-    
-def rm_file_dir(file_path):
-    import os, shutil
-    if(os.path.exists(file_path)):
-        try:
-            if os.path.isfile(file_path):
-                os.unlink(file_path)
-            elif os.path.isdir(file_path): 
-                shutil.rmtree(file_path)
-        except:
-            pass         
+
 def write_to_json_file(data, file_path):
     import json
     import io

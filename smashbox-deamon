@@ -29,7 +29,6 @@ class SmashboxCLI:
                 stop_execution(self.pid)
                 break
             line = process.stdout.readline()
-            stdout.append(line)
             print line,
             if line == '' and process.poll() != None:
                 break         

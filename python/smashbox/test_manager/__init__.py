@@ -15,7 +15,7 @@ class Test_Manager:
         import smashbox.test_manager.reporter
         import smashbox.test_manager.sniffer
         self.reporter = smashbox.test_manager.reporter.Reporter(name,config)
-        if self.SNIFFER:
+        if self.SNIFFER and config.sniffer=="true":
             self.sniffer = smashbox.test_manager.sniffer.SnifferThread()
         if self.NON_NATIVE_ENGINE:
             self.engine = getattr(config, "engine")
@@ -35,7 +35,7 @@ class Test_Manager:
                 setattr(self.config, "seafile_server",self.config.oc_server)
                 self.worker_name_array=smashbox.test_manager.non_native_engine.setup_seafile(self.config.smashdir,smash_workers,self.config)
                 setattr(self.config, "worker_name_array", self.worker_name_array)
-        if self.SNIFFER:
+        if self.SNIFFER and self.config.sniffer=="true":
             self.sniffer.start()
         
     def finalize_test(self):
@@ -43,7 +43,7 @@ class Test_Manager:
             print "TESTCASE_STOP"
         self.reporter.reporter_finalize_test()
         
-        if self.SNIFFER:
+        if self.SNIFFER and self.config.sniffer=="true":
             test_results = self.reporter.reporter_get_test_results()
             test_results["packet_trace"] = self.sniffer.stop()
             self.sniffer.join()

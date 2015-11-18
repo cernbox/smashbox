@@ -60,15 +60,12 @@ testsets = [
 def worker0(step): 
     
     exclude_time = eval_excudetime(excludetime)
-    # do not cleanup server files from previous run
-    reset_owncloud_account()
-
-    # cleanup all local files for the test
-    reset_rundir()
     
     step(1,'Preparation')
     d = make_workdir()
-    count_dir = prepare_workdir(d)
+    array = prepare_workdir(d)
+    count_dir = array[0]
+    d = array[1]
     step(2,'Pre-sync')
     run_ocsync(d,option=exclude_time)
     
@@ -93,10 +90,14 @@ def worker0(step):
         
 @add_worker
 def worker1(step):
+    
     exclude_time = eval_excudetime(excludetime)
-    step(1,'Preparation')
+    
+    step(2,'Preparation')
     d = make_workdir()
-    count_dir = get_workdir(d)
+    array = get_workdir(d)
+    count_dir = array[0]
+    d = array[1]
     step(3,'Pre-sync')
     run_ocsync(d,option=exclude_time)
     k0 = count_files(count_dir)
@@ -111,27 +112,32 @@ def worker1(step):
     error_check(k1-k0==nfiles,'Expecting to have %d files more: see k1=%d k0=%d'%(nfiles,k1,k0))
 
     fatal_check(ncorrupt==0, 'Corrupted files (%s) found'%ncorrupt)
-
+    
 def prepare_workdir(d):
-    cdir = d
+    cdir = os.path.join(d,"0")
+    remove_tree(cdir)
     if fullsyncdir!=False:
         conf = fullsyncdir.split('/')
         if len(conf)==3 and int(conf[0])>0:
-            cdir = os.path.join(d,"0")
             for i in range(0, int(conf[0])):
-                dir = os.path.join(d,str(i))
-                mkdir(dir)
-                for i in range(int(conf[1])):
-                    create_hashfile(dir,size=int(conf[2]))
-    return cdir
+                dir = os.path.join(d,str(i)) 
+                if (not (os.path.exists(dir))) or i==0:
+                    mkdir(dir)
+                    for i in range(int(conf[1])):
+                        create_hashfile(dir,size=int(conf[2]))
+            return [cdir,d]
+    reset_owncloud_account()
+    mkdir(cdir)
+    d = cdir
+    return [cdir,d]
 
 def get_workdir(d):
-    cdir = d
-    if fullsyncdir!=False:
-        conf = fullsyncdir.split('/')
-        if len(conf)==3 and int(conf[0])>0:
-            cdir = os.path.join(d,"0")
-    return cdir
+    cdir = os.path.join(d,"0")
+    remove_tree(cdir)  
+    mkdir(cdir)
+    if fullsyncdir==False:
+        d = cdir  
+    return [cdir,d]
 
 def eval_excudetime(excludetime):
     if excludetime:   
