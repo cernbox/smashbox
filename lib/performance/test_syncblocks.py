@@ -15,7 +15,7 @@ import inspect
 test_name = ((os.path.basename(inspect.getfile(inspect.currentframe()))).replace('test_','')).replace('.py','')
 nfiles = int(config.get('%s_nfiles'%test_name,1))
 filesize = config.get('%s_filesize'%test_name,1000)
-blocksize = config.get('%s_rptblocksize'%test_name,10000000)
+blocksize = config.get('%s_rptblocksize'%test_name,1000000)
 excludetime = True
 
 if type(filesize) is type(''):
@@ -24,15 +24,15 @@ if type(filesize) is type(''):
 testsets = [
         { '%s_filesize'%test_name: 1000, 
           '%s_nfiles'%test_name:1,
-          '%s_rptblocksize'%test_name:10000000,
+          '%s_rptblocksize'%test_name:1000000,
         },
         { '%s_filesize'%test_name: 5000000, 
           '%s_nfiles'%test_name:1,
-          '%s_rptblocksize'%test_name:10000000,
+          '%s_rptblocksize'%test_name:1000000,
         },
         { '%s_filesize'%test_name: 500000000, 
           '%s_nfiles'%test_name:1,
-          '%s_rptblocksize'%test_name:10000000,
+          '%s_rptblocksize'%test_name:1000000,
         },
         { '%s_filesize'%test_name: 1000, 
           '%s_nfiles'%test_name:1,

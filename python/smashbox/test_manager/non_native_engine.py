@@ -453,7 +453,7 @@ class NonBlockingStreamReader:
                 if line:
                     queue.put(line)
                 else:
-                    raise UnexpectedEndOfStream
+                    pass
 
         self._t = Thread(target = _populateQueue,
                 args = (self._s, self._q))
@@ -466,5 +466,3 @@ class NonBlockingStreamReader:
                     timeout = timeout)
         except Empty:
             return None
-
-class UnexpectedEndOfStream(Exception): pass
