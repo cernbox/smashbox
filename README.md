@@ -86,17 +86,66 @@ run ``smashbox/bin/smash -o oc_account_password=dropbox -o engine=dropbox --test
 
 If you are on the text-based system, information about accessing the link and enabling dropbox client will appear. If it is desktop system, it will open the dropbox desktop client so that you could enter credentials for the dropbox account.
 
+For Seafile client, first you need to set up the certificates on ubuntu, because the latest CLI client uses http protocol for synchronization. If you use https on the Seafile server side, you can't connect to the server from a Debian/Ubuntu machine using this CLI client:
+
+<pre>
+sudo mkdir -p /etc/pki/tls/certs
+sudo cp /etc/ssl/certs/ca-certificates.crt /etc/pki/tls/certs/ca-bundle.crt
+sudo ln -s /etc/pki/tls/certs/ca-bundle.crt /etc/pki/tls/cert.pem
+</pre>
+
+If you will skip this step, your seafile will freeze on ``Starting to download ...``
+
 NEXT, you shoudl create file testrun.config by ``nano smashbox/testrun.config`` and insert the following file
 
 <pre>
 {  
     "config" : [
-     "remote=false",
-     "sniffer=false",
+     "remote=true",
+     "sniffer=true",
      "remote_storage_server=YOUR_SERVER",
      "remote_database=YOUR_DB",
      "remote_storage_user=YOUR_DB_USR",
      "remote_storage_password=YOUR_DB_PSWD",
+    ],
+    "sync_engines" : [
+        [
+         "engine=dropbox",
+         "oc_server=dropbox",
+         "oc_account_name=dropbox",
+         "oc_account_password=dropbox",
+         "oc_server_folder=dropbox",
+         "oc_sync_cmd=dropbox",
+         "oc_webdav_endpoint=dropbox",
+         "oc_account_reset_procedure=dropbox"
+        ],
+        [
+         "engine=seafile",
+         "oc_server=https://seacloud.cc/",
+         "oc_account_name=YOUR_USR",
+         "oc_account_password=YOUR_PSWRD",
+         "oc_server_folder=YOUR_LIB",
+         "oc_sync_cmd=seafile",
+         "oc_webdav_endpoint=4.3.2",
+         "oc_account_reset_procedure=seafile"
+        ],
+    ],
+    "tests" : [
+        {
+         "runid" : "testrun",
+         "test_name" : "performance/test_syncperf.py",
+         "testset" : "0"
+        }, 
+    ],
+    "loop" : 1
+} 
+
+or just 
+
+{  
+    "config" : [
+     "remote=false",
+     "sniffer=false",
     ],
     "sync_engines" : [
         [
