@@ -5,8 +5,8 @@ import tempfile
 
 __doc__ = """ Add nfiles to a directory and check consistency.
     "excludetime" is information if to count preparation sync to the total sync time.
-    Due to several engines being used, and possible running of other performance tests, 
-    there is need for so called sync_directory d and count directory count_dir
+    Due to several engines being used, and possible running of other performance tests,
+     there is need for so called sync_directory d and count directory for corruption and consistencty
 """
 
 from smashbox.utilities import *
@@ -33,6 +33,7 @@ testsets = [
 
 @add_worker
 def worker0(step): 
+    exclude_time = eval_excludetime()
     step(1,'Preparation')
     d = make_workdir()
     array = prepare_workdir(d)
@@ -62,6 +63,7 @@ def worker0(step):
         
 @add_worker
 def worker1(step):
+    exclude_time = eval_excludetime()
     step(2,'Preparation')
     d = make_workdir()
     array = get_workdir(d)
@@ -97,7 +99,8 @@ def get_workdir(d):
     d = cdir  
     return [cdir,d]
 
-def eval_excudetime(excludetime):
+def eval_excludetime():
+    global excludetime
     if excludetime:   
         return "exclude_time"
     else:

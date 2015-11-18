@@ -59,7 +59,7 @@ testsets = [
 @add_worker
 def worker0(step): 
     
-    exclude_time = eval_excudetime(excludetime)
+    exclude_time = eval_excludetime()
     
     step(1,'Preparation')
     d = make_workdir()
@@ -91,7 +91,7 @@ def worker0(step):
 @add_worker
 def worker1(step):
     
-    exclude_time = eval_excudetime(excludetime)
+    exclude_time = eval_excludetime()
     
     step(2,'Preparation')
     d = make_workdir()
@@ -139,7 +139,8 @@ def get_workdir(d):
         d = cdir  
     return [cdir,d]
 
-def eval_excudetime(excludetime):
+def eval_excludetime():
+    global excludetime
     if excludetime:   
         return "exclude_time"
     else:
