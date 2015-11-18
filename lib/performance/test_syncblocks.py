@@ -24,27 +24,27 @@ if type(filesize) is type(''):
 testsets = [
         { '%s_filesize'%test_name: 1000, 
           '%s_nfiles'%test_name:1,
-          '%s_rptblocksize'%test_name:1000000,
+          '%s_rptblocksize'%test_name:False,
         },
         { '%s_filesize'%test_name: 5000000, 
           '%s_nfiles'%test_name:1,
-          '%s_rptblocksize'%test_name:1000000,
+          '%s_rptblocksize'%test_name:False,
         },
         { '%s_filesize'%test_name: 500000000, 
           '%s_nfiles'%test_name:1,
-          '%s_rptblocksize'%test_name:1000000,
+          '%s_rptblocksize'%test_name:False,
         },
         { '%s_filesize'%test_name: 1000, 
           '%s_nfiles'%test_name:1,
-          '%s_rptblocksize'%test_name:False,
+          '%s_rptblocksize'%test_name:1000*1000,
         },
         { '%s_filesize'%test_name: 5000000, 
           '%s_nfiles'%test_name:1,
-          '%s_rptblocksize'%test_name:False,
+          '%s_rptblocksize'%test_name:1000*1000,
         },
         { '%s_filesize'%test_name: 500000000, 
           '%s_nfiles'%test_name:1,
-          '%s_rptblocksize'%test_name:False,
+          '%s_rptblocksize'%test_name:1000*1000,
         },
 ]
 
@@ -115,10 +115,11 @@ def get_workdir(d):
     mkdir(cdir)
     d = cdir  
     return [cdir,d]
+    
 def get_blocksize():
     global blocksize,filesize
     if blocksize==False:   
-        return filesize
+        return 1024*1024
     else:
         return blocksize
     
