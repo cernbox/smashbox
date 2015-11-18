@@ -1,8 +1,10 @@
 FROM ubuntu:14.04
 MAINTAINER Piotr Mrowczynski <piotr.mrowczynski@yahoo.com>
-RUN apt-get update && apt-get install -y firefox
+RUN sh -c "echo 'deb http://download.opensuse.org/repositories/isv:/ownCloud:/desktop/xUbuntu_14.04/ /' >> /etc/apt/sources.list.d/owncloud-client.list"
+RUN apt-get update
 RUN apt-get upgrade -y
 RUN apt-get install git-all -y
+RUN apt-get install owncloud-client -y
 FROM ubuntu:14.04
 
 # Replace 1000 with your user / group id
