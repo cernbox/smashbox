@@ -14,45 +14,47 @@ __doc__ = """ Add nfiles to a directory and check consistency.
 
 from smashbox.utilities import *
 from smashbox.utilities.hash_files import *
+import inspect
+test_name = ((os.path.basename(inspect.getfile(inspect.currentframe()))).replace('test_','')).replace('.py','')
 
-nfiles = int(config.get('syncperf_nfiles',1))
-filesize = config.get('syncperf_filesize',1000)
-excludetime = config.get('syncperf_excludetime',True)
-fullsyncdir = config.get('syncperf_fullsyncdir',False)
+nfiles = int(config.get('%s_nfiles'%test_name,1))
+filesize = config.get('%s_filesize'%test_name,1000)
+excludetime = config.get('%s_excludetime'%test_name,True)
+fullsyncdir = config.get('%s_fullsyncdir'%test_name,False)
 
 if type(filesize) is type(''):
     filesize = eval(filesize)
 full_dir_size = "10/100/10000"
 testsets = [
-        { 'syncperf_filesize': 1000, 
-          'syncperf_nfiles':1,
-          'syncperf_fullsyncdir':False,
-          'syncperf_excludetime':True
+        { '%s_filesize'%test_name: 1000, 
+          '%s_nfiles'%test_name:1,
+          '%s_fullsyncdir'%test_name:False,
+          '%s_excludetime'%test_name:True
         },
-        { 'syncperf_filesize': 5000000, 
-          'syncperf_nfiles':1,
-          'syncperf_fullsyncdir':False,
-          'syncperf_excludetime':True
+        { '%s_filesize'%test_name: 5000000, 
+          '%s_nfiles'%test_name:1,
+          '%s_fullsyncdir'%test_name:False,
+          '%s_excludetime':True
         },
-        { 'syncperf_filesize': 500000000, 
-          'syncperf_nfiles':1,
-          'syncperf_fullsyncdir':False,
-          'syncperf_excludetime':True
+        { '%s_filesize'%test_name: 500000000, 
+          '%s_nfiles'%test_name:1,
+          '%s_fullsyncdir'%test_name:False,
+          '%s_excludetime'%test_name:True
         },
-        { 'syncperf_filesize': 1000, 
-          'syncperf_nfiles':1,
-          'syncperf_fullsyncdir':full_dir_size,
-          'syncperf_excludetime':True
+        { '%s_filesize'%test_name: 1000, 
+          '%s_nfiles'%test_name:1,
+          '%s_fullsyncdir'%test_name:full_dir_size,
+          '%s_excludetime'%test_name:True
         },
-        { 'syncperf_filesize': 5000000, 
-          'syncperf_nfiles':1,
-          'syncperf_fullsyncdir':full_dir_size,
-          'syncperf_excludetime':True
+        { '%s_filesize'%test_name: 5000000, 
+          '%s_nfiles'%test_name:1,
+          '%s_fullsyncdir'%test_name:full_dir_size,
+          '%s_excludetime'%test_name:True
         },
-        { 'syncperf_filesize': 500000000, 
-          'syncperf_nfiles':1,
-          'syncperf_fullsyncdir':full_dir_size,
-          'syncperf_excludetime':True
+        { '%s_filesize'%test_name: 500000000, 
+          '%s_nfiles'%test_name:1,
+          '%s_fullsyncdir'%test_name:full_dir_size,
+          '%s_excludetime'%test_name:True
         },
 ]
 

@@ -11,23 +11,40 @@ __doc__ = """ Add nfiles to a directory and check consistency.
 
 from smashbox.utilities import *
 from smashbox.utilities.hash_files import *
-
-nfiles = int(config.get('syncperf_nfiles',1))
-filesize = config.get('syncperf_filesize',1000)
+import inspect
+test_name = ((os.path.basename(inspect.getfile(inspect.currentframe()))).replace('test_','')).replace('.py','')
+nfiles = int(config.get('%s_nfiles'%test_name,1))
+filesize = config.get('%s_filesize'%test_name,1000)
+blocksize = config.get('%s_rptblocksize'%test_name,10000000)
 excludetime = True
 
 if type(filesize) is type(''):
     filesize = eval(filesize)
     
 testsets = [
-        { 'syncperf_filesize': 1000, 
-          'syncperf_nfiles':1,
+        { '%s_filesize'%test_name: 1000, 
+          '%s_nfiles'%test_name:1,
+          '%s_rptblocksize'%test_name:10000000,
         },
-        { 'syncperf_filesize': 5000000, 
-          'syncperf_nfiles':1,
+        { '%s_filesize'%test_name: 5000000, 
+          '%s_nfiles'%test_name:1,
+          '%s_rptblocksize'%test_name:10000000,
         },
-        { 'syncperf_filesize': 500000000, 
-          'syncperf_nfiles':1,
+        { '%s_filesize'%test_name: 500000000, 
+          '%s_nfiles'%test_name:1,
+          '%s_rptblocksize'%test_name:10000000,
+        },
+        { '%s_filesize'%test_name: 1000, 
+          '%s_nfiles'%test_name:1,
+          '%s_rptblocksize'%test_name:False,
+        },
+        { '%s_filesize'%test_name: 5000000, 
+          '%s_nfiles'%test_name:1,
+          '%s_rptblocksize'%test_name:False,
+        },
+        { '%s_filesize'%test_name: 500000000, 
+          '%s_nfiles'%test_name:1,
+          '%s_rptblocksize'%test_name:False,
         },
 ]
 
@@ -47,7 +64,7 @@ def worker0(step):
     step(4,'Add %s files and check if we still have k1+nfiles after resync'%nfiles)
 
     for i in range(nfiles):
-        create_hashfile(count_dir,size=filesize)
+        create_hashfile(count_dir,size=filesize, bs=get_blocksize())
 
     run_ocsync(d)
 
@@ -98,7 +115,13 @@ def get_workdir(d):
     mkdir(cdir)
     d = cdir  
     return [cdir,d]
-
+def get_blocksize():
+    global blocksize,filesize
+    if blocksize==False:   
+        return filesize
+    else:
+        return blocksize
+    
 def eval_excludetime():
     global excludetime
     if excludetime:   
