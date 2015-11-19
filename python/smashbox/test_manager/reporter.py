@@ -34,6 +34,7 @@ class InfluxDBClient:
         self.tmp_result_array_len += 1
        
     def send(self):
+        import time
         try:
             for i in range(0, self.result_array_len+1):    
                 with io.open(self.tmp_file,'w', encoding='utf-8') as file_write:
@@ -41,11 +42,12 @@ class InfluxDBClient:
                     file_write.write(unicode(result_string))
                     
                 with open(os.devnull, "w") as fnull:
-                    #process = subprocess.Popen(self.CURL_CMD, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-                    #output = process.communicate()
-                    #print (output[0]).encode('ascii','ignore')
-                    #print (output[1]).encode('ascii','ignore')
-                    subprocess.call(self.CURL_CMD, shell=True,stdout=fnull,stderr=fnull)
+                    process = subprocess.Popen(self.CURL_CMD, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+                    output = process.communicate()
+                    print (output[0]).encode('ascii','ignore')
+                    print (output[1]).encode('ascii','ignore')
+                time.sleep(0.5)
+                    #subprocess.call(self.CURL_CMD, shell=True,stdout=fnull,stderr=fnull)
         except Exception,e:
             print e
               

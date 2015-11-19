@@ -76,7 +76,7 @@ def worker0(step):
     step(4,'Add %s files and check if we still have k1+nfiles after resync'%nfiles)
 
     for i in range(nfiles):
-        create_dummy_file(dir,"%s%s"%("test",i),filesize,1000*1000)
+        create_dummy_file(count_dir,"%s%s"%("test",i),filesize,1000*1000)
 
     run_ocsync(d)
     

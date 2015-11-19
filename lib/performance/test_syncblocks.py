@@ -64,17 +64,14 @@ def worker0(step):
     step(4,'Add %s files and check if we still have k1+nfiles after resync'%nfiles)
 
     for i in range(nfiles):
-        create_hashfile(count_dir,size=filesize, bs=blocksize)
+        create_dummy_file(count_dir,"%s%s"%("test",i),filesize,1000*1000)
 
     run_ocsync(d)
 
-    ncorrupt = analyse_hashfiles(count_dir)[2]
     
     k1 = count_files(count_dir)
 
     error_check(k1-k0==nfiles,'Expecting to have %d files more: see k1=%d k0=%d'%(nfiles,k1,k0))
-
-    fatal_check(ncorrupt==0, 'Corrupted files (%s) found'%ncorrupt)
 
     logger.info('SUCCESS: %d files found',k1)
         
@@ -94,12 +91,9 @@ def worker1(step):
 
     run_ocsync(d)
 
-    ncorrupt = analyse_hashfiles(count_dir)[2]
     k1 = count_files(count_dir)
 
     error_check(k1-k0==nfiles,'Expecting to have %d files more: see k1=%d k0=%d'%(nfiles,k1,k0))
-
-    fatal_check(ncorrupt==0, 'Corrupted files (%s) found'%ncorrupt)
     
 def prepare_workdir(d):
     cdir = os.path.join(d,"0")

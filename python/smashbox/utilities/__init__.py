@@ -416,12 +416,9 @@ def createfile(fn,c,count,bs):
     of.close()
 
 def create_dummy_file(wdir,name,size,bs):
-    """ Same as create_hashfile but return (filename,md5sum).
-    """
-    import hashlib
     import random
 
-    nbytes = size2nbytes(size)
+    nbytes = int(size)
 
     nblocks = nbytes/bs
     nr = nbytes%bs
@@ -433,7 +430,6 @@ def create_dummy_file(wdir,name,size,bs):
     # Prepare the building blocks
     block_data = str(os.urandom(bs)) # Repeated nblocks times
     block_data_r = str(os.urandom(nr))       # Only once
-
     fn = os.path.join(wdir,name)
 
     f = file(fn,'w')
