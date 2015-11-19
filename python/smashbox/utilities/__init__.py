@@ -415,6 +415,37 @@ def createfile(fn,c,count,bs):
         of.write(buf)
     of.close()
 
+def create_dummy_file(wdir,name,size,bs):
+    """ Same as create_hashfile but return (filename,md5sum).
+    """
+    import hashlib
+    import random
+
+    nbytes = size2nbytes(size)
+
+    nblocks = nbytes/bs
+    nr = nbytes%bs
+
+    assert nblocks*bs+nr==nbytes,'Chunking error!'
+
+    time.sleep(0.1)
+
+    # Prepare the building blocks
+    block_data = str(os.urandom(bs)) # Repeated nblocks times
+    block_data_r = str(os.urandom(nr))       # Only once
+
+    fn = os.path.join(wdir,name)
+
+    f = file(fn,'w')
+
+    # write data blocks
+    for i in range(nblocks):
+        f.write(block_data)
+
+    f.write(block_data_r)
+    f.close()
+
+    return fn
 
 def modify_file(fn,c,count,bs):
     logger.info('modify_file %s character=%s count=%d bs=%d',fn,repr(c),count,bs)
