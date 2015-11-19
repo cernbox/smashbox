@@ -24,15 +24,15 @@ if type(filesize) is type(''):
 testsets = [
         { '%s_filesize'%test_name: 1000, 
           '%s_nfiles'%test_name:1,
-          '%s_rptblocksize'%test_name:False,
+          '%s_rptblocksize'%test_name:1024*1024,
         },
         { '%s_filesize'%test_name: 5000000, 
           '%s_nfiles'%test_name:1,
-          '%s_rptblocksize'%test_name:False,
+          '%s_rptblocksize'%test_name:1024*1024,
         },
         { '%s_filesize'%test_name: 500000000, 
           '%s_nfiles'%test_name:1,
-          '%s_rptblocksize'%test_name:False,
+          '%s_rptblocksize'%test_name:1024*1024,
         },
         { '%s_filesize'%test_name: 1000, 
           '%s_nfiles'%test_name:1,
@@ -64,7 +64,7 @@ def worker0(step):
     step(4,'Add %s files and check if we still have k1+nfiles after resync'%nfiles)
 
     for i in range(nfiles):
-        create_hashfile(count_dir,size=filesize, bs=get_blocksize())
+        create_hashfile(count_dir,size=filesize, bs=blocksize)
 
     run_ocsync(d)
 
@@ -116,12 +116,6 @@ def get_workdir(d):
     d = cdir  
     return [cdir,d]
     
-def get_blocksize():
-    global blocksize,filesize
-    if blocksize==False:   
-        return 1024*1024
-    else:
-        return blocksize
     
 def eval_excludetime():
     global excludetime
