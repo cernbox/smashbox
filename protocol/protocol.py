@@ -233,8 +233,8 @@ def ls_prop_desktop17(url,depth=0):
     return r
 
 
-def ls_prop_desktop18(url,depth=0):
-    """ List directory: desktop sync client 1.8
+def ls_prop_desktop20(url,depth=0):
+    """ List directory: desktop sync client 2.0
     """
 
     query= """<?xml version="1.0" encoding="utf-8"?>
@@ -244,8 +244,9 @@ def ls_prop_desktop18(url,depth=0):
 <resourcetype xmlns="DAV:"/>
 <getetag xmlns="DAV:"/>
 <id xmlns="http://owncloud.org/ns"/>
-<dDU xmlns="http://owncloud.org/ns"/>
+<downloadURL xmlns="http://owncloud.org/ns"/>
 <dDC xmlns="http://owncloud.org/ns"/>
+<size xmlns="http://owncloud.org/ns"/>
 <permissions xmlns="http://owncloud.org/ns"/>
 </prop></propfind>
 """
@@ -256,8 +257,28 @@ def ls_prop_desktop18(url,depth=0):
 
     r=client.PROPFIND(url,query,depth=depth)
 
+    fatal_check(os.path.commonprefix([x[0] for x in r.propfind_response])) # all hrefs should share a common prefix 
+
     for x in r.propfind_response:
-        print x
+        props = x[1]
+        error_check(set(props.keys()) <= set(['HTTP/1.1 200 OK','HTTP/1.1 404 Not Found'])) # warn if there are other return codes for some properties
+
+        props200 = x[1]['HTTP/1.1 200 OK']
+        props404 = x[1]['HTTP/1.1 404 Not Found']
+
+        fatal_check(props200['{DAV:}resourcetype'] in [None,'{DAV:}collection'])
+
+        is_collection = props200['{DAV:}resourcetype'] and props200['{DAV:}resourcetype'] == '{DAV:}collection'
+        fatal_check(implies(is_collection,props404['{DAV:}getcontentlength'] is None))
+
+        fatal_check(set(props200['{http://owncloud.org/ns}permissions']) <= set('SRMWCKDNV'))
+
+        try:
+            int(props200['{http://owncloud.org/ns}size'])
+        except ValueError,x:
+            fatal_check(False,"{http://owncloud.org/ns}size: '%s' not an integer"%props200['{http://owncloud.org/ns}size'])
+               
+
     return r
    
 
