@@ -17,73 +17,112 @@ from smashbox.utilities.hash_files import *
 import inspect
 test_name = ((os.path.basename(inspect.getfile(inspect.currentframe()))).replace('test_','')).replace('.py','')
 
-nfiles = int(config.get('%s_nfiles'%test_name,1))
-filesize = config.get('%s_filesize'%test_name,1000)
+testdirstruct = config.get('%s_testdirstruct'%test_name,"0/1/1000")
 excludetime = config.get('%s_excludetime'%test_name,True)
 fullsyncdir = config.get('%s_fullsyncdir'%test_name,False)
+hashfiles = config.get('%s_hashfiles'%test_name,False)
+blocksize = config.get('%s_rptblocksize'%test_name,None)
 
-if type(filesize) is type(''):
-    filesize = eval(filesize)
-full_dir_size = "10/100/10000"
 testsets = [
-        { '%s_filesize'%test_name: 1000, 
-          '%s_nfiles'%test_name:1,
-          '%s_fullsyncdir'%test_name:False,
-          '%s_excludetime'%test_name:True
-        },
-        { '%s_filesize'%test_name: 5000000, 
-          '%s_nfiles'%test_name:1,
-          '%s_fullsyncdir'%test_name:False,
-          '%s_excludetime':True
-        },
-        { '%s_filesize'%test_name: 500000000, 
-          '%s_nfiles'%test_name:1,
-          '%s_fullsyncdir'%test_name:False,
-          '%s_excludetime'%test_name:True
-        },
-        { '%s_filesize'%test_name: 1000, 
-          '%s_nfiles'%test_name:1,
-          '%s_fullsyncdir'%test_name:full_dir_size,
-          '%s_excludetime'%test_name:True
-        },
-        { '%s_filesize'%test_name: 5000000, 
-          '%s_nfiles'%test_name:1,
-          '%s_fullsyncdir'%test_name:full_dir_size,
-          '%s_excludetime'%test_name:True
-        },
-        { '%s_filesize'%test_name: 500000000, 
-          '%s_nfiles'%test_name:1,
-          '%s_fullsyncdir'%test_name:full_dir_size,
-          '%s_excludetime'%test_name:True
-        },
+#Typical sync - twice per day, every second day - all clients - packet sniffer on#
+        {
+          '%s_testdirstruct'%test_name:"0/1/1000",
+          '%s_rptblocksize'%test_name:None,
+        },#0
+        {
+          '%s_testdirstruct'%test_name:"0/1/5000000",
+          '%s_rptblocksize'%test_name:None,
+        },#1
+        {
+          '%s_testdirstruct'%test_name:"0/1/500000000",
+          '%s_rptblocksize'%test_name:None, # file contains only random bytes
+        },#2
+        {
+          '%s_testdirstruct'%test_name:"0/1/500000000",
+          '%s_rptblocksize'%test_name:1000*1000, # file contains repeated blocks of 1MB 
+        },#3
+        {
+          '%s_testdirstruct'%test_name:"0/1/500000000",
+          '%s_rptblocksize'%test_name:4*1000*1000, # file contains repeated blocks of 4MB 
+        },#4
+        {
+          '%s_testdirstruct'%test_name:"0/1/1000",
+          '%s_fullsyncdir'%test_name:"10/100/10000",
+          '%s_rptblocksize'%test_name:None,
+        },#5
+        {
+          '%s_testdirstruct'%test_name:"0/1/5000000",
+          '%s_fullsyncdir'%test_name:"10/100/10000",
+          '%s_rptblocksize'%test_name:None,
+        },#6
+        {
+          '%s_testdirstruct'%test_name:"0/1/500000000",
+          '%s_fullsyncdir'%test_name:"10/100/10000",
+          '%s_rptblocksize'%test_name:None,
+        },#7
+#############
+#Typical sync - twice per day, every second day - owncloud clients only - packet sniffer off#
+        {
+          '%s_testdirstruct'%test_name:"0/1/500000",
+          '%s_fullsyncdir'%test_name:"10/100/10000",
+        },#8
+        {
+          '%s_testdirstruct'%test_name:"0/1/50000000",
+          '%s_fullsyncdir'%test_name:"10/100/10000",
+        },#9
+#############
+#Stress sync - test many times per day - all clients - packet sniffer on#
+#every day, 4am, 8am, 12am, 3pm, 7pm, 12pm.
+        {
+          '%s_testdirstruct'%test_name:"1/100/100000",
+          '%s_rptblocksize'%test_name:None,
+          '%s_hashfiles'%test_name:True,
+        },#10
+        {
+          '%s_testdirstruct'%test_name:"10/100/100000",
+          '%s_rptblocksize'%test_name:None,
+          '%s_hashfiles'%test_name:True,
+        },#11
+        {
+          '%s_testdirstruct'%test_name:"1/5/10000000",
+          '%s_rptblocksize'%test_name:None,
+          '%s_hashfiles'%test_name:True,
+        },#12
+        {
+          '%s_testdirstruct'%test_name:"1/50/10000000",
+          '%s_rptblocksize'%test_name:None,
+          '%s_hashfiles'%test_name:True,
+        },#13
+        {
+          '%s_testdirstruct'%test_name:"1/5/100000000",
+          '%s_rptblocksize'%test_name:None,
+          '%s_hashfiles'%test_name:True,
+        },#14
+#############
 ]
 
 @add_worker
 def worker0(step): 
     
     exclude_time = eval_excludetime()
-    
     step(1,'Preparation')
     d = make_workdir()
-    array = prepare_workdir(d)
-    count_dir = array[0]
-    d = array[1]
+    test_dir,sync_dir_num = prepare_workdir(d)
+    
     step(2,'Pre-sync')
     run_ocsync(d,option=exclude_time)
     
-    k0 = count_files(count_dir)
+    k0,ncorrupt0 = check_workdir(d,test_dir,sync_dir_num)
 
-    step(4,'Add %s files and check if we still have k1+nfiles after resync'%nfiles)
-
-    for i in range(nfiles):
-        create_dummy_file(count_dir,"%s%s"%("test",i),filesize,1000*1000)
+    step(4,'Add %s files and check if we still have k1+nfiles after resync'%testdirstruct)
+    nfiles = create_teststruct(test_dir)
 
     run_ocsync(d)
     
-    k1 = count_files(count_dir)
+    k1,ncorrupt1 = check_workdir(d,test_dir,sync_dir_num)
 
     error_check(k1-k0==nfiles,'Expecting to have %d files more: see k1=%d k0=%d'%(nfiles,k1,k0))
-
+    fatal_check((ncorrupt0+ncorrupt1)==0, 'Corrupted files (%s) found'%(ncorrupt0+ncorrupt1))
     logger.info('SUCCESS: %d files found',k1)
         
 @add_worker
@@ -93,25 +132,25 @@ def worker1(step):
     
     step(2,'Preparation')
     d = make_workdir()
-    array = get_workdir(d)
-    count_dir = array[0]
-    d = array[1]
+    test_dir,sync_dir_num = get_workdir(d)
+    nfiles = eval_teststruct(test_dir)
     step(3,'Pre-sync')
     run_ocsync(d,option=exclude_time)
-    k0 = count_files(count_dir)
+    k0,ncorrupt0 = check_workdir(d,test_dir,sync_dir_num)
 
     step(5,'Resync and check files added by worker0')
-
     run_ocsync(d)
 
-    k1 = count_files(count_dir)
+    k1,ncorrupt1 = check_workdir(d,test_dir,sync_dir_num)
 
     error_check(k1-k0==nfiles,'Expecting to have %d files more: see k1=%d k0=%d'%(nfiles,k1,k0))
+    fatal_check((ncorrupt0+ncorrupt1)==0, 'Corrupted files (%s) found'%(ncorrupt0+ncorrupt1))
 
+""" TEST UTILITIES """
     
 def prepare_workdir(d):
-    cdir = os.path.join(d,"0")
-    remove_tree(cdir)
+    wdir = os.path.join(d,"0")
+    remove_tree(wdir)
     if fullsyncdir!=False:
         conf = fullsyncdir.split('/')
         if len(conf)==3 and int(conf[0])>0:
@@ -120,20 +159,84 @@ def prepare_workdir(d):
                 if (not (os.path.exists(dir))) or i==0:
                     mkdir(dir)
                     for j in range(int(conf[1])):
-                        create_dummy_file(dir,"%s%s"%(i,j),int(conf[2]),1000*1000)
-            return [cdir,d]
+                        create_test_file(dir,"%s%s"%(i,j),int(conf[2]))
+            return (wdir,int(conf[0]))
+        error_check(len(conf)==3,'Improper testdirstruct format, expects dir_n/file_n/file_size')
     reset_owncloud_account()
-    mkdir(cdir)
-    d = cdir
-    return [cdir,d]
+    reset_rundir()
+    mkdir(wdir)
+    return (wdir,1)
 
 def get_workdir(d):
-    cdir = os.path.join(d,"0")
-    remove_tree(cdir)  
-    mkdir(cdir)
-    if fullsyncdir==False:
-        d = cdir  
-    return [cdir,d]
+    wdir = os.path.join(d,"0")
+    remove_tree(wdir)  
+    mkdir(wdir)
+    dir_num = 1
+    if fullsyncdir!=False:
+        conf = fullsyncdir.split('/') 
+        if len(conf)==3 and int(conf[0])>0:
+            return (wdir,int(conf[0]))
+        error_check(len(conf)==3,'Improper workdirstruct format, expects dir_n/file_n/file_size')
+    return (wdir,1)
+
+def create_teststruct(test_dir):
+    teststruct = testdirstruct.split('/')
+    nfiles = 0
+    error_check(len(teststruct)==3,'Improper teststruct format, expects dir_n/file_n/file_size')
+    if int(teststruct[0])<1:
+        for i in range(int(teststruct[1])):
+            create_test_file(test_dir,"%s%s%s"%(0,"test",i),int(teststruct[2]),bs=blocksize)
+            nfiles+=1
+    else:
+        for i in range(int(teststruct[0])):
+            dir = os.path.join(test_dir,str(i)) 
+            mkdir(dir)
+            for j in range(int(teststruct[1])):
+                create_test_file(dir,"%s%s%s"%(i,"test",j),int(teststruct[2]),bs=blocksize)
+                nfiles+=1
+    return nfiles
+
+def eval_teststruct(test_dir):
+    teststruct = testdirstruct.split('/')
+    nfiles = 0
+    error_check(len(teststruct)==3,'Improper teststruct format, expects dir_n/file_n/file_size')
+    if int(teststruct[0])<1:
+        for i in range(int(teststruct[1])):
+            nfiles+=1
+    else:
+        for i in range(int(teststruct[0])):
+            dir = os.path.join(test_dir,str(i)) 
+            for j in range(int(teststruct[1])):
+                nfiles+=1
+    return nfiles
+
+def create_test_file(directory, name, size, bs=None):
+    if hashfiles==True:
+        if bs==None:
+            create_hashfile(directory,size=size,bs=size)
+        else:
+            create_hashfile(directory,size=size,bs=bs)
+    else:
+        create_dummy_file(directory,name,size,bs=bs)
+
+
+def check_workdir(d,test_dir,sync_dir_num):
+    teststruct = testdirstruct.split('/')
+    error_check(len(teststruct)==3,'Improper teststruct format, expects dir_n/file_n/file_size')
+    files = 0
+    corrupt = 0
+    for i in range(int(teststruct[0])):
+        dir = os.path.join(test_dir,str(i)) 
+        nfiles,nanalysed,ncorrupt = analyse_hashfiles(dir)
+        files += nfiles
+        corrupt += ncorrupt
+        
+    for n in range(sync_dir_num):
+        dir = os.path.join(d,str(n)) 
+        nfiles,nanalysed,ncorrupt = analyse_hashfiles(dir)
+        files += nfiles
+        corrupt += ncorrupt
+    return (files,corrupt)
 
 def eval_excludetime():
     global excludetime

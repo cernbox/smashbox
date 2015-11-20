@@ -100,29 +100,31 @@ def create_hashfile2(wdir,filemask=None,size=None,bs=None,slow_write=None):
     assert nblocks*bs+nr==nbytes,'Chunking error!'
 
     time.sleep(0.1)
-
-    # Prepare the building blocks
-    block_data = str(os.urandom(bs)) # Repeated nblocks times
-    block_data_r = str(os.urandom(nr))       # Only once
-
-    #block_data = str(time.time()) + 'a'*bs;
-    #block_data_r = 'a'*nr; 
-
-    #time.sleep(0.1)
-    #block_data =  str(time.time()) + ":".join(["%09s"%n for n in range(90000)]) #str([str(n)+':' for n in range(10000)])
-    #block_data_r = ""
-
-    # Precompute the checksum - we do it separately before writing the file to avoid the file rename
-    md5 = hashlib.md5()
-    for kb in range(nblocks):
-        md5.update(block_data)
-    md5.update(block_data_r)
-
-    if filemask is None:
-        filemask = "{md5}"        
-
-
-    fn = os.path.join(wdir,filemask.replace('{md5}',md5.hexdigest()))
+    while True:
+        # Prepare the building blocks
+        block_data = str(os.urandom(bs)) # Repeated nblocks times
+        block_data_r = str(os.urandom(nr))       # Only once
+    
+        #block_data = str(time.time()) + 'a'*bs;
+        #block_data_r = 'a'*nr; 
+    
+        #time.sleep(0.1)
+        #block_data =  str(time.time()) + ":".join(["%09s"%n for n in range(90000)]) #str([str(n)+':' for n in range(10000)])
+        #block_data_r = ""
+    
+        # Precompute the checksum - we do it separately before writing the file to avoid the file rename
+        md5 = hashlib.md5()
+        for kb in range(nblocks):
+            md5.update(block_data)
+        md5.update(block_data_r)
+    
+        if filemask is None:
+            filemask = "{md5}"        
+    
+    
+        fn = os.path.join(wdir,filemask.replace('{md5}',md5.hexdigest()))
+        if not(os.path.exists(fn)):
+            break
 
     f = file(fn,'w')
 

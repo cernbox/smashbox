@@ -415,10 +415,14 @@ def createfile(fn,c,count,bs):
         of.write(buf)
     of.close()
 
-def create_dummy_file(wdir,name,size,bs):
+def create_dummy_file(wdir,name,size,bs=None):
+    """ by default - creates file with fully random content, specified name and in specific directory. 
+    By specifing bs blocksize, random bytes will be structured in blocks and repeated ntimes """
     import random
-
     nbytes = int(size)
+    
+    if bs is None:
+        bs = nbytes
 
     nblocks = nbytes/bs
     nr = nbytes%bs
@@ -428,21 +432,48 @@ def create_dummy_file(wdir,name,size,bs):
     time.sleep(0.1)
 
     # Prepare the building blocks
-    block_data = str(os.urandom(bs)) # Repeated nblocks times
-    block_data_r = str(os.urandom(nr))       # Only once
     fn = os.path.join(wdir,name)
 
     f = file(fn,'w')
 
+    block_data = str(os.urandom(bs)) # Repeated nblocks times
     # write data blocks
     for i in range(nblocks):
         f.write(block_data)
 
+    block_data_r = str(os.urandom(nr))       # Only once
     f.write(block_data_r)
     f.close()
 
     return fn
 
+def modify_dummy_file(wdir,name,size,bs=None):
+    import random
+
+    nbytes = int(size)
+    
+    if bs is None:
+        bs = nbytes
+        
+    nblocks = nbytes/bs
+    nr = nbytes%bs
+
+    assert nblocks*bs+nr==nbytes,'Chunking error!'
+
+    time.sleep(0.1)
+
+    # Prepare the building blocks
+    fn = os.path.join(wdir,name)
+    f = file(fn,'a')
+    f.seek(0,2)
+    # write data blocks
+    for i in range(nblocks):
+        block_data = str(os.urandom(bs)) # Repeated nblocks times
+        f.write(block_data)
+
+    block_data_r = str(os.urandom(nr))       # Only once
+    f.write(block_data_r)
+    f.close()
 def modify_file(fn,c,count,bs):
     logger.info('modify_file %s character=%s count=%d bs=%d',fn,repr(c),count,bs)
     buf = c*bs
