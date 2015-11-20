@@ -122,16 +122,14 @@ def prepare_workdir(d):
                         create_dummy_file(dir,"%s%s"%(i,j),int(conf[2]))
             return [cdir,d]
     reset_owncloud_account()
-    mkdir(cdir)
-    d = cdir
+    reset_rundir()
+    mkdir(wdir)
     return [cdir,d]
 
 def get_workdir(d):
     cdir = os.path.join(d,"0")
     remove_tree(cdir)  
     mkdir(cdir)
-    if fullsyncdir==False:
-        d = cdir  
     return [cdir,d]
 
 def eval_excludetime():
