@@ -447,9 +447,10 @@ def create_dummy_file(wdir,name,size,bs=None):
 
     return fn
 
-def modify_dummy_file(wdir,name,size,bs=None):
+def modify_dummy_file(fn,size,bs=None):
     import random
-
+    import hashlib
+    
     nbytes = int(size)
     
     if bs is None:
@@ -463,7 +464,6 @@ def modify_dummy_file(wdir,name,size,bs=None):
     time.sleep(0.1)
 
     # Prepare the building blocks
-    fn = os.path.join(wdir,name)
     f = file(fn,'a')
     f.seek(0,2)
     # write data blocks
@@ -474,6 +474,15 @@ def modify_dummy_file(wdir,name,size,bs=None):
     block_data_r = str(os.urandom(nr))       # Only once
     f.write(block_data_r)
     f.close()
+    f = file(fn,'r')
+    data = f.read()
+    f.close()
+    md5 = hashlib.md5()
+    md5.update(data)
+    filemask = "{md5}"        
+    new_fn = os.path.join(os.path.dirname(fn),filemask.replace('{md5}',md5.hexdigest()))
+    os.rename(fn,new_fn)
+    
 def modify_file(fn,c,count,bs):
     logger.info('modify_file %s character=%s count=%d bs=%d',fn,repr(c),count,bs)
     buf = c*bs

@@ -23,13 +23,14 @@ fraction = config.get('%s_add_orgn_fraction'%test_name,0.1)
 excludetime = config.get('%s_excludetime'%test_name,True)
 full_dir_size = "10/100/10000"
 fullsyncdir = config.get('%s_fullsyncdir'%test_name,full_dir_size)
+hashfiles = config.get('%s_hashfiles'%test_name,True)
 
 if type(filesize) is type(''):
     filesize = eval(filesize)
 testsets = [
 #Modify sync - twice per day, every second day - all clients - packet sniffer on#
         { 
-         '%s_filesize'%test_name: 1000, 
+         '%s_filesize'%test_name: 1000,
         },#0
         { 
          '%s_filesize'%test_name: 5000000,
@@ -67,23 +68,24 @@ def worker0(step):
     array = prepare_workdir(d)
     count_dir = array[0]
     d = array[1]
+    mod_file_array = []
     for i in range(nfiles):
-        create_dummy_file(count_dir,"%s%s"%("test",i),filesize)
+        mod_file_array.append(create_test_file(count_dir,"%s%s"%("test",i),filesize))
     step(2,'Pre-sync')
     run_ocsync(d,option=exclude_time)
     
-    k0 = count_files(count_dir)
+    k0,ncorrupt0 = check_workdir(d)
 
     step(4,'Modify files')
-    for j in range(nfiles):
-        modify_dummy_file(count_dir,"%s%s"%("test",j),filesize*fraction)
+    for j in range(0, len(mod_file_array)):
+        modify_dummy_file(mod_file_array[j],filesize*fraction)
 
     run_ocsync(d)
     
-    k1 = count_files(count_dir)
+    k1,ncorrupt1 = check_workdir(d)
 
     error_check(k1==k0,'Expecting to have %d files more: see k1=%d k0=%d'%((k0-k1),k1,k0))
-
+    fatal_check((ncorrupt0+ncorrupt1)==0, 'Corrupted files (%s) found'%(ncorrupt0+ncorrupt1))
     logger.info('SUCCESS: %d files found',k1)
         
 @add_worker
@@ -98,16 +100,19 @@ def worker1(step):
     d = array[1]
     step(3,'Pre-sync')
     run_ocsync(d,option=exclude_time)
-    k0 = count_files(count_dir)
+    k0,ncorrupt0 = check_workdir(d)
 
     step(5,'Resync and check files modified by worker0')
 
     run_ocsync(d)
 
-    k1 = count_files(count_dir)
+    k1,ncorrupt1 = check_workdir(d)
 
     error_check(k1==k0,'Expecting to have %d files more: see k1=%d k0=%d'%((k0-k1),k1,k0))
-    
+    fatal_check((ncorrupt0+ncorrupt1)==0, 'Corrupted files (%s) found'%(ncorrupt0+ncorrupt1))
+
+""" TEST UTILITIES """
+   
 def prepare_workdir(d):
     cdir = os.path.join(d,"0")
     remove_tree(cdir)
@@ -119,7 +124,7 @@ def prepare_workdir(d):
                 if (not (os.path.exists(dir))) or i==0:
                     mkdir(dir)
                     for j in range(int(conf[1])):
-                        create_dummy_file(dir,"%s%s"%(i,j),int(conf[2]))
+                        create_test_file(dir,"%s%s"%(i,j),int(conf[2]))
             return [cdir,d]
     reset_owncloud_account()
     reset_rundir()
@@ -139,3 +144,27 @@ def eval_excludetime():
     else:
         return None
 
+def create_test_file(directory, name, size, bs=None):
+    if hashfiles==True:
+        if bs==None:
+            fn = create_hashfile(directory,size=size,bs=size)
+        else:
+            fn = create_hashfile(directory,size=size,bs=bs)
+    else:
+        fn = create_dummy_file(directory,name,size,bs=bs)
+    return fn
+
+def check_workdir(d):
+    files = 0
+    corrupt = 0
+    if fullsyncdir!=False:
+        conf = fullsyncdir.split('/')   
+        sync_dir_num = int(conf[0])
+    else:
+        sync_dir_num = 1
+    for n in range(sync_dir_num):
+        dir = os.path.join(d,str(n)) 
+        nfiles,nanalysed,ncorrupt = analyse_hashfiles(dir)
+        files += nfiles
+        corrupt += ncorrupt
+    return (files,corrupt)
