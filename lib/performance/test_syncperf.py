@@ -98,6 +98,11 @@ testsets = [
           '%s_rptblocksize'%test_name:None,
           '%s_hashfiles'%test_name:True,
         },#14
+        {
+          '%s_testdirstruct'%test_name:"100/1000/100",
+          '%s_rptblocksize'%test_name:None,
+          '%s_hashfiles'%test_name:True,
+        },#15
 #############
 ]
 

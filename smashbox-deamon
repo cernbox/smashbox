@@ -1,10 +1,11 @@
 #!/usr/bin/python
 import sys,os,socket
 import subprocess,time,signal
+from multiprocessing import Process
 
 class SmashboxCLI:
     def __init__(self,config):
-        self.pid_file = "smashbox.pid"
+        self.pid_file = os.path.abspath("smashbox.pid")
         self.SMASHBOX_CMD_BASIC = ["bin/smash","--keep-going"]
         for i in range(0, len(config)):
             self.SMASHBOX_CMD_BASIC += ["-o",config[i]]
@@ -19,22 +20,29 @@ class SmashboxCLI:
             SMASHBOX_CMD += ["-t",str(testset)] 
         SMASHBOX_CMD += ["-o","runid=%s"%runid,"lib/%s"%test_name] 
         process = subprocess.Popen(SMASHBOX_CMD,stdout=subprocess.PIPE, stderr=subprocess.STDOUT, preexec_fn=os.setsid, cwd=parentdir)
-        self.pid = os.getpgid(process.pid)
-        print self.pid
-        completed = False
-        start = time.time()
-        stdout = []
+        pid = str(os.getpgid(process.pid))
+        p = Process(target=timeout, args=(pid,))
+        p.start()
         while True:
-            if int(time.time() - start) > 1800:
-                stop_execution(self.pid)
-                break
             line = process.stdout.readline()
             print line,
             if line == '' and process.poll() != None:
+                p.terminate()
+                p.join()
                 break         
+
+def timeout(pid):
+    print pid
+    TIMEOUT = 1800
+    start = time.time()
+    while True:
+        if int(time.time() - start) > TIMEOUT:
+            stop_execution(pid)
+            break
 
 def stop_execution(pid):
     pid = int(pid)
+    print ("killing %s: ok"%pid)
     try:
         os.killpg(pid, signal.SIGTERM)
         time.sleep(2)
@@ -43,7 +51,6 @@ def stop_execution(pid):
         except:
             pass
         time.sleep(2)
-        print ("ok")
     except Exception, e:
         print (e)
   
