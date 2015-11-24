@@ -5,7 +5,6 @@ from multiprocessing import Process
 
 class SmashboxCLI:
     def __init__(self,config):
-        self.pid_file = os.path.abspath("smashbox.pid")
         self.SMASHBOX_CMD_BASIC = ["bin/smash","--keep-going"]
         for i in range(0, len(config)):
             self.SMASHBOX_CMD_BASIC += ["-o",config[i]]
