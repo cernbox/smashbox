@@ -79,14 +79,12 @@ def run(testset_config):
                 testset = tests[j]["testset"]
                 runid = tests[j]["runid"]
                 client.start(sync_engines[i],testset,test_name,runid)     
-                   
-    return (testset_config.has_key("reboot") and testset_config["reboot"] == True)
           
 def main(arguments):
     check_smashbox_basic_conf()
     for arg_i in range(1, len(arguments)):
         testset_config = get_config(arguments[arg_i])
-        return run(testset_config)            
+        run(testset_config)            
 		
 def get_lock():
 	process_name = 'running_test'		
@@ -102,9 +100,7 @@ if __name__ == '__main__':
     """    """
     arguments = sys.argv
     if (get_lock()==1):
-        if (main(arguments)==True):
-            print "rebooting now.."
-            os.system("shutdown -r now")
+        main(arguments)
     else:
         print ("Aborting - wait for the end of the previous smashbox run")
         sys.exit()
