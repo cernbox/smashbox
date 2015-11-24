@@ -17,7 +17,7 @@ class SmashboxCLI:
             SMASHBOX_CMD += ["-a"]
         else:
             SMASHBOX_CMD += ["-t",str(testset)] 
-        SMASHBOX_CMD += ["-o","runid=%s"%runid,"lib/%s"%test_name] 
+        SMASHBOX_CMD += ["-o","runid=%s"%runid,"../lib/%s"%test_name] 
         process = subprocess.Popen(SMASHBOX_CMD,stdout=subprocess.PIPE, stderr=subprocess.STDOUT, preexec_fn=os.setsid, cwd=parentdir)
         pid = str(os.getpgid(process.pid))
         p = Process(target=timeout, args=(pid,))
