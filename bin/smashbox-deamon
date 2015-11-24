@@ -65,8 +65,8 @@ def get_config(path):
         sys.exit()
         
 def check_smashbox_basic_conf():
-    if not (os.path.exists(os.path.abspath('etc/smashbox.conf'))):
-        subprocess.call(["cp",os.path.abspath('etc/smashbox.conf.template'),os.path.abspath('etc/smashbox.conf')],cwd=os.path.dirname(os.path.realpath(__file__)))
+    if not (os.path.exists('../etc/smashbox.conf')):
+        subprocess.call(["cp",'../etc/smashbox.conf.template','../etc/smashbox.conf'],cwd=os.path.dirname(os.path.realpath(__file__)))
 
 def run(testset_config): 
     client = SmashboxCLI(testset_config["config"])
