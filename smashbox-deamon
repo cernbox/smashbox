@@ -104,6 +104,7 @@ if __name__ == '__main__':
     if (get_lock()==1):
         if (main(arguments)==True):
             print "rebooting now.."
+            os.system("shutdown -r now")
     else:
         print ("Aborting - wait for the end of the previous smashbox run")
         sys.exit()
