@@ -5,7 +5,7 @@ from multiprocessing import Process
 
 class SmashboxCLI:
     def __init__(self,config):
-        self.SMASHBOX_CMD_BASIC = ["bin/smash","--keep-going"]
+        self.SMASHBOX_CMD_BASIC = ["smash","--keep-going"]
         for i in range(0, len(config)):
             self.SMASHBOX_CMD_BASIC += ["-o",config[i]]
     def start(self,sync_engine,testset,test_name,runid): 
