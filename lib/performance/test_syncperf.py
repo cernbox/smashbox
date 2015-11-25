@@ -99,7 +99,7 @@ testsets = [
           '%s_hashfiles'%test_name:True,
         },#14
         {
-          '%s_testdirstruct'%test_name:"100/1000/100",
+          '%s_testdirstruct'%test_name:"100/100/10",
           '%s_rptblocksize'%test_name:None,
           '%s_hashfiles'%test_name:True,
         },#15
@@ -108,46 +108,38 @@ testsets = [
 
 @add_worker
 def worker0(step): 
-    
     exclude_time = eval_excludetime()
+    
     step(1,'Preparation')
     d = make_workdir()
     test_dir,sync_dir_num = prepare_workdir(d)
-    
-    step(2,'Pre-sync')
     run_ocsync(d,option=exclude_time)
-    
     k0,ncorrupt0 = check_workdir(d,test_dir,sync_dir_num)
 
     step(4,'Add %s files and check if we still have k1+nfiles after resync'%testdirstruct)
     nfiles = create_teststruct(test_dir)
-
     run_ocsync(d)
-    
     k1,ncorrupt1 = check_workdir(d,test_dir,sync_dir_num)
-
     error_check(k1-k0==nfiles,'Expecting to have %d files, have %d: see k1=%d k0=%d'%(nfiles,k0-k1,k1,k0))
     fatal_check((ncorrupt0+ncorrupt1)==0, 'Corrupted files (%s) found'%(ncorrupt0+ncorrupt1))
     logger.info('SUCCESS: %d files found',k1)
         
 @add_worker
 def worker1(step):
-    
     exclude_time = eval_excludetime()
     
     step(2,'Preparation')
     d = make_workdir()
     test_dir,sync_dir_num = get_workdir(d)
     nfiles = eval_teststruct(test_dir)
+    
     step(3,'Pre-sync')
     run_ocsync(d,option=exclude_time)
     k0,ncorrupt0 = check_workdir(d,test_dir,sync_dir_num)
 
     step(5,'Resync and check files added by worker0')
     run_ocsync(d)
-
     k1,ncorrupt1 = check_workdir(d,test_dir,sync_dir_num)
-
     error_check(k1-k0==nfiles,'Expecting to have %d files, have %d: see k1=%d k0=%d'%(nfiles,k0-k1,k1,k0))
     fatal_check((ncorrupt0+ncorrupt1)==0, 'Corrupted files (%s) found'%(ncorrupt0+ncorrupt1))
 

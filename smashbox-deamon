@@ -31,7 +31,7 @@ class SmashboxCLI:
 
 def timeout(pid):
     print pid
-    TIMEOUT = 3600
+    TIMEOUT = 7200
     start = time.time()
     while True:
         if int(time.time() - start) > TIMEOUT:
