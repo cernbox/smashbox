@@ -194,6 +194,8 @@ class Reporter:
                 if(total_sync_time!=0):
                     influxdb_client.write(("%s-total-syn"%RUNID),[],total_sync_time,TIMEID)
                     influxdb_client.write(("%s-total-exec"%RUNID),[],TOTAL_EXEC,TIMEID)
+            elif ENGINE=="owncloud":
+                backup_test_detailed_log(self.config.smashdir, TEST_NAME,TIMEID)
             
         influxdb_client = InfluxDBClient(self.config)    
         SERVER_NAME = self.config.oc_server
@@ -204,8 +206,8 @@ class Reporter:
         test_results = result_raw.pop("results")
         TIMEID = str(result_raw["timeid"])
         TOTAL_EXEC = result_raw["total_exec_time"]
-         
-        influxdb_client.initialize_keys(result_raw["engine"], SERVER_NAME, result_raw["scenario"])
+        ENGINE = result_raw["engine"] 
+        influxdb_client.initialize_keys(ENGINE, SERVER_NAME, result_raw["scenario"])
         
         if result_raw.has_key("packet_trace"):
             packet_trace = result_raw["packet_trace"]
@@ -223,6 +225,15 @@ class Reporter:
             #file(data) exists
             data = append_to_json(result,self.test_name,data,self.config)
         write_to_json_file(data, self.resultfile) 
+
+def backup_test_detailed_log(smashdir, test_name,timeid):
+    import shutil
+    path = os.path.join(smashdir,"test_%s"%test_name)
+    save_path = os.path.join(smashdir,"test_%s_%s"%(test_name,timeid))
+    os.makedirs(save_path)
+    for fn in next(os.walk(path))[2]:
+        if((fn.find(".log") != -1)):
+            shutil.copy2(os.path.join(path,fn), save_path)
 
 def set_sync_intervals(sync_exec_time_array):
     import calendar
