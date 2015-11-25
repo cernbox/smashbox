@@ -126,7 +126,7 @@ def worker0(step):
     
     k1,ncorrupt1 = check_workdir(d,test_dir,sync_dir_num)
 
-    error_check(k1-k0==nfiles,'Expecting to have %d files more: see k1=%d k0=%d'%(nfiles,k1,k0))
+    error_check(k1-k0==nfiles,'Expecting to have %d files, have %d: see k1=%d k0=%d'%(nfiles,k0-k1,k1,k0))
     fatal_check((ncorrupt0+ncorrupt1)==0, 'Corrupted files (%s) found'%(ncorrupt0+ncorrupt1))
     logger.info('SUCCESS: %d files found',k1)
         
@@ -148,7 +148,7 @@ def worker1(step):
 
     k1,ncorrupt1 = check_workdir(d,test_dir,sync_dir_num)
 
-    error_check(k1-k0==nfiles,'Expecting to have %d files more: see k1=%d k0=%d'%(nfiles,k1,k0))
+    error_check(k1-k0==nfiles,'Expecting to have %d files, have %d: see k1=%d k0=%d'%(nfiles,k0-k1,k1,k0))
     fatal_check((ncorrupt0+ncorrupt1)==0, 'Corrupted files (%s) found'%(ncorrupt0+ncorrupt1))
 
 """ TEST UTILITIES """

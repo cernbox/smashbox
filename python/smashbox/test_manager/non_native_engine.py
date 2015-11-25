@@ -360,13 +360,17 @@ def check_status_seafile(fname, smashdir):
     return (process.communicate()[0]).encode('ascii','ignore')
 
 def get_synced_seafile(fname, smashdir):
+    import time
     flag = 0 
     stdout_array = []
-    while flag<2:
+    while flag<3:
         stdout = check_status_seafile(fname, smashdir)
         stdout_array.append("%s - %s"%(time_now(),stdout))
         if(stdout.find("synchronized") != -1):
             flag+=1
+        else:
+            flag=0
+        time.sleep(0.05)
     return { fname : stdout_array }
     
 def get_running_seafile(fname, smashdir):
@@ -399,6 +403,8 @@ def seafile_clean_directory(smashdir, fname):
         process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         process.wait()
 
+""" common functions """
+
 def check_if_stopped(service):
     import time
     t_syncprepare = time_now() 
@@ -411,10 +417,8 @@ def check_if_stopped(service):
         if((stdout.find(status) != -1)):
             running = False
         else:
-            print "some %s process is still running"%service
+            print "some %s process is still running: %s"%(service,stdout)
             time.sleep(1)
-
-""" common functions """
 
 def log_test(smashdir,data):
     import io,json
