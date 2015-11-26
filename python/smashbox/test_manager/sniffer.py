@@ -44,6 +44,7 @@ class SnifferThread(threading.Thread):
                     s_addr = socket.inet_ntoa(iph[8]);
                     d_addr = socket.inet_ntoa(iph[9]);
                     incoming = None
+                    ip=None
                     if (str(s_addr) == str(d_addr)):
                         ip = "localhost"
                         incoming = False
