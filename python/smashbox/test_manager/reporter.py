@@ -72,7 +72,7 @@ class Reporter:
         #prepare configurations
         barename = self.test_name
         config = self.config
-        self.resultfile = config.smashdir +"/results-"+config.oc_server+"-"+config.runid
+        self.resultfile = config.smashdir +"/results-"+(config.oc_server).replace("/","")+"-"+config.runid
         self.start_date = time_now() 
         #log
         #prepare dictionary for the test results    
@@ -227,7 +227,9 @@ class Reporter:
         write_to_json_file(data, self.resultfile) 
 
 def backup_test_detailed_log(smashdir, test_name,timeid):
-    import shutil
+    import shutil,time
+    timeid = list(timeid)
+    timeid = "%s-%s"%(time.strftime('%Y-%m-%d-%H-%M-%S', time.localtime(int(''.join(timeid[0:10])))),''.join(timeid[10:16]))
     path = os.path.join(smashdir,"test_%s"%test_name)
     save_path = os.path.join(smashdir,"test_%s_%s"%(test_name,timeid))
     os.makedirs(save_path)
@@ -236,7 +238,7 @@ def backup_test_detailed_log(smashdir, test_name,timeid):
             shutil.copy2(os.path.join(path,fn), save_path)
 
 def set_sync_intervals(sync_exec_time_array):
-    import calendar
+    import time
     sync_intervals = []
     for i in range(1, len(sync_exec_time_array)):
         if sync_exec_time_array[i]!=None:
