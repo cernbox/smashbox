@@ -71,7 +71,6 @@ def worker0(step):
     mod_file_array = []
     for i in range(nfiles):
         mod_file_array.append(create_test_file(count_dir,"%s%s"%("test",i),filesize))
-    step(2,'Pre-sync')
     run_ocsync(d,option=exclude_time)
     
     k0,ncorrupt0 = check_workdir(d)
