@@ -43,7 +43,7 @@ testsets = [
         },#3
         {
           '%s_testdirstruct'%test_name:"0/1/500000000",
-          '%s_rptblocksize'%test_name:4*1000*1000, # file contains repeated blocks of 4MB 
+          '%s_rptblocksize'%test_name:4*1024*1024, # file contains repeated blocks of 4MB 
         },#4
         {
           '%s_testdirstruct'%test_name:"0/1/1000",
