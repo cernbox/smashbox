@@ -194,8 +194,11 @@ class Reporter:
                 if(total_sync_time!=0):
                     influxdb_client.write(("%s-total-syn"%RUNID),[],total_sync_time,TIMEID)
                     influxdb_client.write(("%s-total-exec"%RUNID),[],TOTAL_EXEC,TIMEID)
-            elif ENGINE=="owncloud":
-                backup_test_detailed_log(self.config.smashdir, TEST_NAME,TIMEID)
+            try:
+                if ENGINE=="owncloud" and getattr(self.config, "backuplog")=="true":
+                    backup_test_detailed_log(self.config.smashdir, TEST_NAME,TIMEID)
+            except Exception,e:
+                pass
             
         influxdb_client = InfluxDBClient(self.config)    
         SERVER_NAME = self.config.oc_server
