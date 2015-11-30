@@ -28,22 +28,27 @@ testsets = [
         {
           '%s_testdirstruct'%test_name:"0/1/1000",
           '%s_rptblocksize'%test_name:None,
+          '%s_fullsyncdir'%test_name:False,
         },#0
         {
           '%s_testdirstruct'%test_name:"0/1/5000000",
           '%s_rptblocksize'%test_name:None,
+          '%s_fullsyncdir'%test_name:False,
         },#1
         {
           '%s_testdirstruct'%test_name:"0/1/500000000",
           '%s_rptblocksize'%test_name:None, # file contains only random bytes
+          '%s_fullsyncdir'%test_name:False,
         },#2
         {
           '%s_testdirstruct'%test_name:"0/1/500000000",
           '%s_rptblocksize'%test_name:1000*1000, # file contains repeated blocks of 1MB 
+          '%s_fullsyncdir'%test_name:False,
         },#3
         {
           '%s_testdirstruct'%test_name:"0/1/500000000",
           '%s_rptblocksize'%test_name:4*1024*1024, # file contains repeated blocks of 4MB 
+          '%s_fullsyncdir'%test_name:False,
         },#4
         {
           '%s_testdirstruct'%test_name:"0/1/1000",
@@ -65,10 +70,12 @@ testsets = [
         {
           '%s_testdirstruct'%test_name:"0/1/500000",
           '%s_fullsyncdir'%test_name:"10/100/10000",
+          '%s_rptblocksize'%test_name:None,
         },#8
         {
           '%s_testdirstruct'%test_name:"0/1/50000000",
           '%s_fullsyncdir'%test_name:"10/100/10000",
+          '%s_rptblocksize'%test_name:None,
         },#9
 #############
 #Stress sync - test many times per day - all clients - packet sniffer on#
