@@ -113,6 +113,7 @@ def worker1(step):
 """ TEST UTILITIES """
    
 def prepare_workdir(d):
+    reset_owncloud_account()
     cdir = os.path.join(d,"0")
     remove_tree(cdir)
     if fullsyncdir!=False:
@@ -120,12 +121,11 @@ def prepare_workdir(d):
         if len(conf)==3 and int(conf[0])>0:
             for i in range(0, int(conf[0])):
                 dir = os.path.join(d,str(i)) 
-                if (not (os.path.exists(dir))) or i==0:
+                if (not (os.path.exists(dir))):
                     mkdir(dir)
                     for j in range(int(conf[1])):
                         create_test_file(dir,"%s%s"%(i,j),int(conf[2]))
             return [cdir,d]
-    reset_owncloud_account()
     reset_rundir()
     mkdir(wdir)
     return [cdir,d]
