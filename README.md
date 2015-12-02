@@ -125,7 +125,7 @@ Config JSON has a structure:
 
 <pre>
 
-   <YOUR_NAME_FOR_FILE>.config
+   YOUR_NAME_FOR_FILE.config
    │
    ├── config
    │   ├── remote                                 : true/false | specifies if you would like to use remote storage
@@ -178,11 +178,6 @@ NEXT, you should create file testrun.config by ``nano testrun.config`` and inser
          "runid" : "testrun",
          "test_name" : "performance/test_syncperf.py",
          "testset" : "0"
-        }, 
-        {
-         "runid" : "testrun",
-         "test_name" : "performance/test_syncperf.py",
-         "testset" : "1"
         }, 
     ],
     "loop" : 1
@@ -240,6 +235,11 @@ For advanced use, with sniffer, non-native engines, log backup and remote storag
          "test_name" : "performance/test_syncperf.py",
          "testset" : "0"
         }, 
+        {
+         "runid" : "testrun",
+         "test_name" : "performance/test_syncperf.py",
+         "testset" : "1"
+        }, 
     ],
     "loop" : 1
 } 
@@ -251,7 +251,7 @@ and confirm running the test
 
 or 
 
-``./smashbox-deamon <YOUR_NAME_FOR_FILE>.config``
+``./smashbox-deamon YOUR_NAME_FOR_FILE.config``
 
 
 
