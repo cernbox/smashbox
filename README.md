@@ -57,7 +57,7 @@ General layout:
    
 </pre>
 
-Installation
+Installation of prerequisites
 ============
 
 Note: Currently this framework works on Unix-like systems only. Windows port is needed.
@@ -66,25 +66,48 @@ Login as root, if you are willing to use sniffer, if not, you can stay as normal
 
 ``sudo su``
 
+and cd to ``/root/`` on your new Virtual Machine
+
 `` cd ``
+
+Install git
+
+``apt-get update``
+
+``apt-get install git-all``
+
+``apt-get install curl``
+
+``apt-get install python-pycurl``
+
+``apt-get install python-netifaces``
 
 Clone git repository into your local ``smashbox`` directory.
 
-To install the library, run the following after checking out your branch:
+``git clone https://github.com/mrow4a/smashbox.git``
 
-pip install -r requirements.txt
+Comment:
+if, for some reason you would like to use specific deic-client, you should 
 
-If you want to use a local copy of pyocclient, you can add the following to your shell environment:
+``git clone https://github.com/mrow4a/deicclient.git``
 
-export PYTHONPATH=/local/path/to/pyocclient/repo/branch
+Install owncloud client, as described at
 
-and clone git repository into your local ``pyocclient`` directory.
+``https://software.opensuse.org/download/package?project=isv:ownCloud:desktop&package=owncloud-client``
 
-If you are willing to use ``dropbox``, you should go to parent dir using ``cd``,
+Dropbox Installation
+============
 
-run ``smashbox/bin/smash -o oc_account_password=dropbox -o engine=dropbox --testset 0 smashbox/lib/performance/test_syncperf.py``
+If you are willing to use ``dropbox``, you should go to ``smashbox`` directory,
+
+run ``bin/smash -o oc_account_password=dropbox -o engine=dropbox --testset 0 lib/performance/test_syncperf.py``
 
 If you are on the text-based system, information about accessing the link and enabling dropbox client will appear. If it is desktop system, it will open the dropbox desktop client so that you could enter credentials for the dropbox account.
+
+IMPORTANT! While you initialize dropbox using some user, you have to use the same user during execution of the tests. If you used root to initialize dropbox, you need to run test as a root. Otherwise, initialization will start again.
+
+Seafile Installation
+============
 
 For Seafile client, first you need to set up the certificates on ubuntu, because the latest CLI client uses http protocol for synchronization. If you use https on the Seafile server side, you can't connect to the server from a Debian/Ubuntu machine using this CLI client:
 
@@ -96,13 +119,84 @@ sudo ln -s /etc/pki/tls/certs/ca-bundle.crt /etc/pki/tls/cert.pem
 
 If you will skip this step, your seafile will freeze on ``Starting to download ...``
 
-NEXT, you shoudl create file testrun.config by ``nano smashbox/testrun.config`` and insert the following file
+First test runs
+===============
+Config JSON has a structure:
+
+<pre>
+
+   <YOUR_NAME_FOR_FILE>.config
+   │
+   ├── config
+   │   ├── remote                                 : true/false | specifies if you would like to use remote storage
+   │   ├── sniffer                                : true/false | specifies if you would like to catch all the packets flowing
+   │   ├── backuplog                              : true/false | specifies if you would like to backup your test results to ``smashdir`` directory
+   │   ├── remote_storage_server                  : ip address of your storage server - currently InfluxDB only supported
+   │   ├── remote_database                        : name of the database at storage server 
+   │   ├── remote_storage_user                    : database user 
+   │   └── remote_storage_password                : database password 
+   │
+   ├── sync_engines
+   │   ├── engine                                 : owncloud/dropbox/seafile | currently only those are supported
+   │   ├── oc_server                              : server address | for seafile, use begining https://  e.g. https://seacloud.cc/
+   │   ├── oc_account_name                        : dropbox/owncloud account name/seafile account name 
+   │   ├── oc_account_password                    : dropbox/owncloud account password/seafile account password
+   │   ├── oc_server_folder                       : dropbox/owncloud account folder e.g. testfolder /seafile account lib which is XXX at https://seacloud.cc/#my-libs/lib/XXX e.g. 1ba5703c-c3b9-403e-ac3c-dec836076ce2 
+   │   ├── oc_sync_cmd                            : dropbox/location of owncloudcmd  e.g. /usr/bin/owncloudcmd --trust/seafile
+   │   ├── oc_webdav_endpoint                     : dropbox/owncloud endpoint e.g. remote.php/webdav/seafile actual version e.g. 4.3.2
+   │   └── oc_account_reset_procedure             : dropbox/seafile/webdav_delete 
+   │   
+   ├── tests
+   │   ├── runid                                  : specify runid to attach all the measurements to the one group 
+   │   ├── test_name                              : path to test in ``smashbox/lib`` directory 
+   │   └── testset                                : id of the test set  
+   │
+   └── loop                                       : number of loops 
+   
+</pre>
+
+NEXT, you should create file testrun.config by ``nano testrun.config`` and insert the following file with your configurations
+
+<pre>
+{  
+    "config" : [
+    ],
+    "sync_engines" : [
+        [
+         "engine=owncloud",
+         "oc_server=YOUR_SERVER",
+         "oc_account_name=YOUR_ACC",
+         "oc_account_password=YOUR_PSW",
+         "oc_server_folder=YOUR_REMOTE_FOLDER",
+         "oc_sync_cmd=YOUR_CMD_DIR",
+         "oc_webdav_endpoint=YOUR_WEBDAV e.g. remote.php/webdav",
+         "oc_account_reset_procedure=webdav_delete"
+        ],
+    ],
+    "tests" : [
+        {
+         "runid" : "testrun",
+         "test_name" : "performance/test_syncperf.py",
+         "testset" : "0"
+        }, 
+        {
+         "runid" : "testrun",
+         "test_name" : "performance/test_syncperf.py",
+         "testset" : "1"
+        }, 
+    ],
+    "loop" : 1
+} 
+</pre>
+
+For advanced use, with sniffer, non-native engines, log backup and remote storage, you should use
 
 <pre>
 {  
     "config" : [
      "remote=true",
      "sniffer=true",
+     "backuplog=true",
      "remote_storage_server=YOUR_SERVER",
      "remote_database=YOUR_DB",
      "remote_storage_user=YOUR_DB_USR",
@@ -121,7 +215,7 @@ NEXT, you shoudl create file testrun.config by ``nano smashbox/testrun.config`` 
         ],
         [
          "engine=seafile",
-         "oc_server=https://seacloud.cc/",
+         "oc_server=YOUR_SERVER",
          "oc_account_name=YOUR_USR",
          "oc_account_password=YOUR_PSWRD",
          "oc_server_folder=YOUR_LIB",
@@ -135,40 +229,9 @@ NEXT, you shoudl create file testrun.config by ``nano smashbox/testrun.config`` 
          "oc_account_name=YOUR_ACC",
          "oc_account_password=YOUR_PSW",
          "oc_server_folder=YOUR_REMOTE_FOLDER",
-         "oc_sync_cmd=YOUR_CMD_DIR e.g. /usr/bin/owncloudcmd --trust",
-         "oc_webdav_endpoint=YOUR_WEBDAV e.g. remote.php/webdav",
+         "oc_sync_cmd=YOUR_CMD_DIR",
+         "oc_webdav_endpoint=YOUR_WEBDAV",
          "oc_account_reset_procedure=webdav_delete"
-        ],
-    ],
-    "tests" : [
-        {
-         "runid" : "testrun",
-         "test_name" : "performance/test_syncperf.py",
-         "testset" : "0"
-        }, 
-    ],
-    "loop" : 1
-} 
-</pre>
-
-or just 
-
-<pre>
-{  
-    "config" : [
-     "remote=false",
-     "sniffer=false",
-    ],
-    "sync_engines" : [
-        [
-         "engine=dropbox",
-         "oc_server=dropbox",
-         "oc_account_name=dropbox",
-         "oc_account_password=dropbox",
-         "oc_server_folder=dropbox",
-         "oc_sync_cmd=dropbox",
-         "oc_webdav_endpoint=dropbox",
-         "oc_account_reset_procedure=dropbox"
         ],
     ],
     "tests" : [
@@ -184,11 +247,11 @@ or just
 
 and confirm running the test 
 
-``smashbox/smashbox-deamon smashbox/testrun.config``
+``./smashbox-deamon testrun.config``
 
-First test runs
-===============
+or 
 
-TO BE CONTINUED...
+``./smashbox-deamon <YOUR_NAME_FOR_FILE>.config``
+
 
 
