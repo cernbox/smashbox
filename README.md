@@ -121,6 +121,9 @@ If you will skip this step, your seafile will freeze on ``Starting to download .
 
 First test runs
 ===============
+
+On you owncloud account, create folder named ``testfolder`` or any name you are specifying as ``oc_server_folder`` in configuration file YOUR_NAME_FOR_FILE.config
+
 Config JSON has a structure:
 
 <pre>
