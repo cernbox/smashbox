@@ -31,29 +31,36 @@ testsets = [
 #Modify sync - twice per day, every second day - all clients - packet sniffer on#
         { 
          '%s_filesize'%test_name: 1000,
+         '%s_fullsyncdir'%test_name:False,
         },#0
         { 
          '%s_filesize'%test_name: 5000000,
+         '%s_fullsyncdir'%test_name:False,
          '%s_add_orgn_fraction'%test_name:0.1,#it will add block of data of size 10% of original file
         },#1
         { 
          '%s_filesize'%test_name: 5000000,
+         '%s_fullsyncdir'%test_name:False,
          '%s_add_orgn_fraction'%test_name:0.5,#it will add block of data of size 50% of original file
         },#2
         { 
          '%s_filesize'%test_name: 5000000,
+         '%s_fullsyncdir'%test_name:False,
          '%s_add_orgn_fraction'%test_name:1,#it will add block of data of size 1000% of original file
         },#3
         { 
-         '%s_filesize'%test_name: 500000000, 
+         '%s_filesize'%test_name: 500000000,
+         '%s_fullsyncdir'%test_name:False, 
         },#4
 ##############
 #Modify sync - twice per day, every second day - owncloud clients only - packet sniffer off#
         { 
          '%s_filesize'%test_name: 500000, 
+         '%s_fullsyncdir'%test_name:False,
         },#5
         { 
          '%s_filesize'%test_name: 50000000,
+         '%s_fullsyncdir'%test_name:False,
         },#6
 ##############
 ]
