@@ -1,4 +1,3 @@
-#!/usr/local/bin/python2.7
 import io,subprocess,os
 
 class InfluxDBClient:
