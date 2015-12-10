@@ -1,4 +1,4 @@
-import os
+import os,random
 import time
 import tempfile
 
@@ -21,9 +21,8 @@ nfiles = int(config.get('%s_nfiles'%test_name,1))
 filesize = config.get('%s_filesize'%test_name,1000)
 fraction = config.get('%s_add_orgn_fraction'%test_name,0.1)
 excludetime = config.get('%s_excludetime'%test_name,True)
-full_dir_size = "10/100/10000"
-fullsyncdir = config.get('%s_fullsyncdir'%test_name,full_dir_size)
-hashfiles = config.get('%s_hashfiles'%test_name,True)
+fullsyncdir = config.get('%s_fullsyncdir'%test_name,False)
+hashfiles = config.get('%s_hashfiles'%test_name,False)
 
 if type(filesize) is type(''):
     filesize = eval(filesize)
@@ -31,43 +30,24 @@ testsets = [
 #Modify sync - twice per day, every second day - all clients - packet sniffer on#
         { 
          '%s_filesize'%test_name: 1000,
-         '%s_fullsyncdir'%test_name:"10/100/10000",
+         '%s_fullsyncdir'%test_name:False, 
+         '%s_add_orgn_fraction'%test_name:0.1,
         },#0
         { 
          '%s_filesize'%test_name: 5000000,
-         '%s_fullsyncdir'%test_name:"10/100/10000",
-         '%s_add_orgn_fraction'%test_name:0.1,#it will add block of data of size 10% of original file
+         '%s_fullsyncdir'%test_name:False, 
+         '%s_add_orgn_fraction'%test_name:0.2,#it will add block of 1MB
         },#1
         { 
-         '%s_filesize'%test_name: 5000000,
-         '%s_fullsyncdir'%test_name:"10/100/10000",
-         '%s_add_orgn_fraction'%test_name:0.5,#it will add block of data of size 50% of original file
+         '%s_filesize'%test_name: 100000000,
+         '%s_fullsyncdir'%test_name:False, 
+         '%s_add_orgn_fraction'%test_name:0.01,#it will add block of 1MB
         },#2
         { 
-         '%s_filesize'%test_name: 5000000,
-         '%s_fullsyncdir'%test_name:"10/100/10000",
-         '%s_add_orgn_fraction'%test_name:1,#it will add block of data of size 1000% of original file
+         '%s_filesize'%test_name: 100000000,
+         '%s_fullsyncdir'%test_name:"10/100/1", #inside full directory
+         '%s_add_orgn_fraction'%test_name:0.01,#it will add block of 1MB
         },#3
-        { 
-         '%s_filesize'%test_name: 500000000,
-         '%s_fullsyncdir'%test_name:"10/100/10000", 
-        },#4
-        { 
-         '%s_filesize'%test_name: 5000000,
-         '%s_fullsyncdir'%test_name:False, 
-         '%s_add_orgn_fraction'%test_name:0.1,#it will add block of data of size 10% of original file
-        },#5
-##############
-#Modify sync - twice per day, every second day - owncloud clients only - packet sniffer off#
-        { 
-         '%s_filesize'%test_name: 500000, 
-         '%s_fullsyncdir'%test_name:"10/100/10000",
-        },#6
-        { 
-         '%s_filesize'%test_name: 50000000,
-         '%s_fullsyncdir'%test_name:"10/100/10000",
-        },#7
-##############
 ]
 
 @add_worker
@@ -82,16 +62,17 @@ def worker0(step):
     d = array[1]
     mod_file_array = []
     for i in range(nfiles):
-        mod_file_array.append(create_test_file(count_dir,"%s%s"%("test",i),filesize))
-    run_ocsync(d,option=exclude_time)
+        mod_file_array.append(create_test_file(count_dir,"%s%s"%("test",random.randint(1, 10000)),filesize,hashf=False))
+    run_ocsync(d,option=[exclude_time])
     
     k0,ncorrupt0 = check_workdir(d)
 
     step(4,'Modify files')
+    run_ocsync(d,option=[exclude_time,'start_only'])
     for j in range(0, len(mod_file_array)):
         modify_dummy_file(mod_file_array[j],filesize*fraction)
 
-    run_ocsync(d)
+    run_ocsync(d,option=['finish_only'])
     
     k1,ncorrupt1 = check_workdir(d)
 
@@ -110,7 +91,7 @@ def worker1(step):
     count_dir = array[0]
     d = array[1]
     step(3,'Pre-sync')
-    run_ocsync(d,option=exclude_time)
+    run_ocsync(d,option=[exclude_time])
     k0,ncorrupt0 = check_workdir(d)
 
     step(5,'Resync and check files modified by worker0')
@@ -139,7 +120,7 @@ def prepare_workdir(d):
                         create_test_file(dir,"%s%s"%(i,j),int(conf[2]))
             return [cdir,d]
     reset_rundir()
-    mkdir(wdir)
+    mkdir(cdir)
     return [cdir,d]
 
 def get_workdir(d):
@@ -155,8 +136,8 @@ def eval_excludetime():
     else:
         return None
 
-def create_test_file(directory, name, size, bs=None):
-    if hashfiles==True:
+def create_test_file(directory, name, size, bs=None,hashf=True):
+    if hashfiles==True and hashf==True:
         if bs==None:
             fn = create_hashfile(directory,size=size,bs=size)
         else:

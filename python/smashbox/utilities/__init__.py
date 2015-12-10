@@ -283,10 +283,11 @@ def sync_engine(cmd,option):
     t1 = datetime.datetime.now()
     logger.info('sync cmd is: %s',cmd) 
     
-    if option == "exclude_time":
-        return None
-    else:
-        return [t0,t1]  
+    if option:
+        for opt in option:
+            if opt=='exclude_time':
+                return None
+    return [t0,t1]  
 
 def run_ocsync(local_folder, remote_folder="", n=None, user_num=None, option = None):
     """ Run the ocsync for local_folder against remote_folder (or the main folder on the owncloud account if remote_folder is None).
@@ -447,7 +448,7 @@ def create_dummy_file(wdir,name,size,bs=None):
 
     return fn
 
-def modify_dummy_file(fn,size,bs=None):
+def modify_dummy_file(fn,size,bs=None,checksum=False):
     import random
     import hashlib
     
@@ -474,14 +475,15 @@ def modify_dummy_file(fn,size,bs=None):
     block_data_r = str(os.urandom(nr))       # Only once
     f.write(block_data_r)
     f.close()
-    f = file(fn,'r')
-    data = f.read()
-    f.close()
-    md5 = hashlib.md5()
-    md5.update(data)
-    filemask = "{md5}"        
-    new_fn = os.path.join(os.path.dirname(fn),filemask.replace('{md5}',md5.hexdigest()))
-    os.rename(fn,new_fn)
+    if checksum==True:
+        f = file(fn,'r')
+        data = f.read()
+        f.close()
+        md5 = hashlib.md5()
+        md5.update(data)
+        filemask = "{md5}"        
+        new_fn = os.path.join(os.path.dirname(fn),filemask.replace('{md5}',md5.hexdigest()))
+        os.rename(fn,new_fn)
     
 def modify_file(fn,c,count,bs):
     logger.info('modify_file %s character=%s count=%d bs=%d',fn,repr(c),count,bs)

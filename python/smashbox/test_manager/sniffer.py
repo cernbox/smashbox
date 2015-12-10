@@ -23,8 +23,10 @@ class SnifferThread(threading.Thread):
             
         
     def run(self):
-        localhost = str(netifaces.ifaddresses('eth0')[netifaces.AF_INET][0]['addr'])
-        
+        try:
+            localhost = str(netifaces.ifaddresses('eth0')[netifaces.AF_INET][0]['addr'])
+        except:
+            localhost=None
         while not self.stoprequest.isSet():
             packet = self.s.recvfrom(65565)
             #packet string from tuple

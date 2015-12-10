@@ -13,20 +13,30 @@ class dropbox:
     @staticmethod
     def sync_engine(args,config,worker_name):
         option = args[1]
+        stop = True
+        finish = False
+        exclude = False
+        if option:
+            for opt in option:
+                if opt=='exclude_time':
+                    exclude = True
+                elif opt=='start_only':
+                    stop = False
+                elif opt=='finish_only':
+                    finish = True
         local_folder = os.path.abspath(os.path.join(config.smashdir,"dropbox-"+worker_name+"/Dropbox/"))
-        dropbox_restart(config.smashdir, worker_name, local_folder)
+        if finish==False:
+            dropbox_restart(config.smashdir, worker_name, local_folder)
         t0 = datetime.datetime.now()
         log = get_running_dropbox(worker_name, config.smashdir)
         if(log != None):
-            t1 = datetime.datetime.now()
-            stop_dropbox(worker_name, config.smashdir)  
-            log_test(config.smashdir,log)
-            
-            if option == "exclude_time":
+            result = [t0,datetime.datetime.now()]
+            if stop==True:
+                stop_dropbox(worker_name, config.smashdir)  
+            if exclude==True:
                 return None
-            else:
-                return [t0,t1]
-          
+            log_test(config.smashdir,log)
+            return result
     @staticmethod    
     def make_workdir(args,config,worker_name):
         import os
@@ -239,18 +249,31 @@ class seafile:
     @staticmethod
     def sync_engine(args,config,worker_name):
         option = args[1]
+        stop = True
+        finish = False
+        exclude = False
+        if option:
+            for opt in option:
+                if opt=='exclude_time':
+                    exclude = True
+                elif opt=='start_only':
+                    stop = False
+                elif opt=='finish_only':
+                    finish = True
         smashdir = config.smashdir
-        run_seafile(smashdir, worker_name)
+        if finish==False:
+            run_seafile(smashdir, worker_name)
         get_running_seafile(worker_name, smashdir)
         t0 = datetime.datetime.now()
         log = get_synced_seafile(worker_name, smashdir)
-        t1 = datetime.datetime.now()
-        stop_seafile(worker_name, smashdir)
-        log_test(smashdir,log)
-        if option == "exclude_time":
+        result = [t0,datetime.datetime.now()]
+        if stop==True:
+            stop_seafile(worker_name, smashdir)
+        if exclude==True:
             return None
-        else:
-            return [t0,t1]
+        log_test(smashdir,log)
+        return result
+        
     
     @staticmethod    
     def reset_owncloud_account(args,config,worker_name):
