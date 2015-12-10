@@ -114,7 +114,7 @@ class Reporter:
             if getattr(self.config, "remote")=="true":
                 self.remote_storage(result)
         except Exception,e:
-            print "%s: continue and save results localy"%e
+            print "continue and save results localy"
             self.local_storage(result)         
     
     def reporter_finalize_test(self):
