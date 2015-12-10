@@ -121,7 +121,7 @@ class Reporter:
         dict = { "results" : [] }
         for i in range(0, len(self.shared_result_workers)):
             dict["results"].append(self.get_shared_results())
-        dict["total_exec_time"]=(time_now(self.start_date)).total_seconds()
+        dict["total_exec_time"]=timedelta_total_seconds(time_now(self.start_date))
         self.test_result_dict = dict
     
     def reporter_get_test_results(self):  
@@ -253,12 +253,12 @@ def set_sync_intervals(sync_exec_time_array):
 def sync_exec_time(sync_exec_time_array):
     import datetime 
     if sync_exec_time_array[0]!=None:
-        exec_time = (sync_exec_time_array[0][1]-sync_exec_time_array[0][0]).total_seconds()
+        exec_time = timedelta_total_seconds(sync_exec_time_array[0][1]-sync_exec_time_array[0][0])
     else:
         exec_time = 0
     for i in range(1, len(sync_exec_time_array)):
         if sync_exec_time_array[i]!=None:
-            sync_exec_time =  (sync_exec_time_array[i][1]-sync_exec_time_array[i][0]).total_seconds()
+            sync_exec_time =  timedelta_total_seconds(sync_exec_time_array[i][1]-sync_exec_time_array[i][0])
             exec_time = (exec_time + sync_exec_time)
     
     return exec_time     
@@ -333,3 +333,8 @@ def write_to_json_file(data, file_path):
     mkdir_p(file_path)
     with io.open(file_path, 'w', encoding='utf-8') as file:
         file.write(unicode(json.dumps(data, ensure_ascii=False, indent=4)))
+        
+def timedelta_total_seconds(timedelta):
+    return (
+        timedelta.microseconds + 0.0 +
+        (timedelta.seconds + timedelta.days * 24 * 3600) * 10 ** 6) / 10 ** 6
