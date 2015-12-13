@@ -651,7 +651,22 @@ Resuming of Transfer:
 Client can not resume the upload of single chunks. If a certain chunk upload
 fails, client will repeat it and transfer the full chunk again.
 
+# Checksumming extensions
+
+Checksumming has been implemented in CERNBOX 1.7.2 client and it is currently integrated into owncloud sync client 2.x releases. It follows this specification:
+
+https://github.com/cernbox/smashbox/blob/master/protocol/checksum.md
+
+
 # OC Sync Semantics
+
+## New development ideas
+
+Currently under discussion:
+
+https://dragotin.wordpress.com/2015/06/22/owncloud-chunking-ng/
+https://dragotin.wordpress.com/2015/07/10/owncloud-chunking-ng-part-2-announcing-an-upload/
+https://dragotin.wordpress.com/2015/11/13/owncloud-chunking-ng-part-3-incremental-syncing/
 
 
 ## Lifecycle and semantics of FileId vs path vs etag
