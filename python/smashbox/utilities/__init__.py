@@ -7,6 +7,40 @@ import time
 
 # Utilities to be used in the test-cases.
 
+
+def compare_oc_version(compare_to, operator):
+    """
+
+    :param compare_to: E.g. '9.0'
+    :param operator: One of '<', '=', '>', '<=', '>='
+    :return:
+    """
+    oc_api = get_oc_api()
+    url = oc_api.url + 'status.php'
+    rtn_code, std_out, std_err = runcmd('curl %s' % url, log_warning=False)
+
+    import json
+    version = (json.loads(std_out))['version']
+
+    if operator == '<':
+        return versiontuple(version) < versiontuple(compare_to)
+    if operator == '>':
+        return versiontuple(version) > versiontuple(compare_to)
+    if operator == '<=':
+        return versiontuple(version) <= versiontuple(compare_to)
+    if operator == '>=':
+        return versiontuple(version) >= versiontuple(compare_to)
+    if operator == '=':
+        compare_tuple = versiontuple(compare_to)
+        return versiontuple(version)[0:len(compare_tuple)] == compare_tuple
+
+    raise ValueError('Invalid operator')
+
+
+def versiontuple(v):
+    return tuple(map(int, (v.split("."))))
+
+
 def OWNCLOUD_CHUNK_SIZE(factor=1):
     """Calculate file size as a fraction of owncloud client's default chunk size.
     """
