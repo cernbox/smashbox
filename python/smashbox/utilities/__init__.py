@@ -675,8 +675,8 @@ def share_file_with_user(filename, sharer, sharee, **kwargs):
         logger.info('share id for file share is %s', str(share_info.share_id))
         return share_info.share_id
     except ResponseError as err:
-        logger.info('Share failed with %s', str(err))
-        if "not allowed to share" in str(err.get_resource_body()):
+        logger.info('Share failed with %s - %s', str(err), str(err.get_resource_body()))
+        if err.status_code == 403 or err.status_code == 404:
             return -1
         else:
             return -2
