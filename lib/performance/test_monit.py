@@ -101,13 +101,29 @@ def create_teststruct(test_dir):
     return 100
 
 def missing_in_teststruct(test_dir):
-    flist = []
+    def list_files(path):
+        files_tmp = {}
+        files = []
+        for name in os.listdir(path):
+            file_path = os.path.join(path, name)
+            if os.path.isfile(file_path):
+                size = os.path.getsize(file_path)
+                if files_tmp.has_key(size):
+                    files_tmp[size] = files_tmp[size] + 1
+                    files.append("%s%s%s"%(files_tmp[size],"test",size))
+                else:
+                    files_tmp.update({size : 0})
+                    files.append("%s%s%s"%(0,"test",size))
+        return files 
+    
+    all_flist = list_files(test_dir)
+    mis_flist = []
     for x in files:
         for n in range(x[0]):
             fname = "%s%s%s"%(n,"test",x[1])
-            if not os.path.exists(os.path.join(test_dir,fname)):
-               flist.append(fname) 
-    return flist
+            if all_flist!=[] and (fname not in all_flist):
+               mis_flist.append(fname) 
+    return mis_flist
 
 def eval_teststruct():
     return 100

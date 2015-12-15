@@ -27,7 +27,7 @@ countfiles = config.get('%s_countfiles'%test_name,True)
 testsets = [
         #Test sync#
         {
-          '%s_testdirstruct'%test_name:"0/1/%s"%1024, #1kB
+          '%s_testdirstruct'%test_name:"0/1/%s"%1, #1B
           '%s_countfiles'%test_name:True,
         },#0
         ###########

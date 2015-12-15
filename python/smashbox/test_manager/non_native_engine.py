@@ -415,17 +415,15 @@ def setup_seafile(smashdir, smash_workers,config):
         if fname is None:
             fname = f.__name__ 
         worker_name_array.append(fname) 
+        seafile_clean_directory(smashdir, fname)
         start_seafile(fname, smashdir,directory,config) 
     return worker_name_array
     
 def seafile_clean_directory(smashdir, fname): 
-    import glob
     workerdir = os.path.abspath(smashdir+"/seafile-"+fname)
-    if os.path.exists(workerdir):
-        cmd = ('rm -rf %s/*'%workerdir)
-        process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-        process.wait()
-
+    cmd = ('rm -rf '+(workerdir+"/*"))
+    process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    process.wait()
 """ common functions """
 
 def check_if_stopped(service):
