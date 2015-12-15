@@ -117,6 +117,8 @@ sudo cp /etc/ssl/certs/ca-certificates.crt /etc/pki/tls/certs/ca-bundle.crt
 sudo ln -s /etc/pki/tls/certs/ca-bundle.crt /etc/pki/tls/cert.pem
 </pre>
 
+Make also sure that under ``/devices/`` in your seafile account, all the devices are removed. Before running, make sure that folder ~/smashdir is empty
+
 If you will skip this step, your seafile will freeze on ``Starting to download ...``
 
 First test runs
