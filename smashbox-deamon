@@ -94,12 +94,13 @@ def run(testset_config):
     for k in range(0, int(testset_config["loop"])):
         for j in range(0, len(tests)):
             for i in range(0, len(sync_engines)):
-                test_name = tests[j]["test_name"]
-                testset=None
-                if tests[j].has_key("testset"):
-                	testset = tests[j]["testset"]
-                runid = tests[j]["runid"]
-                client.start(sync_engines[i],testset,test_name,runid)     
+                if testset_config.has_key("ensure_net_qos") and ensure_qos(testset_config["ensure_net_qos"])==True:
+                    test_name = tests[j]["test_name"]
+                    testset=None
+                    if tests[j].has_key("testset"):
+                    	testset = tests[j]["testset"]
+                    runid = tests[j]["runid"]
+                    client.start(sync_engines[i],testset,test_name,runid)     
           
 def main(arguments):
     check_smashbox_basic_conf()
@@ -107,13 +108,13 @@ def main(arguments):
         testset_config = get_config(arguments[arg_i])
         run(testset_config)            
 
-def ensure_qos():
+def ensure_qos(qos_min_dev):
     import subprocess
     print "Ensuring Network QoS..."
     s = subprocess.check_output(["ping -c 10 8.8.8.8 | grep 'rtt\|loss'"], shell=True)
     start = s.rfind('/') + 1
     end = s.find(' ms', start)
-    if float(s[start:end]) > float(2) and (s.find("0%")!=-1):
+    if float(s[start:end]) > float(qos_min_dev) and (s.find("0%")!=-1):
         return False
     print "QoS OK rtt-stddev=%s, loss=0"%float(s[start:end])
     return True
@@ -132,7 +133,7 @@ if __name__ == '__main__':
     """    """
     global order_reboot
     arguments = sys.argv
-    if (get_lock()==1 and ensure_qos()==True):
+    if (get_lock()==1):
         main(arguments)
     else:
         print ("Aborting - wait for the end of the previous smashbox run or ensure better QoS of your network to start tests")
