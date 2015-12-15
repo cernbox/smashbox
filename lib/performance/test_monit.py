@@ -53,8 +53,9 @@ def worker0(step):
     step(4,'Add 100 files and check if we still have k1+nfiles after resync')
     nfiles = create_teststruct(test_dir)
     run_ocsync(d)
+    missing = missing_in_teststruct(test_dir)
     k1,ncorrupt1 = check_workdir(d,test_dir,sync_dir_num)
-    error_check(k1-k0==nfiles,'Expecting to have %d files, have %d: see k1=%d k0=%d missing=[%s]'%(nfiles,k1-k0,k1,k0,missing_in_teststruct(test_dir)))
+    error_check(k1-k0==nfiles,'Expecting to have %d files, have %d: see k1=%d k0=%d missing=[%s]'%(nfiles,k1-k0,k1,k0,missing))
     fatal_check((ncorrupt0+ncorrupt1)==0, 'Corrupted files (%s) found'%(ncorrupt0+ncorrupt1))
     logger.info('SUCCESS: %d files found',k1)
         
@@ -73,8 +74,9 @@ def worker1(step):
 
     step(5,'Resync and check files added by worker0')
     run_ocsync(d)
+    missing = missing_in_teststruct(test_dir)
     k1,ncorrupt1 = check_workdir(d,test_dir,sync_dir_num)
-    error_check(k1-k0==nfiles,'Expecting to have %d files, have %d: see k1=%d k0=%d missing=[%s]'%(nfiles,k1-k0,k1,k0,missing_in_teststruct(test_dir)))
+    error_check(k1-k0==nfiles,'Expecting to have %d files, have %d: see k1=%d k0=%d missing=[%s]'%(nfiles,k1-k0,k1,k0,missing))
     fatal_check((ncorrupt0+ncorrupt1)==0, 'Corrupted files (%s) found'%(ncorrupt0+ncorrupt1))
 
 """ TEST UTILITIES """
@@ -97,6 +99,7 @@ def create_teststruct(test_dir):
         for n in range(x[0]):
             create_test_file(test_dir,"%s%s%s"%(n,"test",x[1]),int(x[1]),bs=blocksize)
     return 100
+
 def missing_in_teststruct(test_dir):
     flist = []
     for x in files:
