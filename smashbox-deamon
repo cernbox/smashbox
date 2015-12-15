@@ -106,7 +106,18 @@ def main(arguments):
     for arg_i in range(1, len(arguments)):
         testset_config = get_config(arguments[arg_i])
         run(testset_config)            
-		
+
+def ensure_qos():
+    import subprocess
+    print "Ensuring Network QoS..."
+    s = subprocess.check_output(["ping -c 10 8.8.8.8 | grep 'rtt\|loss'"], shell=True)
+    start = s.rfind('/') + 1
+    end = s.find(' ms', start)
+    if float(s[start:end]) > float(2) and (s.find("0%")!=-1):
+        return False
+    print "QoS OK rtt-stddev=%s, loss=0"%float(s[start:end])
+    return True
+    
 def get_lock():
 	process_name = 'running_test'		
 	global lock_socket   # Without this our lock gets garbage collected
@@ -121,10 +132,10 @@ if __name__ == '__main__':
     """    """
     global order_reboot
     arguments = sys.argv
-    if (get_lock()==1):
+    if (get_lock()==1 and ensure_qos()==True):
         main(arguments)
     else:
-        print ("Aborting - wait for the end of the previous smashbox run")
+        print ("Aborting - wait for the end of the previous smashbox run or ensure better QoS of your network to start tests")
         sys.exit()
 
 
