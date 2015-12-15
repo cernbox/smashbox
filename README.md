@@ -156,6 +156,8 @@ Config JSON has a structure:
    │   ├── test_name                              : path to test in ``smashbox/lib`` directory 
    │   └── testset                                : id of the test set  
    │
+   ├── ensure_net_qos									  : 
+   │   
    └── loop                                       : number of loops 
    
 </pre>
@@ -185,7 +187,7 @@ NEXT, you should create file testrun.config by ``nano testrun.config`` and inser
          "testset" : "0"
         }, 
     ],
-    "loop" : 1
+    "loop" : 1,
 } 
 </pre>
 
@@ -246,7 +248,8 @@ For advanced use, with sniffer, non-native engines, log backup and remote storag
          "testset" : "1"
         }, 
     ],
-    "loop" : 1
+    "loop" : 1,
+    "ensure_net_qos" : 2,
 } 
 </pre>
 

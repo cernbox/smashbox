@@ -94,7 +94,7 @@ def run(testset_config):
     for k in range(0, int(testset_config["loop"])):
         for j in range(0, len(tests)):
             for i in range(0, len(sync_engines)):
-                if testset_config.has_key("ensure_net_qos") and ensure_qos(testset_config["ensure_net_qos"])==True:
+                if (not testset_config.has_key("ensure_net_qos")) or testset_config.has_key("ensure_net_qos") and ensure_qos(testset_config["ensure_net_qos"])==True:
                     test_name = tests[j]["test_name"]
                     testset=None
                     if tests[j].has_key("testset"):
@@ -114,9 +114,13 @@ def ensure_qos(qos_min_dev):
     s = subprocess.check_output(["ping -c 10 8.8.8.8 | grep 'rtt\|loss'"], shell=True)
     start = s.rfind('/') + 1
     end = s.find(' ms', start)
-    if float(s[start:end]) > float(qos_min_dev) and (s.find("0%")!=-1):
-        return False
-    print "QoS OK rtt-stddev=%s, loss=0"%float(s[start:end])
+    try:
+        qos_min_dev = float(qos_min_dev)
+        if float(s[start:end]) > qos_min_dev and (s.find("0%")!=-1):
+            return False
+        print "QoS OK rtt-stddev=%s, loss=0"%float(s[start:end])
+    except:
+        pass
     return True
     
 def get_lock():
