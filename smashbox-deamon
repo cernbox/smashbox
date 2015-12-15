@@ -14,7 +14,7 @@ class SmashboxCLI:
             SMASHBOX_CMD += ["-o",sync_engine[j]]
         if (testset == "all"):
             SMASHBOX_CMD += ["-a"]
-        else:
+        elif (testset != None):
             SMASHBOX_CMD += ["-t",str(testset)] 
         SMASHBOX_CMD += ["-o","runid=%s"%runid,"lib/%s"%test_name] 
         process = subprocess.Popen(SMASHBOX_CMD,stdout=subprocess.PIPE, stderr=subprocess.STDOUT, preexec_fn=os.setsid, cwd=parentdir)
@@ -95,7 +95,9 @@ def run(testset_config):
         for j in range(0, len(tests)):
             for i in range(0, len(sync_engines)):
                 test_name = tests[j]["test_name"]
-                testset = tests[j]["testset"]
+                testset=None
+                if tests[j].has_key("testset"):
+                	testset = tests[j]["testset"]
                 runid = tests[j]["runid"]
                 client.start(sync_engines[i],testset,test_name,runid)     
           

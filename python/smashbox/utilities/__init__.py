@@ -603,7 +603,6 @@ def fatal_check(expr,message=""):
         message=" ".join([message, "%s failed in %s() [\"%s\" at line %s]" %(''.join(f[4]).strip(),f[3],f[1],f[2])])
         logger.fatal(message)
         reported_errors.append(message)
-        raise AssertionError(message)
 
 
 # ###### Server Log File Scraping ############

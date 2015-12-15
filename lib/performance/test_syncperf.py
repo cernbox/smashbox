@@ -22,94 +22,44 @@ excludetime = config.get('%s_excludetime'%test_name,True)
 fullsyncdir = config.get('%s_fullsyncdir'%test_name,False)
 hashfiles = config.get('%s_hashfiles'%test_name,False)
 blocksize = config.get('%s_rptblocksize'%test_name,None)
+countfiles = config.get('%s_countfiles'%test_name,True)
 
 testsets = [
-#Typical sync - twice per day, every second day - all clients - packet sniffer on#
+        #Test sync#
         {
-          '%s_testdirstruct'%test_name:"0/1/1000",
-          '%s_rptblocksize'%test_name:None,
-          '%s_fullsyncdir'%test_name:False,
+          '%s_testdirstruct'%test_name:"0/1/%s"%1024, #1kB
+          '%s_countfiles'%test_name:True,
         },#0
+        ###########
+        #CS3 Scenario Sync#
         {
-          '%s_testdirstruct'%test_name:"0/1/5000000",
-          '%s_rptblocksize'%test_name:None,
-          '%s_fullsyncdir'%test_name:False,
+          '%s_testdirstruct'%test_name:"0/1/100000000", #100MB = 100MB
+          '%s_countfiles'%test_name:True,
         },#1
+        {
+          '%s_testdirstruct'%test_name:"0/10/10000000",#10x10MB = 100MB
+          '%s_countfiles'%test_name:True,
+        },#2
+        {
+          '%s_testdirstruct'%test_name:"10/100/10000",#1000x100kB = 100MB
+          '%s_countfiles'%test_name:True,
+        },#3
+        ###########
         {
           '%s_testdirstruct'%test_name:"0/1/500000000",
           '%s_rptblocksize'%test_name:None, # file contains only random bytes
           '%s_fullsyncdir'%test_name:False,
-        },#2
+        },#4
         {
           '%s_testdirstruct'%test_name:"0/1/500000000",
           '%s_rptblocksize'%test_name:1000*1000, # file contains repeated blocks of 1MB 
           '%s_fullsyncdir'%test_name:False,
-        },#3
-        {
-          '%s_testdirstruct'%test_name:"0/1/500000000",
-          '%s_rptblocksize'%test_name:4*1024*1024, # file contains repeated blocks of 4MB 
-          '%s_fullsyncdir'%test_name:False,
-        },#4
-        {
-          '%s_testdirstruct'%test_name:"0/1/1000",
-          '%s_fullsyncdir'%test_name:"10/100/10000",
-          '%s_rptblocksize'%test_name:None,
         },#5
         {
-          '%s_testdirstruct'%test_name:"0/1/5000000",
-          '%s_fullsyncdir'%test_name:"10/100/10000",
-          '%s_rptblocksize'%test_name:None,
-        },#6
-        {
           '%s_testdirstruct'%test_name:"0/1/500000000",
-          '%s_fullsyncdir'%test_name:"10/100/10000",
-          '%s_rptblocksize'%test_name:None,
-        },#7
-#############
-#Typical sync - twice per day, every second day - owncloud clients only - packet sniffer off#
-        {
-          '%s_testdirstruct'%test_name:"0/1/500000",
-          '%s_fullsyncdir'%test_name:"10/100/10000",
-          '%s_rptblocksize'%test_name:None,
-        },#8
-        {
-          '%s_testdirstruct'%test_name:"0/1/50000000",
-          '%s_fullsyncdir'%test_name:"10/100/10000",
-          '%s_rptblocksize'%test_name:None,
-        },#9
-#############
-#Stress sync - test many times per day - all clients - packet sniffer on#
-#every day, 4am, 8am, 12am, 3pm, 7pm, 12pm.
-        {
-          '%s_testdirstruct'%test_name:"1/100/100000",
-          '%s_rptblocksize'%test_name:None,
-          '%s_hashfiles'%test_name:True,
-        },#10
-        {
-          '%s_testdirstruct'%test_name:"10/100/100000",
-          '%s_rptblocksize'%test_name:None,
-          '%s_hashfiles'%test_name:True,
-        },#11
-        {
-          '%s_testdirstruct'%test_name:"1/5/10000000",
-          '%s_rptblocksize'%test_name:None,
-          '%s_hashfiles'%test_name:True,
-        },#12
-        {
-          '%s_testdirstruct'%test_name:"1/50/10000000",
-          '%s_rptblocksize'%test_name:None,
-          '%s_hashfiles'%test_name:True,
-        },#13
-        {
-          '%s_testdirstruct'%test_name:"1/5/100000000",
-          '%s_rptblocksize'%test_name:None,
-          '%s_hashfiles'%test_name:True,
-        },#14
-        {
-          '%s_testdirstruct'%test_name:"100/100/10",
-          '%s_rptblocksize'%test_name:None,
-          '%s_hashfiles'%test_name:True,
-        },#15
+          '%s_rptblocksize'%test_name:4*1024*1024, # file contains only random bytes
+          '%s_fullsyncdir'%test_name:False,
+        },#6
 #############
 ]
 
@@ -127,7 +77,7 @@ def worker0(step):
     nfiles = create_teststruct(test_dir)
     run_ocsync(d)
     k1,ncorrupt1 = check_workdir(d,test_dir,sync_dir_num)
-    error_check(k1-k0==nfiles,'Expecting to have %d files, have %d: see k1=%d k0=%d'%(nfiles,k0-k1,k1,k0))
+    error_check(k1-k0==nfiles,'Expecting to have %d files, have %d: see k1=%d k0=%d'%(nfiles,k1-k0,k1,k0))
     fatal_check((ncorrupt0+ncorrupt1)==0, 'Corrupted files (%s) found'%(ncorrupt0+ncorrupt1))
     logger.info('SUCCESS: %d files found',k1)
         
@@ -138,7 +88,7 @@ def worker1(step):
     step(2,'Preparation')
     d = make_workdir()
     test_dir,sync_dir_num = get_workdir(d)
-    nfiles = eval_teststruct(test_dir)
+    nfiles = eval_teststruct()
     
     step(3,'Pre-sync')
     run_ocsync(d,option=exclude_time)
@@ -200,7 +150,7 @@ def create_teststruct(test_dir):
                 nfiles+=1
     return nfiles
 
-def eval_teststruct(test_dir):
+def eval_teststruct():
     teststruct = testdirstruct.split('/')
     nfiles = 0
     error_check(len(teststruct)==3,'Improper teststruct format, expects dir_n/file_n/file_size')
@@ -209,7 +159,6 @@ def eval_teststruct(test_dir):
             nfiles+=1
     else:
         for i in range(int(teststruct[0])):
-            dir = os.path.join(test_dir,str(i)) 
             for j in range(int(teststruct[1])):
                 nfiles+=1
     return nfiles

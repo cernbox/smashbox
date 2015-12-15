@@ -114,6 +114,7 @@ class Reporter:
             if getattr(self.config, "remote")=="true":
                 self.remote_storage(result)
         except Exception,e:
+            print "%s"%e
             print "continue and save results localy"
             self.local_storage(result)         
     
@@ -156,44 +157,67 @@ class Reporter:
                     for j in range(0, len(sync_array)):
                         if packet_time >= sync_array[j][0] and packet_time <= sync_array[j][1]:
                             return True
-                return False    
+                return False 
+            k = False 
             for j in range(0, len(packet_trace)):
                 packet = packet_trace[j]
-                send_packet_tag = []
-                send_packet_tag.append("ip=%s"%packet["ip"])
-                send_packet_tag.append("incoming=%s"%packet["incoming"])
-                if in_sync_period(packet["time"]):
-                    send_packet_tag.append("sync_packet=true")
-                else:
-                    send_packet_tag.append("sync_packet=false")
-                
-                influxdb_client.write(("%s-pkt"%RUNID), send_packet_tag, packet["size"],str(packet["time"])) 
-            TIMEID = str(packet["time"])
-            
+                if packet["incoming"]!=None:
+                    send_packet_tag = [("runid=%s"%RUNID)]
+                    send_packet_tag.append("ip=%s"%packet["ip"])
+                    send_packet_tag.append("incoming=%s"%packet["incoming"])
+                    if in_sync_period(packet["time"]):
+                        send_packet_tag.append("syncid=%s"%TIMEID)
+                        send_packet_tag.append("sync_packet=true")
+                    else:
+                        send_packet_tag.append("sync_packet=false")
+                    pkt_timestamp = packet["time"]
+                    influxdb_client.write(("%s-pkt"%TEST_NAME), send_packet_tag, packet["size"],str(pkt_timestamp)) 
         def process_results():
             total_sync_time = 0
             sync_time_array = []
             for i in range(0, len(test_results)):
                 test_result = test_results[i]
-                err_tags = [("worker_name=%s"%test_result["worker"])]
+                err_tags = [("runid=%s"%RUNID),("worker_name=%s"%test_result["worker"])]
                 if test_result.has_key("errors"): 
                     import urllib
-                    err_tags.append("errors=%s"%urllib.quote(str(test_result["errors"])))
-                    error_flag = 1
+                    err_msg = str(test_result["errors"])
+                    err_tags.append("errors=%s"%urllib.quote(err_msg))
+                    if (err_msg.find("fatal") != -1):
+                        error_flag = -1
+                    else:
+                        error_flag = 1
                 else:
                     error_flag = 0
-                influxdb_client.write(("%s-err"%RUNID), err_tags, str(error_flag) ,TIMEID)
+                influxdb_client.write(("%s-err"%TEST_NAME), err_tags, str(error_flag) ,TIMEID)
                 
             if error_flag==0:    
                 for j in range(0, len(test_results)):
                     test_result = test_results[j]
                     if(test_result["sync_time"]!=0):
                         total_sync_time += test_result["sync_time"]
-                        influxdb_client.write(("%s-syn"%RUNID), [("worker_name=%s"%test_result["worker"])], test_result["sync_time"] ,TIMEID)     
+                        influxdb_client.write(("%s-syn"%TEST_NAME), [("runid=%s"%RUNID),("worker_name=%s"%test_result["worker"])], test_result["sync_time"] ,TIMEID)     
                 #total sync has to be calculated due to grouping of values at grafana, no option to calculate it in query 
                 if(total_sync_time!=0):
-                    influxdb_client.write(("%s-total-syn"%RUNID),[],total_sync_time,TIMEID)
-                    influxdb_client.write(("%s-total-exec"%RUNID),[],TOTAL_EXEC,TIMEID)
+                    influxdb_client.write(("%s-total-syn"%TEST_NAME),[("runid=%s"%RUNID)],total_sync_time,TIMEID)
+                    influxdb_client.write(("%s-total-exec"%TEST_NAME),[("runid=%s"%RUNID)],TOTAL_EXEC,TIMEID)
+                    
+            #send total amount of synced files
+            try:
+                count_files = getattr(self.config, "%s_%s"%(TEST_NAME,"countfiles"))
+                testdirstruct = getattr(self.config, "%s_%s"%(TEST_NAME,"testdirstruct"))
+                if(count_files==True):
+                    if error_flag==0:
+                        total_files = eval_teststruct(testdirstruct)
+                    else:
+                        s = str(test_results)
+                        start = s.find('k1=') + 3
+                        end = s.find(' k0', start)
+                        total_files = int(s[start:end])
+                    influxdb_client.write(("%s-total-files"%TEST_NAME),[("runid=%s"%RUNID)],total_files,TIMEID)
+            except Exception,e: 
+                print e
+                pass             
+            
             try:
                 if ENGINE=="owncloud" and getattr(self.config, "backuplog")=="true":
                     backup_test_detailed_log(self.config.smashdir, TEST_NAME,TIMEID)
@@ -203,14 +227,15 @@ class Reporter:
         influxdb_client = InfluxDBClient(self.config)    
         SERVER_NAME = self.config.oc_server
         TEST_NAME=self.test_name
-        RUNID = result["runid"]+"-"+TEST_NAME
+        RUNID = result["runid"]
         result_raw = result[SERVER_NAME][TEST_NAME][0] #function remote_storage is called always after the test, so it is only result avaiable at that iteration
         
         test_results = result_raw.pop("results")
         TIMEID = str(result_raw["timeid"])
         TOTAL_EXEC = result_raw["total_exec_time"]
         ENGINE = result_raw["engine"] 
-        influxdb_client.initialize_keys(ENGINE, SERVER_NAME, result_raw["scenario"])
+        SCENARIO = result_raw["scenario"]
+        influxdb_client.initialize_keys(ENGINE, SERVER_NAME, SCENARIO)
         
         if result_raw.has_key("packet_trace"):
             packet_trace = result_raw["packet_trace"]
@@ -333,7 +358,17 @@ def write_to_json_file(data, file_path):
     mkdir_p(file_path)
     with io.open(file_path, 'w', encoding='utf-8') as file:
         file.write(unicode(json.dumps(data, ensure_ascii=False, indent=4)))
-        
+def eval_teststruct(testdirstruct):
+    teststruct = testdirstruct.split('/')
+    nfiles = 0
+    if int(teststruct[0])<1:
+        for i in range(int(teststruct[1])):
+            nfiles+=1
+    else:
+        for i in range(int(teststruct[0])):
+            for j in range(int(teststruct[1])):
+                nfiles+=1
+    return nfiles        
 def timedelta_total_seconds(timedelta):
     return (
         timedelta.microseconds + 0.0 +
