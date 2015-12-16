@@ -359,9 +359,11 @@ def start_seafile(fname, smashdir,directory,config):
         subprocess.call(["cp", "-R", directory, parentdir], cwd=home)
         subprocess.call(["mkdir", workerdir], cwd=home) 
         subprocess.call(["mkdir", os.path.abspath(smashdir+"/seafile-c-"+fname)], cwd=home) 
-        while ((not os.path.exists(parentdir+"seafile-data")) or (not os.path.exists(parentdir+"seafile"))):
-            subprocess.call(["./seaf-cli", "init", "-c",workerconfdir,"-d", parentdir], cwd=parentdir)
+        subprocess.call(["./seaf-cli", "init", "-c",workerconfdir,"-d", parentdir], cwd=parentdir)
         subprocess.call(["./seaf-cli", "start", "-c",workerconfdir], cwd=parentdir)
+        if ((not os.path.exists(parentdir+"/seafile-data")) or (not os.path.exists(parentdir+"/seafile"))):
+            import time
+            time.sleep(5)
         cmd_arr = ["./seaf-cli", "sync", "-c",workerconfdir, "-l",config.seafile_lib,"-s",config.seafile_server,"-u",config.seafile_user,"-p",config.seafile_password,"-d",workerdir]
         subprocess.call(cmd_arr, cwd=parentdir)
     else:
