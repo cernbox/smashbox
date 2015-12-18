@@ -8,7 +8,7 @@ class SmashboxCLI:
         self.SMASHBOX_CMD_BASIC = ["bin/smash","--keep-going"]
         for i in range(0, len(config)):
             self.SMASHBOX_CMD_BASIC += ["-o",config[i]]
-        if testset_config.has_key("timeout"):
+        if full_config.has_key("timeout"):
             self.timeout_time = full_config["timeout"]
     def start(self,sync_engine,testset,test_name,runid): 
         parentdir = os.path.dirname(os.path.realpath(__file__))    
