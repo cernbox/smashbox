@@ -3,10 +3,13 @@ import sys,os,socket
 import subprocess,time,signal
 from multiprocessing import Process
 class SmashboxCLI:
-    def __init__(self,config):
+    def __init__(self,full_config):
+        config = full_config["config"]
         self.SMASHBOX_CMD_BASIC = ["bin/smash","--keep-going"]
         for i in range(0, len(config)):
             self.SMASHBOX_CMD_BASIC += ["-o",config[i]]
+        if testset_config.has_key("timeout"):
+            self.timeout_time = full_config["timeout"]
     def start(self,sync_engine,testset,test_name,runid): 
         parentdir = os.path.dirname(os.path.realpath(__file__))    
         SMASHBOX_CMD = self.SMASHBOX_CMD_BASIC[:]
@@ -19,7 +22,7 @@ class SmashboxCLI:
         SMASHBOX_CMD += ["-o","runid=%s"%runid,"lib/%s"%test_name] 
         process = subprocess.Popen(SMASHBOX_CMD,stdout=subprocess.PIPE, stderr=subprocess.STDOUT, preexec_fn=os.setsid, cwd=parentdir)
         pid = str(os.getpgid(process.pid))
-        p = Process(target=timeout, args=(pid,))
+        p = Process(target=timeout, args=(pid,self.timeout_time,))
         p.start()
         while True:
             line = process.stdout.readline()
@@ -29,12 +32,11 @@ class SmashboxCLI:
                 p.join()
                 break         
 
-def timeout(pid):
+def timeout(pid,timeout_time):
     print pid
-    TIMEOUT = 7200
     start = time.time()
     while True:
-        if int(time.time() - start) > TIMEOUT:
+        if int(time.time() - start) > timeout_time:
             kill_if_not_stopped("ccnet")
             kill_if_not_stopped("dropbox")
             stop_execution(pid)
@@ -88,7 +90,7 @@ def check_smashbox_basic_conf():
         subprocess.call(["cp",'etc/smashbox.conf.template','etc/smashbox.conf'],cwd=os.path.dirname(os.path.realpath(__file__)))
 
 def run(testset_config): 
-    client = SmashboxCLI(testset_config["config"])
+    client = SmashboxCLI(testset_config)
     sync_engines = testset_config["sync_engines"]
     tests = testset_config["tests"]
     for k in range(0, int(testset_config["loop"])):
