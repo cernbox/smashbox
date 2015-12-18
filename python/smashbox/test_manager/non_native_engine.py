@@ -365,7 +365,6 @@ def start_seafile(fname, smashdir,directory,config):
             subprocess.call(["./seaf-cli", "stop", "-c",workerconfdir], cwd=parentdir)
             subprocess.call(["./seaf-cli", "start", "-c",workerconfdir], cwd=parentdir)
         subprocess.call(["./seaf-cli", "config", "-c",workerconfdir,"-k","disable_verify_certificate","-v","true"], cwd=parentdir)
-        subprocess.call(["./seaf-cli", "config", "-c",workerconfdir,"-k","enable_http_sync","-v","true"], cwd=parentdir)
         subprocess.call(["./seaf-cli", "stop", "-c",workerconfdir], cwd=parentdir)
         subprocess.call(["./seaf-cli", "start", "-c",workerconfdir], cwd=parentdir)
         cmd_arr = ["./seaf-cli", "sync", "-c",workerconfdir, "-l",config.seafile_lib,"-s",config.seafile_server,"-u",config.seafile_user,"-p",config.seafile_password,"-d",workerdir]
