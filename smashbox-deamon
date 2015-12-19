@@ -138,7 +138,6 @@ def get_lock():
         
 if __name__ == '__main__':
     """    """
-    global order_reboot
     arguments = sys.argv
     if (get_lock()==1):
         main(arguments)

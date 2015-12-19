@@ -425,6 +425,7 @@ def setup_seafile(smashdir, smash_workers,config):
         start_seafile(fname, smashdir,directory,config) 
         seafile_clean_directory(smashdir, fname)
         start_seafile(fname, smashdir,directory,config) 
+        seafile_clean_directory(smashdir, fname)
     return worker_name_array
     
 def seafile_clean_directory(smashdir, fname): 
