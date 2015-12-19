@@ -90,11 +90,10 @@ def prepare_workdir(d):
 
 def get_workdir(d):
     wdir = os.path.join(d,"0")
-    remove_tree(wdir)  
-    mkdir(wdir)
     return (wdir,1)
 
 def create_teststruct(test_dir):
+    mkdir(test_dir)
     for x in files:
         for n in range(x[0]):
             create_test_file(test_dir,"%s%s%s"%(n,"test",x[1]),int(x[1]),bs=blocksize)
