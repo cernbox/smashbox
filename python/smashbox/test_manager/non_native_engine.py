@@ -422,6 +422,7 @@ def setup_seafile(smashdir, smash_workers,config):
         if fname is None:
             fname = f.__name__ 
         worker_name_array.append(fname) 
+        start_seafile(fname, smashdir,directory,config) 
         seafile_clean_directory(smashdir, fname)
         start_seafile(fname, smashdir,directory,config) 
     return worker_name_array
