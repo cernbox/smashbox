@@ -411,10 +411,10 @@ def get_running_seafile(fname, smashdir):
 def setup_seafile(smashdir, smash_workers,config):
     import time
     directory = install_seafile(smashdir,config.version)
-    seafile_clean_directory(smashdir, "boss")
     start_seafile("boss", smashdir,directory,config)
     seafile_clean_directory(smashdir, "boss")
     start_seafile("boss", smashdir,directory,config)
+    seafile_clean_directory(smashdir, "boss")
     worker_name_array = []   
     for i,f_n in enumerate(smash_workers):
         f = f_n[0]
@@ -430,7 +430,7 @@ def setup_seafile(smashdir, smash_workers,config):
     
 def seafile_clean_directory(smashdir, fname): 
     workerdir = os.path.abspath(smashdir+"/seafile-"+fname)
-    cmd = ('rm -rf '+(workerdir+"/*"))
+    cmd = ('rm -rf '+os.path.join(workerdir,"*"))
     process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
     process.wait()
 """ common functions """

@@ -123,8 +123,6 @@ def prepare_workdir(d):
 
 def get_workdir(d):
     wdir = os.path.join(d,"0")
-    remove_tree(wdir)  
-    mkdir(wdir)
     dir_num = 1
     if fullsyncdir!=False:
         conf = fullsyncdir.split('/') 
@@ -138,6 +136,7 @@ def create_teststruct(test_dir):
     nfiles = 0
     error_check(len(teststruct)==3,'Improper teststruct format, expects dir_n/file_n/file_size')
     if int(teststruct[0])<1:
+        mkdir(test_dir)
         for i in range(int(teststruct[1])):
             create_test_file(test_dir,"%s%s%s"%(0,"test",i),int(teststruct[2]),bs=blocksize)
             nfiles+=1
