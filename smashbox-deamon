@@ -22,7 +22,7 @@ class SmashboxCLI:
         SMASHBOX_CMD += ["-o","runid=%s"%runid,"lib/%s"%test_name] 
         process = subprocess.Popen(SMASHBOX_CMD,stdout=subprocess.PIPE, stderr=subprocess.STDOUT, preexec_fn=os.setsid, cwd=parentdir)
         pid = str(os.getpgid(process.pid))
-        p = Process(target=timeout, args=(pid,self.timeout_time,))
+        p = Process(target=timeout, args=(pid,self.timeout_time,sync_engine,))
         p.start()
         while True:
             line = process.stdout.readline()
@@ -32,13 +32,21 @@ class SmashboxCLI:
                 p.join()
                 break         
 
-def timeout(pid,timeout_time):
+def reinit_seafile():
+    print "reinitialize seafile after corruption of fs"
+    home = os.path.expanduser("~")
+    subprocess.call("rm -rf %s"%os.path.join(home,"seafile-cli*"), shell=True)
+    subprocess.call("rm -rf %s"%os.path.join(home,"smashdir","seafile-*"), shell=True)
+    
+def timeout(pid,timeout_time,sync_engine):
     print pid
     start = time.time()
     while True:
         if int(time.time() - start) > timeout_time:
             kill_if_not_stopped("ccnet")
             kill_if_not_stopped("dropbox")
+            if str(sync_engine).find("seafile")!=-1:
+                reinit_seafile()
             stop_execution(pid)
             break
         
@@ -87,7 +95,7 @@ def get_config(path):
         
 def check_smashbox_basic_conf():
     if not (os.path.exists('etc/smashbox.conf')):
-        subprocess.call(["cp",'etc/smashbox.conf.template','etc/smashbox.conf'],cwd=os.path.dirname(os.path.realpath(__file__)))
+        subprocess.call(["\cp",'etc/smashbox.conf.template','etc/smashbox.conf'],cwd=os.path.dirname(os.path.realpath(__file__)))
 
 def run(testset_config): 
     client = SmashboxCLI(testset_config)
