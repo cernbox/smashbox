@@ -1,0 +1,132 @@
+#!/usr/bin/python
+import sys,os, subprocess
+import matplotlib.pyplot as plt
+from influxdb import InfluxDBClient
+import numpy as np
+from gi.overrides.keysyms import upleftcorner
+
+def get_config(path):
+    import io    
+    path = os.path.abspath(path)    
+    if (os.path.exists(path)):
+        with io.open(path,'r') as file:
+            data = eval(file.read())
+        return data 
+    else:
+        print "path does not exists %s"%path
+        sys.exit()
+        
+
+def get_low_high(avg,values):        
+    low, high = [], []
+    for value in values:
+        if value>avg:
+            high.append(value)
+        else:
+            low.append(value) 
+    return low,high       
+
+def compare_monit_sync_graph(results):
+    fig = plt.figure() 
+    ax = fig.add_subplot(111)
+    xTickMarks = []
+    avg_total = []
+    error_total_low = []
+    error_total_high = []
+    avg_upl = []
+    error_upl_low = []
+    error_upl_high = []
+    avg_dwl = []
+    error_dwl_low = []
+    error_dwl_high = []
+    for key, objs in results.items() :
+        values = []
+        for obj in objs[0]:
+            values.append(obj["value"])
+        values = np.array(values)
+        avg = np.mean(values)
+        low, high = get_low_high(avg,values)     
+        avg_total.append(avg)   
+        error_total_low.append(np.std(low))  
+        error_total_high.append(np.std(high))  
+        
+        values = []
+        for obj in objs[1]:
+            values.append(obj["value"])
+        values = np.array(values)
+        avg = np.mean(values)
+        low, high = get_low_high(avg,values)     
+        avg_upl.append(avg)   
+        error_upl_low.append(np.std(low))  
+        error_upl_high.append(np.std(high))  
+        
+        values = []
+        for obj in objs[2]:
+            values.append(obj["value"])
+        values = np.array(values)
+        avg = np.mean(values)
+        get_low_high(avg,values)
+        low, high = get_low_high(avg,values)      
+        avg_dwl.append(avg)   
+        error_dwl_low.append(np.std(low))  
+        error_dwl_high.append(np.std(high))  
+        
+        xTickMarks.append(key)
+    ## necessary variables
+    ind = np.arange(len(xTickMarks))                # the x locations for the groups
+    width = 0.3                      # the width of the bars
+    # axes and labels
+    total = ax.bar(ind, avg_total, width, color='b',
+                yerr=[error_total_low,error_total_high],
+                error_kw=dict(capsize=5, elinewidth=2,ecolor='black'))
+    upload = ax.bar(ind+width, avg_upl, width, color='g',
+                yerr=[error_upl_low,error_upl_high],
+                error_kw=dict(capsize=5, elinewidth=2,ecolor='black'))
+    download = ax.bar(ind+2*width, avg_dwl, width, color='y',
+                yerr=[error_dwl_low,error_dwl_high],
+                error_kw=dict(capsize=5, elinewidth=2,ecolor='black'))
+    ax.set_xlim(-0.1,len(ind))
+    ax.set_ylim(bottom=0)
+    ax.set_ylabel('Synchronisation Time (s)')     
+    ax.set_xticks(ind+0.45)
+    xtickNames = ax.set_xticklabels(xTickMarks)
+    plt.setp(xtickNames, rotation=45, fontsize=10)
+    plt.title('Monitoring - distributions of synchronisation times')
+    ## add a legend
+    ax.legend((total[0], upload[0], download[0]), ('Total', 'Upload', 'Download'))
+    plt.tight_layout()
+    plt.show()
+
+def run(testset_config): 
+    config = testset_config["config"]
+    client = InfluxDBClient(config["remote_storage_server"], 8086, config["remote_storage_user"], config["remote_storage_password"], config["remote_database"])
+    
+    tests = testset_config["tests"] 
+    for test in tests:
+        if test["test_name"]=="monit":
+            for type in test["graph"]:
+                if type["type"]=="compare-sync":
+                    points = {}
+                    for server in type["server"]:
+                        tot = client.query("SELECT value FROM \"%s-%s\" WHERE runid='%s' and server_name='%s'"%(test["test_name"],"total-syn",type["runid"],server))
+                        upl = client.query("SELECT value FROM \"%s-%s\" WHERE runid='%s' and server_name='%s' and worker_name='%s'"%(test["test_name"],"syn",type["runid"],server,"worker0"))
+                        dwl = client.query("SELECT value FROM \"%s-%s\" WHERE runid='%s' and server_name='%s' and worker_name='%s'"%(test["test_name"],"syn",type["runid"],server,"worker1"))
+                        points[server]=[list(tot.get_points()),list(upl.get_points()),list(dwl.get_points())]
+                    compare_monit_sync_graph(points)
+                    
+def main(arguments):
+    analyse_path = os.path.join(os.path.dirname(__file__),'analyse.config')
+    if len(arguments)==1 and os.path.exists(analyse_path):
+        arguments.append(analyse_path)
+    for arg_i in range(1, len(arguments)):
+        testset_config = get_config(arguments[arg_i])
+        run(testset_config)            
+       
+if __name__ == '__main__':
+    """    """
+    arguments = sys.argv
+    main(arguments)
+
+
+
+
