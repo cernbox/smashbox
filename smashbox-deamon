@@ -35,7 +35,7 @@ class SmashboxCLI:
 def reinit_seafile():
     print "reinitialize seafile after corruption of fs"
     home = os.path.expanduser("~")
-    subprocess.call("find %s -type d -name "sea*" -exec rm -rf {} \;"%home, shell=True)
+    subprocess.call("find %s -type d -name 'sea*' -exec rm -rf {} \;"%home, shell=True)
     
 def timeout(pid,timeout_time,sync_engine):
     print pid
