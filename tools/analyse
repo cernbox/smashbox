@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from influxdb import InfluxDBClient
 import numpy as np
 from gi.overrides.keysyms import upleftcorner
+import matplotlib.mlab as mlab
 
 def get_config(path):
     import io    
@@ -17,16 +18,95 @@ def get_config(path):
         sys.exit()
         
 
-def get_low_high(avg,values):        
-    low, high = [], []
-    for value in values:
-        if value>avg:
-            high.append(value)
-        else:
-            low.append(value) 
-    return low,high       
+def get_low_high(avg,values):
+    standard = True
+    if standard==False:        
+        low, high = [], []
+        for value in values:
+            if value>avg:
+                high.append(value)
+            else:
+                low.append(value) 
+        return np.std(low),np.std(high)  
+    else:
+        return np.std(values),np.std(values) 
+             
+def get_hour_from_timestamp(time):
+    start = time.find('T') + 1
+    end = time.find(':', start)
+    return int(time[start:end])
 
-def compare_monit_sync_graph(results):
+def compare_monit_histsync_graph(results,runid):
+    fig = plt.figure() 
+    ax = fig.add_subplot(111)
+    avg_total = []
+    values = []
+    for key, objs in results.items() :
+        for obj in objs:
+            values.append(obj["value"])
+        size = len(values)  
+        values = np.array(values) 
+        
+        xTickMarks.append(key)
+        
+    ind = np.arange(len(xTickMarks))                # the x locations for the groups
+    width = 1                      # the width of the bars
+    
+    # the histogram of the data
+    ax.hist(values, bins=100, normed=True, cumulative=True, facecolor='green', histtype='step')
+    
+    ax.set_xlabel('Synchronisation time [s]')
+    ax.set_ylabel('Probability')
+    plt.title('Histogram %s'%key)
+    plt.grid(True)
+
+    plt.tight_layout()
+    plt.draw()
+    
+def compare_monit_time_graph(results,runid):
+    fig = plt.figure() 
+    ax = fig.add_subplot(111)
+    xTickMarks = range(0,24)
+    avg_total = []
+    error_total_low = []
+    error_total_high = []
+    values = []
+    for i in range(0,24):
+        avg_total.append([]) 
+        error_total_low.append([]) 
+        error_total_high.append([]) 
+        values.append([])
+        
+    for key, objs in results.items() :
+        for obj in objs:
+            hour = get_hour_from_timestamp(obj["time"])
+            values[hour].append(obj["value"])
+    
+    for i in range(0,24): 
+        avg = np.mean(np.array(values[i])) 
+        low, high = get_low_high(avg,values[i])   
+        avg_total[i].append(avg)   
+        error_total_low[i].append(low)
+        error_total_high[i].append(high)
+    ## necessary variables
+    ind = np.arange(len(xTickMarks))                # the x locations for the groups
+    width = 1                      # the width of the bars
+    # axes and labels
+    for i in range(0,24):
+        ax.bar(ind[i], avg_total[i], width, color='b',
+                yerr=[error_total_low[i],error_total_high[i]],
+                error_kw=dict(capsize=5, elinewidth=2,ecolor='black'))
+    ax.set_xlim(0,len(ind))
+    ax.set_ylim(bottom=0)
+    ax.set_ylabel('Synchronisation Time (s)')     
+    ax.set_xticks(ind)
+    xtickNames = ax.set_xticklabels(xTickMarks)
+    plt.setp(xtickNames, rotation=45, fontsize=10)
+    plt.title('Monitoring - %s\nDistributions of synchronisation times during the day\nMachine: %s'%(key,runid))
+    plt.tight_layout()
+    plt.draw()
+    
+def compare_monit_sync_graph(results,runid):
     fig = plt.figure() 
     ax = fig.add_subplot(111)
     xTickMarks = []
@@ -47,8 +127,8 @@ def compare_monit_sync_graph(results):
         avg = np.mean(values)
         low, high = get_low_high(avg,values)     
         avg_total.append(avg)   
-        error_total_low.append(np.std(low))  
-        error_total_high.append(np.std(high))  
+        error_total_low.append(low)  
+        error_total_high.append(high) 
         
         values = []
         for obj in objs[1]:
@@ -57,8 +137,8 @@ def compare_monit_sync_graph(results):
         avg = np.mean(values)
         low, high = get_low_high(avg,values)     
         avg_upl.append(avg)   
-        error_upl_low.append(np.std(low))  
-        error_upl_high.append(np.std(high))  
+        error_upl_low.append(low)
+        error_upl_high.append(high) 
         
         values = []
         for obj in objs[2]:
@@ -68,8 +148,8 @@ def compare_monit_sync_graph(results):
         get_low_high(avg,values)
         low, high = get_low_high(avg,values)      
         avg_dwl.append(avg)   
-        error_dwl_low.append(np.std(low))  
-        error_dwl_high.append(np.std(high))  
+        error_dwl_low.append(low)
+        error_dwl_high.append(high) 
         
         xTickMarks.append(key)
     ## necessary variables
@@ -91,11 +171,11 @@ def compare_monit_sync_graph(results):
     ax.set_xticks(ind+0.45)
     xtickNames = ax.set_xticklabels(xTickMarks)
     plt.setp(xtickNames, rotation=45, fontsize=10)
-    plt.title('Monitoring - distributions of synchronisation times')
+    plt.title('Monitoring - distributions of synchronisation times\nMachine: %s'%(runid))
     ## add a legend
     ax.legend((total[0], upload[0], download[0]), ('Total', 'Upload', 'Download'))
     plt.tight_layout()
-    plt.show()
+    plt.draw()
 
 def run(testset_config): 
     config = testset_config["config"]
@@ -105,15 +185,27 @@ def run(testset_config):
     for test in tests:
         if test["test_name"]=="monit":
             for type in test["graph"]:
-                if type["type"]=="compare-sync":
+                if type["show"]==True and type["type"]=="compare-sync":
                     points = {}
                     for server in type["server"]:
                         tot = client.query("SELECT value FROM \"%s-%s\" WHERE runid='%s' and server_name='%s'"%(test["test_name"],"total-syn",type["runid"],server))
                         upl = client.query("SELECT value FROM \"%s-%s\" WHERE runid='%s' and server_name='%s' and worker_name='%s'"%(test["test_name"],"syn",type["runid"],server,"worker0"))
                         dwl = client.query("SELECT value FROM \"%s-%s\" WHERE runid='%s' and server_name='%s' and worker_name='%s'"%(test["test_name"],"syn",type["runid"],server,"worker1"))
                         points[server]=[list(tot.get_points()),list(upl.get_points()),list(dwl.get_points())]
-                    compare_monit_sync_graph(points)
-                    
+                    compare_monit_sync_graph(points,type["runid"])
+                if type["show"]==True and type["type"]=="compare-time":
+                    points = {}
+                    server = type["server"]
+                    tot = client.query("SELECT value FROM \"%s-%s\" WHERE runid='%s' and server_name='%s'"%(test["test_name"],"total-syn",type["runid"],server))
+                    points[server]=list(tot.get_points())
+                    compare_monit_time_graph(points,type["runid"])
+                if type["show"]==True and type["type"]=="histogram-sync":
+                    points = {}
+                    server = type["server"]
+                    tot = client.query("SELECT value FROM \"%s-%s\" WHERE runid='%s' and server_name='%s'"%(test["test_name"],"total-syn",type["runid"],server))
+                    points[server]=list(tot.get_points())
+                    compare_monit_histsync_graph(points,type["runid"])
+    plt.show()                
 def main(arguments):
     analyse_path = os.path.join(os.path.dirname(__file__),'analyse.config')
     if len(arguments)==1 and os.path.exists(analyse_path):
