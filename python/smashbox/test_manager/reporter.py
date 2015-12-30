@@ -148,30 +148,65 @@ class Reporter:
             self.shared_result[i]["errors"] = reported_errors
     
     def remote_storage(self,result):
-        
+        import math
+        import numpy as np
         def process_packets():
-            
             def in_sync_period(packet_time):
+                sync_flag = False
+                time_diff = 0
+                sync_min = 0
+                sync_id = 0
                 for i in range(0, len(test_results)):
                     sync_array = test_results[i]["sync_time_intervals"]
                     for j in range(0, len(sync_array)):
                         if packet_time >= sync_array[j][0] and packet_time <= sync_array[j][1]:
-                            return True
-                return False 
-            k = False 
+                            sync_flag = True
+                            time_diff = ((packet_time - sync_array[j][0])/1000000.0)
+                            sync_id = i
+                return sync_flag,time_diff,sync_id
+            def eval_incoming(incoming): 
+                if incoming==True:
+                    return "dwl"
+                else:
+                    return "upl"
+                       
+            sync_instance = {}
+            send_packet_tag = [("runid=%s"%RUNID),("syncid=%s"%TIMEID)]
+            
             for j in range(0, len(packet_trace)):
                 packet = packet_trace[j]
                 if packet["incoming"]!=None:
-                    send_packet_tag = [("runid=%s"%RUNID)]
-                    send_packet_tag.append("ip=%s"%packet["ip"])
-                    send_packet_tag.append("incoming=%s"%packet["incoming"])
-                    if in_sync_period(packet["time"]):
-                        send_packet_tag.append("syncid=%s"%TIMEID)
-                        send_packet_tag.append("sync_packet=true")
-                    else:
-                        send_packet_tag.append("sync_packet=false")
                     pkt_timestamp = packet["time"]
-                    influxdb_client.write(("%s-pkt"%TEST_NAME), send_packet_tag, packet["size"],str(pkt_timestamp)) 
+                    size = packet["size"]
+                    sync_pkt,time_diff,sync_id = in_sync_period(packet["time"])
+                    if sync_pkt==True: 
+                        sync_label = "%s-%s"%(sync_id,eval_incoming(packet["incoming"]))
+                        if sync_instance.has_key(sync_label):
+                            sync_instance[sync_label].append([size,time_diff,pkt_timestamp])
+                        else:
+                            sync_instance[sync_label] = [[size,time_diff,pkt_timestamp]]
+            
+            for sync_id, objs in sync_instance.items():
+                objs_len = len(objs)
+                k_save = 0
+                obj_size_save=[]
+                for k in range(0, objs_len): 
+                    obj = objs[k]
+                    obj_size_save.append(int(obj[0]))  
+                    save_flag = False  
+                    if k==0:
+                        diff_zero = math.floor(obj[1])
+                    elif diff_zero!=math.floor(obj[1]):
+                        save_flag = True
+                        diff_zero = math.floor(obj[1])
+                        
+                    if save_flag:
+                        influxdb_client.write(("%s-%s"%(TEST_NAME,sync_id)), send_packet_tag, np.mean(obj_size_save[k_save:k]),str(objs[k-1][2]))          
+                        k_save = k
+                    if k == objs_len-1:
+                        influxdb_client.write(("%s-%s"%(TEST_NAME,sync_id)), send_packet_tag, np.mean(obj_size_save[k_save:k+1]),str(objs[k][2])) 
+                        k_save = k   
+                        
         def process_results():
             total_sync_time = 0
             sync_time_array = []

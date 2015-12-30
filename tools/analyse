@@ -41,28 +41,76 @@ def compare_monit_histsync_graph(results,runid):
     ax = fig.add_subplot(111)
     avg_total = []
     values = []
+    xTickMarks = []
+    xTickGraph = []
+    global_max = []
     for key, objs in results.items() :
+        tmp_values = []
         for obj in objs:
-            values.append(obj["value"])
-        size = len(values)  
-        values = np.array(values) 
+            tmp_values.append(obj["value"])
+        size = len(tmp_values)  
+        tmp_values = np.array(tmp_values) 
+        global_max.append(np.max(tmp_values))
+        values.append(tmp_values)
         
         xTickMarks.append(key)
-        
+    
+    global_max= (np.max(global_max))   
+    ax.set_xlim(left=0)
+    ax.set_xlim(right=global_max)
     ind = np.arange(len(xTickMarks))                # the x locations for the groups
     width = 1                      # the width of the bars
     
     # the histogram of the data
-    ax.hist(values, bins=100, normed=True, cumulative=True, facecolor='green', histtype='step')
+    for value in values:
+        n, bins, patches = ax.hist(values, bins=100, normed=True, histtype='step', range=(0,global_max))
+        xTickGraph.append(patches[0])
     
     ax.set_xlabel('Synchronisation time [s]')
     ax.set_ylabel('Probability')
-    plt.title('Histogram %s'%key)
+    ax.legend(xTickGraph,xTickMarks)
+    plt.title('Monitoring - Histogram\nMachine: %s'%(runid))
     plt.grid(True)
-
     plt.tight_layout()
     plt.draw()
     
+def compare_monit_cm_histsync_graph(results,runid):
+    fig = plt.figure() 
+    ax = fig.add_subplot(111)
+    avg_total = []
+    values = []
+    xTickMarks = []
+    xTickGraph = []
+    global_max = []
+    for key, objs in results.items() :
+        tmp_values = []
+        for obj in objs:
+            tmp_values.append(obj["value"])
+        size = len(tmp_values)  
+        tmp_values = np.array(tmp_values) 
+        global_max.append(np.max(tmp_values))
+        values.append(tmp_values)
+        
+        xTickMarks.append(key)
+    
+    global_max= (np.max(global_max))   
+    ax.set_xlim(left=0)
+    ax.set_xlim(right=global_max)
+    ind = np.arange(len(xTickMarks))                # the x locations for the groups
+    width = 1                      # the width of the bars
+    
+    # the histogram of the data
+    for value in values:
+        n, bins, patches = ax.hist(value, bins=100, normed=True, cumulative=True, histtype='step', range=(0,global_max))
+        xTickGraph.append(patches[0])
+    
+    ax.set_xlabel('Synchronisation time [s]')
+    ax.set_ylabel('Probability')
+    ax.legend(xTickGraph,xTickMarks)
+    plt.title('Monitoring - Histogram\nMachine: %s'%(runid))
+    plt.grid(True)
+    plt.tight_layout()
+    plt.draw()    
 def compare_monit_time_graph(results,runid):
     fig = plt.figure() 
     ax = fig.add_subplot(111)
@@ -199,6 +247,12 @@ def run(testset_config):
                     tot = client.query("SELECT value FROM \"%s-%s\" WHERE runid='%s' and server_name='%s'"%(test["test_name"],"total-syn",type["runid"],server))
                     points[server]=list(tot.get_points())
                     compare_monit_time_graph(points,type["runid"])
+                if type["show"]==True and type["type"]=="cm-histogram-sync":
+                    points = {}
+                    for server in type["server"]:
+                        tot = client.query("SELECT value FROM \"%s-%s\" WHERE runid='%s' and server_name='%s'"%(test["test_name"],"total-syn",type["runid"],server))
+                        points[server]=list(tot.get_points())
+                    compare_monit_cm_histsync_graph(points,type["runid"])
                 if type["show"]==True and type["type"]=="histogram-sync":
                     points = {}
                     server = type["server"]
@@ -209,6 +263,7 @@ def run(testset_config):
 def main(arguments):
     analyse_path = os.path.join(os.path.dirname(__file__),'analyse.config')
     if len(arguments)==1 and os.path.exists(analyse_path):
+        print "takes %s config path"%analyse_path
         arguments.append(analyse_path)
     for arg_i in range(1, len(arguments)):
         testset_config = get_config(arguments[arg_i])

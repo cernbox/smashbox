@@ -1,0 +1,130 @@
+#!/usr/bin/python
+import sys,os, subprocess
+import matplotlib.pyplot as plt
+from influxdb import InfluxDBClient
+import numpy as np
+from gi.overrides.keysyms import upleftcorner
+import matplotlib.mlab as mlab
+from pyx.graph.data import points
+import datetime
+import bz2
+
+def get_config(path):
+    import io    
+    path = os.path.abspath(path)    
+    if (os.path.exists(path)):
+        with io.open(path,'r') as file:
+            data = eval(file.read())
+        return data 
+    else:
+        print "path does not exists %s"%path
+        sys.exit()
+        
+def compress_to_file(data, file_name):
+    import io
+    home = os.path.join(os.path.expanduser("~"),"smashbox-backup")
+    if not(os.path.exists(home)):
+        subprocess.call("mkdir -p %s"%home, shell=True)
+    file_path = "%s%s"%(os.path.join(home,file_name),".bz2")
+    output = bz2.BZ2File(file_path, 'wb')
+    try:
+        output.write(data)
+    finally:
+        output.close()
+        return file_path
+        
+def get_data_from_bz2(file_path):
+    import json
+    import os
+    if(os.path.exists(file_path)):
+        input_file = bz2.BZ2File(file_path, 'rb')
+        try:
+            data = input_file.read()
+        finally:
+            input_file.close() 
+            return bz2.decompress(data)
+
+def pull(config):
+    client = InfluxDBClient(config["remote_storage_server"], 8086, config["remote_storage_user"], config["remote_storage_password"], config["remote_database"])
+    
+    q = "SHOW MEASUREMENTS;"
+    series_raw = list((client.query(q)).get_points())
+    series = []
+    for serie in series_raw:
+        series.append(serie["name"])
+    print "[PULL] Got list of series"
+    result_dict = {}
+    now = (datetime.datetime.now()).strftime('%s%f')
+    for serie in series:
+        q = "SELECT * FROM \"%s\" WHERE time <= %su;"%(serie,now)
+        result_dict[serie] = list((client.query(q)).get_points())
+    print "[PULL] Got backup of series"
+    #print str(result_dict)
+    strdict = str(result_dict)
+    file_name = datetime.datetime.fromtimestamp(float(now)/ 1000000.0).isoformat()
+    file_path = compress_to_file(strdict, file_name)
+    print "[PULL] Finished compression"
+    print '[PULL] File in      :',file_path
+    
+def push(config):
+    try:
+        client = InfluxDBClient(config["remote_storage_server"], 8086, config["remote_storage_user"], config["remote_storage_password"], config["remote_database"])
+        file_path = config["bz2_path"]  
+        if not os.path.exists(file_path):
+            raise Exception
+        data = eval(get_data_from_bz2(file_path))
+        if not data:
+            raise Exception
+        measurements = []
+        for key, objs in data.items() :
+            for obj in objs:
+                tags = {}
+                for obj_key, obj_value in obj.items():
+                    if obj_key=="value":
+                        value = float(obj_value)
+                    elif obj_key=="time":
+                        time = str(obj_value)
+                    else:
+                        tags.update({str(obj_key):str(obj_value)})
+                measurement = {
+                    "measurement": str(key),
+                    "tags": tags,
+                    "time": time,
+                    "fields": {
+                        "value": value,
+                    }
+                }
+                measurements.append(measurement)
+        client.write_points(measurements, batch_size=128)
+    except Exception, e:
+        print "[CONFIG] %s"%e
+        print "[CONFIG] Please specify <push> <backup config path> and valid bz2_path to valid bz2 file in config file"
+    
+def main(arguments):
+    analyse_path = os.path.join(os.path.dirname(__file__),'backup.config')
+    if len(arguments)==1:
+        print "[CONFIG] Please specify <push/pull> <backup config path>"
+        sys.exit()
+    elif len(arguments)==2 and os.path.exists(analyse_path):
+        print "[CONFIG] Takes %s config path"%analyse_path
+        arguments.append(analyse_path)
+        
+    config = get_config(arguments[2])
+    
+    if(arguments[1]=="pull"): 
+        print "[INIT] Pulling"
+        pull(config[arguments[1]])  
+    elif(arguments[1]=="push"): 
+        print "[INIT] Pushing"
+        push(config[arguments[1]])  
+    else:
+        print "[INIT]wrong syntax, please specify <push/pull> <backup config path>"    
+       
+if __name__ == '__main__':
+    """    """
+    arguments = sys.argv
+    main(arguments)
+
+
+
+
