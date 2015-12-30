@@ -28,7 +28,7 @@ def compress_to_file(data, file_name):
     file_path = "%s%s"%(os.path.join(home,file_name),".bz2")
     output = bz2.BZ2File(file_path, 'wb')
     try:
-        output.write(data)
+        output.write(bz2.compress(data))
     finally:
         output.close()
         return file_path
@@ -72,9 +72,11 @@ def push(config):
         file_path = config["bz2_path"]  
         if not os.path.exists(file_path):
             raise Exception
+        print "[PUSH] File exists, pushing %s .."%file_path
         data = eval(get_data_from_bz2(file_path))
         if not data:
             raise Exception
+        print "[PUSH] Decompressed"
         measurements = []
         for key, objs in data.items() :
             for obj in objs:
@@ -96,6 +98,7 @@ def push(config):
                 }
                 measurements.append(measurement)
         client.write_points(measurements, batch_size=128)
+        print "[PUSH] Sent to the remote"
     except Exception, e:
         print "[CONFIG] %s"%e
         print "[CONFIG] Please specify <push> <backup config path> and valid bz2_path to valid bz2 file in config file"
