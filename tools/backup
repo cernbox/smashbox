@@ -52,12 +52,14 @@ def pull(config):
     series = []
     for serie in series_raw:
         series.append(serie["name"])
+    print series
     print "[PULL] Got list of series"
     result_dict = {}
     now = (datetime.datetime.now()).strftime('%s%f')
     for serie in series:
-        q = "SELECT * FROM \"%s\" WHERE time <= %su;"%(serie,now)
-        result_dict[serie] = list((client.query(q)).get_points())
+        if serie.find("pkt")==-1:
+            q = "SELECT * FROM \"%s\" WHERE time <= %su;"%(serie,now)
+            result_dict[serie] = list((client.query(q)).get_points())
     print "[PULL] Got backup of series"
     #print str(result_dict)
     strdict = str(result_dict)

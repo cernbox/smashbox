@@ -201,10 +201,10 @@ class Reporter:
                         diff_zero = math.floor(obj[1])
                         
                     if save_flag:
-                        influxdb_client.write(("%s-%s"%(TEST_NAME,sync_id)), send_packet_tag, np.mean(obj_size_save[k_save:k]),str(objs[k-1][2]))          
+                        influxdb_client.write(("%s-%s"%(TEST_NAME,sync_id)), send_packet_tag, np.sum(obj_size_save[k_save:k]),str(objs[k-1][2]))          
                         k_save = k
                     if k == objs_len-1:
-                        influxdb_client.write(("%s-%s"%(TEST_NAME,sync_id)), send_packet_tag, np.mean(obj_size_save[k_save:k+1]),str(objs[k][2])) 
+                        influxdb_client.write(("%s-%s"%(TEST_NAME,sync_id)), send_packet_tag, np.sum(obj_size_save[k_save:k+1]),str(objs[k][2])) 
                         k_save = k   
                         
         def process_results():
