@@ -80,6 +80,8 @@ def stop_execution(pid):
         time.sleep(2)
     except Exception, e:
         print (e)
+        print "dirty kill.."
+        subprocess.call("kill -TERM %s"%pid, shell=True)
   
 def get_config(path):
     import io    
