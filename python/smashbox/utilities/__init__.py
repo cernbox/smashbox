@@ -22,6 +22,38 @@ def compare_oc_version(compare_to, operator):
     import json
     version = (json.loads(std_out))['version']
 
+    return compare_version(compare_to, operator, version)
+
+
+def compare_client_version(compare_to, operator):
+    """
+
+    :param compare_to: E.g. '2.1'
+    :param operator: One of '<', '=', '>', '<=', '>='
+    :return:
+    """
+
+    cmd = config.oc_sync_cmd
+    cmd = cmd[:cmd.find(' --')]
+    cmd += ' --version'
+    rtn_code, std_out, std_err = runcmd(cmd)
+
+    version = std_out[std_out.find(' version ') + 9:]
+    if version[-4:-1] == 'git':
+        version = version[:-4]
+
+    return compare_version(compare_to, operator, version)
+
+
+def compare_version(compare_to, operator, version):
+    """
+
+    :param compare_to: E.g. '9.0'
+    :param operator: One of '<', '=', '>', '<=', '>='
+    :param version: E.g. '9.0'
+    :return:
+    """
+
     if operator == '<':
         return versiontuple(version) < versiontuple(compare_to)
     if operator == '>':
