@@ -242,7 +242,7 @@ def oc_webdav_url(protocol='http',remote_folder="",user_num=None,webdav_endpoint
     """ Protocol for sync client should be set to 'owncloud'. Protocol for generic webdav clients is http.
     """
 
-    if config.oc_ssl_enabled:
+    if config.oc_ssl_enabled==True:
         protocol += 's'
 
     # strip-off any leading / characters to prevent 1) abspath result from the join below, 2) double // and alike...
