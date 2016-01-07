@@ -1,7 +1,14 @@
 import os,subprocess, datetime,sys
 
 """ dropbox section """
-                
+class clawio:
+    def __init__(self):
+        pass
+    
+    @staticmethod      
+    def curl_check_url(args,config,worker_name):
+        pass
+                    
 class dropbox:
     def __init__(self):
         pass
