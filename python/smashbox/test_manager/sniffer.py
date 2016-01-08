@@ -61,5 +61,5 @@ class SnifferThread(threading.Thread):
         self.stoprequest.set()
         return self.packet_traces
 
-    def join(self, timeout=None):
+    def join(self, timeout=10):
         super(SnifferThread, self).join(timeout)
