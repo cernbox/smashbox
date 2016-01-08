@@ -47,7 +47,7 @@ oc_webdav_endpoint = os.path.join(oc_root,'remote.php/webdav') # standard ownclo
 oc_server_folder = ''
 
 # should we use protocols with SSL (https, ownclouds)
-oc_ssl_enabled = True
+oc_ssl_enabled = False
 
 # how to invoke shell commands on the server
 # for localhost there is no problem - leave it blank
