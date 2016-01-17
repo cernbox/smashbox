@@ -148,7 +148,7 @@ class Reporter:
             self.shared_result[i]["errors"] = reported_errors
     
     def remote_storage(self,result):
-        import math
+        import math,sys
         try:
             import numpy as np
         except ImportError,e :

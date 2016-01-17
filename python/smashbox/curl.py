@@ -5,7 +5,7 @@ class Response:
         self.rc = None
         self.headers = []
         self.body = None
-
+import sys
 try:
     import pycurl, cStringIO
 except ImportError,e :
