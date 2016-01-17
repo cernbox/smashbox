@@ -148,12 +148,8 @@ class Reporter:
             self.shared_result[i]["errors"] = reported_errors
     
     def remote_storage(self,result):
-        import math,sys
-        try:
-            import numpy as np
-        except ImportError,e :
-            print('Error!%s'%e)
-            sys.exit()
+        import math
+        import numpy as np
         def process_packets():
             def in_sync_period(packet_time):
                 sync_flag = False

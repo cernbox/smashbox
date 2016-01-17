@@ -5,12 +5,8 @@ class Response:
         self.rc = None
         self.headers = []
         self.body = None
-import sys
-try:
-    import pycurl, cStringIO
-except ImportError,e :
-    print('Error!%s'%e)
-    sys.exit()
+        
+import pycurl, cStringIO
 
 class Client:
     

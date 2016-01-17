@@ -4,6 +4,14 @@ class Test_Manager:
     """
 
     def __init__(self,name,config):
+        import imp
+        try:
+            imp.find_module('numpy')
+            imp.find_module('netifaces')
+            imp.find_module('pycurl')
+        except ImportError,e:
+            print "Error!",e
+            
         self.LOG=True
         self.NON_NATIVE_ENGINE = hasattr(config, "engine")
         self.SNIFFER = hasattr(config, "sniffer")
