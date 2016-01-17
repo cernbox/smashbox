@@ -96,7 +96,11 @@ Installation of prerequisites
 
 Note: Currently this framework works on Unix-like systems only. Windows port is needed.
 
-``docker run -d -i --restart=always --name smashbox --net=host mrow4a/smashbox:latest``
+``docker run -d --restart=always --name smashbox mrow4a/smashbox:latest``
+
+or sometimes
+
+``docker run -d --restart=always --name smashbox --net=host mrow4a/smashbox:latest``
 
 ``sudo docker exec -it smashbox /bin/bash -c "export TERM=xterm; exec bash"``
 
