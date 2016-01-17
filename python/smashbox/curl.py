@@ -6,7 +6,11 @@ class Response:
         self.headers = []
         self.body = None
 
-import pycurl, cStringIO
+try:
+    import pycurl, cStringIO
+except ImportError,e :
+    print('Error!%s'%e)
+    sys.exit()
 
 class Client:
     

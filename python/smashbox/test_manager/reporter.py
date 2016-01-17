@@ -1,4 +1,4 @@
-import io,subprocess,os
+import io,subprocess,os,sys
 
 class InfluxDBClient:
     import io,subprocess,os
@@ -149,7 +149,11 @@ class Reporter:
     
     def remote_storage(self,result):
         import math
-        import numpy as np
+        try:
+            import numpy as np
+        except ImportError,e :
+            print('Error!%s'%e)
+            sys.exit()
         def process_packets():
             def in_sync_period(packet_time):
                 sync_flag = False

@@ -3,8 +3,13 @@ import threading
 import socket, sys
 from struct import *
 import datetime
-import netifaces
-import shelve
+
+try:
+    import netifaces
+except ImportError,e :
+    print('Error!%s'%e)
+    sys.exit()
+    
 """
     Packet extraction reference - http://www.binarytides.com/python-packet-sniffer-code-linux/
 """

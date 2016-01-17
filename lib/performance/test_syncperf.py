@@ -41,7 +41,7 @@ testsets = [
           '%s_countfiles'%test_name:True,
         },#2
         {
-          '%s_testdirstruct'%test_name:"10/100/10000",#1000x100kB = 100MB
+          '%s_testdirstruct'%test_name:"10/100/10000",#1000x100kB = 10MB
           '%s_countfiles'%test_name:True,
         },#3
         ###########
