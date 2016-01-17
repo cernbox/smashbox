@@ -10,58 +10,99 @@ What we check:
    * sharing of files and folders
    * basic protocol checks and documentation
 
+Features:
+* running multiple test scenarios at once, aggregate them in groups by runid and store remotely in the database. Currently supported database is INFLUXDB
+* currently supported clients are ownCloud, Seafile, Dropbox
+* get details about transfer rates during the sync, distinguishing client to server and server to client syncs
+* monitor corruptions and number of synced files in single sync round
+* monitor sync time for different scenarios
+
 The goal of this is to:
-   * make sure that behaviour of the system is understood and not 
+   * make sure that behavior of the system is understood and not 
      changing unintentionally
    * reproduce difficult bugs more easily
    * a testcase is better way of reporting and documenting bugs 
-     or undesider behaviour to the developers
+     or undesired behavior to the developers
    * provide a broad test coverage given a large number of setups and platforms
 
 If you think you see a bug - write a test-case and let others
 reproduce it on their systems.
 
-This modification provides the possibility of:
-   * running multiple test scenarios, aggregate them in groups by runid and store remotely in the database. Currently supported database is INFLUXDB, if 	 you want to get access to the already working database,graph displaying and aggregating webserver, please contact me at piotr.mrowczynski@yahoo.com.
-   * you can test your service and compare specific scenarios with dropbox and seafile clients. 
-
-
 This is work in progress. 
 
-Project tree
+Installation of the database - InfluxDB - STABLE SERVICE
 ============
 
-General layout:
+Before installing smashbox reporting and analysis tool, and to use all of their capabilities, there is a need of installing InfluxDB to store the results of the working scripts.
 
-<pre>
+You can both install InfluxDB via the instructions from the official repository:
 
-   smashbox
-   ├── bin/
-   │   └── smash*                               : main test driver + other utilities for direct shell use
-   ├── etc/				
-   │   └── smashbox.conf                        : configuration file - this is also the default configuration for smashbox/bin utilities and for test-cases
-   ├── lib/                                     : main collection of test-cases
-   │   └── performance/                   		: here is the collection of performance test-cases
-   │   		└── test_syncperf.py  			        
-   │   ├── test_nplusone.py			
-   │   └── ...  			        
-   ├── protocol/                                : sync protocol tests and documentation
-   ├── python/                                  : implementation of tools and API library for tests
-   │   └── smashbox/utilities                   : here is the utilities used directly in the test-cases
-   │   └── smashbox/test_manager                : that is the directory containing all the reporting features, also dropbox and seafile engines plugins
-   ├── server/                                  : server-side procedures used in the tests
-   ├── client/                                  : owncloud client helpers 
-   │   └── compile-owncloud-sync-client*        : 
-   ├── smashbox-deamon                          : This is the core executable file to handle reporting and aggregating of the files 
-   └── README                                   : this file
-   
-</pre>
+``https://influxdata.com/``
+
+or use the preconfigured source using the docker container:
+
+``sudo docker run --restart=always --net=host --name influxdb -d -p 8083:8083 -p 8086:8086 -e INFLUXDB_HTTP_AUTH_ENABLED="true" -e INFLUXDB_REPORTING_DISABLED="true" tutum/influxdb``
+
+CONFIGURATION EXAMPLE:
+
+Enter the site at which you host the docker, e.g. localhost:8083
+
+``CREATE USER <username> WITH PASSWORD '<password>' WITH ALL PRIVILEGES``
+
+``CREATE DATABASE "smashbox"``
+
+``CREATE USER "demo" WITH PASSWORD 'demo'``
+
+``GRANT ALL/READ/WRITE on smashbox to demo``
+
+Access the database container
+``sudo docker exec -it influxdb /bin/bash -c "export TERM=xterm; exec bash"``
+
+Change configuration file, updating
+``nano /etc/influxdb/influxdb.conf``
+
+``apt-get upgrade influxdb``
+
+Restart container (after exiting container, on the host)
+``docker restart influxdb``
+
+TO BE COMPATILIBLE WITH GRAFANA TEMPLATED DASHBOARDS, YOU NEED TO NAME DATABASE ``smashbox``
+
+Installation of the monitoring graph display - GRAFANA - STABLE SERVICE
+============
+
+`` sudo docker run --restart=always --name grafana -i -d -p 3000:3000 grafana/grafana ``
+
+Change the grafana settings inside the image.
+
+`` nano /etc/grafana/grafana.ini ``
+
+Github authentication, configuration and more at:
+
+`` http://docs.grafana.org/installation/configuration/ ``
+
+Check grafana demo for smashbox at http://130.226.137.144:3000/, user:password >> demo:demo 
+You can also export the DASHBOARDS directly from there and install them at your instance! Just remember to set the following config at Data Sources section:
+
+Name smashbox
+Database smashbox
+
+Please do it before you will install your DASHBOARD!
+
+`` More at https://www.youtube.com/watch?v=QhhwzgAKd9U ``
 
 Installation of prerequisites
 ============
 
 Note: Currently this framework works on Unix-like systems only. Windows port is needed.
 
+``sudo docker run --name smashbox -d mrow4a/smashbox:latest``
+
+``sudo docker exec -it smashbox /bin/bash -c "export TERM=xterm; exec bash"``
+
+DOCKER CONTAINER IS ALREADY INSTALLED WITH ownCloud client and other prerequisites, you only need to specify the configuration file and run tests.
+
+IF YOU WANT TO USE OUTSIDE THE mrow4a/smashbox container follow instructions:
 Login as root, if you are willing to use sniffer, if not, you can stay as normal user. 
 
 ``sudo su``
@@ -82,14 +123,11 @@ Install git
 
 ``apt-get install python-netifaces``
 
+``apt-get install python-numpy``
+
 Clone git repository into your local ``smashbox`` directory.
 
 ``git clone https://github.com/mrow4a/smashbox.git``
-
-Comment:
-if, for some reason you would like to use specific deic-client, you should 
-
-``git clone https://github.com/mrow4a/deicclient.git``
 
 Install owncloud client, as described at
 
@@ -121,6 +159,8 @@ Make also sure that under ``/devices/`` in your seafile account, all the devices
 
 If you will skip this step, your seafile will freeze on ``Starting to download ...``
 
+NOTE: If your seafile hangs during the first run and you performed first steps, take ctrl+C, exit and restart container, your seafile should now perform test correctly. Please also check if at your seafile account, in the panel DEVICES, there are listed recently 3 devices(or different number depending on test, usually worker0, worker1, boss -> 3) and they have attached your library. 
+
 First test runs
 ===============
 
@@ -147,7 +187,8 @@ Config JSON has a structure:
    │   ├── oc_account_name                        : dropbox/owncloud account name/seafile account name 
    │   ├── oc_account_password                    : dropbox/owncloud account password/seafile account password
    │   ├── oc_server_folder                       : dropbox/owncloud account folder e.g. testfolder /seafile account lib which is XXX at https://seacloud.cc/#my-libs/lib/XXX e.g. 1ba5703c-c3b9-403e-ac3c-dec836076ce2 
-   │   ├── oc_sync_cmd                            : dropbox/location of owncloudcmd  e.g. /usr/bin/owncloudcmd --trust/seafile
+   │   ├── oc_sync_cmd                            : dropbox/location of owncloudcmd  e.g. /usr/bin/owncloudcmd --
+   │   ├── oc_ssl_enabled                          : true/false -- specify is server uses SSL
    │   ├── oc_webdav_endpoint                     : dropbox/owncloud endpoint e.g. remote.php/webdav/seafile actual version e.g. 4.3.2
    │   └── oc_account_reset_procedure             : dropbox/seafile/webdav_delete 
    │   
@@ -156,8 +197,8 @@ Config JSON has a structure:
    │   ├── test_name                              : path to test in ``smashbox/lib`` directory 
    │   └── testset                                : id of the test set  
    │
-   ├── ensure_net_qos									  : 
-   │   
+   ├── ensure_net_qos		          : secure against situation when you have very bad network condition on the test machine
+   ├── timeout	                                  : define how long it will sync till it kills the process
    └── loop                                       : number of loops 
    
 </pre>
@@ -177,7 +218,8 @@ NEXT, you should create file testrun.config by ``nano testrun.config`` and inser
          "oc_server_folder=YOUR_REMOTE_FOLDER",
          "oc_sync_cmd=YOUR_CMD_DIR",
          "oc_webdav_endpoint=YOUR_WEBDAV e.g. remote.php/webdav",
-         "oc_account_reset_procedure=webdav_delete"
+         "oc_account_reset_procedure=webdav_delete",
+         "oc_ssl_enabled=false",
         ],
     ],
     "tests" : [
@@ -188,6 +230,8 @@ NEXT, you should create file testrun.config by ``nano testrun.config`` and inser
         }, 
     ],
     "loop" : 1,
+    "ensure_net_qos" : 10,
+    "timeout" : 3600,
 } 
 </pre>
 
@@ -233,7 +277,8 @@ For advanced use, with sniffer, non-native engines, log backup and remote storag
          "oc_server_folder=YOUR_REMOTE_FOLDER",
          "oc_sync_cmd=YOUR_CMD_DIR",
          "oc_webdav_endpoint=YOUR_WEBDAV",
-         "oc_account_reset_procedure=webdav_delete"
+         "oc_account_reset_procedure=webdav_delete",
+         "oc_ssl_enabled=false",
         ],
     ],
     "tests" : [
@@ -249,7 +294,8 @@ For advanced use, with sniffer, non-native engines, log backup and remote storag
         }, 
     ],
     "loop" : 1,
-    "ensure_net_qos" : 2,
+    "ensure_net_qos" : 10,
+    "timeout" : 3600,
 } 
 </pre>
 
@@ -260,6 +306,5 @@ and confirm running the test
 or 
 
 ``./smashbox-deamon YOUR_NAME_FOR_FILE.config``
-
 
 
