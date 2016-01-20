@@ -6,6 +6,7 @@ import subprocess
 import time
 
 # Utilities to be used in the test-cases.
+from smashbox.utilities.version import version_compare
 
 
 def compare_oc_version(compare_to, operator):
@@ -22,7 +23,7 @@ def compare_oc_version(compare_to, operator):
     import json
     version = (json.loads(std_out))['version']
 
-    return compare_version(compare_to, operator, version)
+    return version_compare(version, operator, compare_to)
 
 
 def compare_client_version(compare_to, operator):
@@ -42,35 +43,7 @@ def compare_client_version(compare_to, operator):
     if version[-4:-1] == 'git':
         version = version[:-4]
 
-    return compare_version(compare_to, operator, version)
-
-
-def compare_version(compare_to, operator, version):
-    """
-
-    :param compare_to: E.g. '9.0'
-    :param operator: One of '<', '=', '>', '<=', '>='
-    :param version: E.g. '9.0'
-    :return:
-    """
-
-    if operator == '<':
-        return versiontuple(version) < versiontuple(compare_to)
-    if operator == '>':
-        return versiontuple(version) > versiontuple(compare_to)
-    if operator == '<=':
-        return versiontuple(version) <= versiontuple(compare_to)
-    if operator == '>=':
-        return versiontuple(version) >= versiontuple(compare_to)
-    if operator == '=':
-        compare_tuple = versiontuple(compare_to)
-        return versiontuple(version)[0:len(compare_tuple)] == compare_tuple
-
-    raise ValueError('Invalid operator')
-
-
-def versiontuple(v):
-    return tuple(map(int, (v.split("."))))
+    return version_compare(version, operator, compare_to)
 
 
 def OWNCLOUD_CHUNK_SIZE(factor=1):
