@@ -303,7 +303,7 @@ def backup_test_detailed_log(smashdir, test_name,timeid):
 def set_sync_intervals(sync_exec_time_array):
     import time
     sync_intervals = []
-    for i in range(1, len(sync_exec_time_array)):
+    for i in range(0, len(sync_exec_time_array)):
         if sync_exec_time_array[i]!=None:
             t0=int((sync_exec_time_array[i][0]).strftime('%s%f'))
             t1=int((sync_exec_time_array[i][1]).strftime('%s%f'))

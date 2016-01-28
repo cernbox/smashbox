@@ -47,7 +47,7 @@ def worker0(step):
     step(1,'Preparation')
     d = make_workdir()
     test_dir,sync_dir_num = prepare_workdir(d)
-    run_ocsync(d,option=exclude_time)
+    run_ocsync(d,option=[exclude_time])
     k0,ncorrupt0 = check_workdir(d,test_dir,sync_dir_num)
 
     step(4,'Add 100 files and check if we still have k1+nfiles after resync')
@@ -69,7 +69,7 @@ def worker1(step):
     nfiles = eval_teststruct()
     
     step(3,'Pre-sync')
-    run_ocsync(d,option=exclude_time)
+    run_ocsync(d,option=[exclude_time])
     k0,ncorrupt0 = check_workdir(d,test_dir,sync_dir_num)
 
     step(5,'Resync and check files added by worker0')
