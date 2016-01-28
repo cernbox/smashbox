@@ -84,6 +84,7 @@ def worker1(step):
 def prepare_workdir(d):
     reset_owncloud_account()
     wdir = os.path.join(d,"0")
+    remove_tree(wdir)
     reset_rundir()
     mkdir(wdir)
     return (wdir,1)
