@@ -139,6 +139,8 @@ Explanation of the capabilities:
 * `version`: detailed server version information
 * `meta`: ocs meta information
 
+Source code reference: client/src/libsync/capabilities.cpp
+
 ## WEBDAV
 
 Standard webdav request/response conventions apply.
