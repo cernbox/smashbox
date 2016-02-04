@@ -104,7 +104,7 @@ class _smash_:
     all_procs = []
 
     @staticmethod
-    def supervisor(steps):
+    def supervisor(steps, test_reporter):
 
         import time
         #print "SU",steps
@@ -119,15 +119,15 @@ class _smash_:
                 #print [s for s in steps]
                 passed = all([_smash_.steps[i]>_smash_.supervisor_step.value for i in range(len(_smash_.steps))])
                 #print 'passed',supervisor_step.value,passed
+                
                 if passed:
                     break
 
             #print "supervisor step completed:",supervisor_step.value,steps
+            test_reporter.finalize_step( _smash_.supervisor_step.value)
 
             _smash_.supervisor_step.value += 1
-
-        
-
+            
         if _smash_.DEBUG:
             log('stop',_smash_.supervisor_step.value,_smash_.steps)
 
@@ -152,7 +152,7 @@ class _smash_:
             logger.info( 'entering new step \n'+sep+'\n'+'(%d) %s:  %s\n'%(i,_smash_.process_name,message.upper())+sep)
 
     @staticmethod
-    def worker_wrap(wi,f,fname):
+    def worker_wrap(wi,f,fname,test_reporter):
         if fname is None:
             fname = f.__name__
         _smash_.process_name=fname
@@ -172,6 +172,9 @@ class _smash_:
             step(_smash_.N_STEPS-1,None) # don't print any message
 
             import smashbox.utilities
+            
+            test_reporter.finalize_worker((smashbox.utilities.sync_exec_time_array), (smashbox.utilities.reported_errors),fname)
+            
             if smashbox.utilities.reported_errors:
                logger.error('%s error(s) reported',len(smashbox.utilities.reported_errors))
                import sys
@@ -193,29 +196,32 @@ class _smash_:
         
         #_smash_.shared_object = shelve.open(os.path.join(config.rundir,'_shared_objects.shelve'))
 
-        #print "SUPERVISOR NAMESPACE",_smash_.shared_object.__dict__
+        #print "SUPERVISOR NAMESPACE",_smash_._smash_shared_object.__dict__
         
         _smash_.supervisor_step = manager.Value('i',0)
 
         _smash_.process_name = "supervisor"
 
         _smash_.steps = manager.list([0 for x in range(len(_smash_.workers))])
-
+        
+        import smashbox.test_reporter
+        test_reporter = smashbox.test_reporter.Test_Reporter(os.path.basename(_smash_.args.test_target),config)
+        test_reporter.start_test(_smash_.workers,manager)
         # first worker => process number == 0
         for i,f_n in enumerate(_smash_.workers):
             f = f_n[0]
             fname = f_n[1]
-            p = Process(target=_smash_.worker_wrap,args=(i,f,fname))
+            p = Process(target=_smash_.worker_wrap,args=(i,f,fname,test_reporter))
             p.start()
             _smash_.all_procs.append(p)
 
-        _smash_.supervisor(_smash_.steps)
+        _smash_.supervisor(_smash_.steps, test_reporter)
 
         for p in _smash_.all_procs:
             p.join()
-
-        smashbox.utilities.finalize_test()
-
+        
+        smashbox.utilities.finalize_test(test_reporter)
+        
         for p in _smash_.all_procs:
            if p.exitcode != 0:
               import sys
