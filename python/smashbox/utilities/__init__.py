@@ -54,6 +54,7 @@ def finalize_test(test_reporter):
     
     If exception is raised then smashbox terminates with non-zero exit code,
     """
+    test_reporter.finalize_test()
     d = make_workdir()
     scrape_log_file(d)
 

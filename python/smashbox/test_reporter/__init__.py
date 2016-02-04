@@ -20,5 +20,6 @@ class Test_Reporter:
         pass
     
     def finalize_worker(self,sync_exec_time_array, reported_errors,fname): 
-        pass
+        if self.LOG:
+            print "FINISHING", fname
 
