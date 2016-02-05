@@ -21,5 +21,6 @@ class Test_Reporter:
     
     def finalize_worker(self,sync_exec_time_array, reported_errors,fname): 
         if self.LOG:
+            print sync_exec_time_array,reported_errors
             print "FINISHING", fname
 

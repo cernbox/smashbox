@@ -14,6 +14,24 @@ def OWNCLOUD_CHUNK_SIZE(factor=1):
 
 
 ######## TEST SETUP AND PREPARATION
+def engine_dependence(func):
+    """Decorator for client dependent functions """
+    def checker(*args, **kwargs): 
+        import importlib
+        #check if there was specified any additional engine using e.g. --option engine=dropbox
+        try:
+            engine = getattr(config, "engine")
+            if engine=="owncloud":
+                return func(*args, **kwargs) #
+            imported_mod = importlib.import_module('smashbox.non_native_engine')
+            imported_sync_class = getattr(imported_mod, config.engine)
+            imported_class_function = getattr(imported_sync_class, func.__name__)
+            from smashbox.utilities import reflection
+            worker_name = reflection.getProcessName()
+            return imported_class_function(args,config,worker_name) #print "executing sync engine custom function %s"%func.__name__
+        except Exception, e:
+            return func(*args, **kwargs) #
+    return checker 
 
 def setup_test():
     """ Setup hooks run before any worker kicks-in. 
@@ -29,15 +47,13 @@ def setup_test():
     import imp,sys
     #check prerequisites
     try:
-        imp.find_module('numpy')
-        imp.find_module('netifaces')
         imp.find_module('pycurl')
     except ImportError,e:
         print "Error!",e
         sys.exit()
      
     #check if configuration is correct    
-    curl_check_url(config)
+    check_settings()
     
     reset_owncloud_account(num_test_users=config.oc_number_test_users)
     reset_rundir()
@@ -98,9 +114,8 @@ def reset_owncloud_account(reset_procedure=None, num_test_users=None):
     if reset_procedure == 'webdav_delete':
         webdav_delete('/') # delete the complete webdav endpoint associated with the remote account
         webdav_delete('/') # FIXME: workaround current bug in EOS (https://savannah.cern.ch/bugs/index.php?104661) 
-
-    # if create if does not exist (for keep or webdav_delete options)
-    webdav_mkcol('/')
+        # if create if does not exist (for keep or webdav_delete options)
+        webdav_mkcol('/')
 
 
 def reset_rundir(reset_procedure=None):
@@ -124,11 +139,12 @@ def reset_rundir(reset_procedure=None):
         remove_tree(config.rundir)
         mkdir(config.rundir)
 
-
+@engine_dependence
 def make_workdir(name=None):
     """ Create a worker directory in the current run directory for the test (by default the name is derived from 
     the worker's name). 
     """
+    #defult ownCloud make directory function
     from smashbox.utilities import reflection
 
     if name is None:
@@ -264,6 +280,7 @@ def create_owncloud_group(group_name):
 
 ######### WEBDAV AND SYNC UTILITIES #####################
 
+@engine_dependence
 def oc_webdav_url(protocol='http',remote_folder="",user_num=None,webdav_endpoint=None,hide_password=False):
     """ Protocol for sync client should be set to 'owncloud'. Protocol for generic webdav clients is http.
     """
@@ -297,7 +314,9 @@ ocsync_cnt = {}
 sync_exec_time_array = []
 reported_errors = []
 
+@engine_dependence
 def sync_engine(cmd,log_location):
+    #defult ownCloud sync engine
     cmd = cmd + " >> "+ log_location + " 2>&1"
     t0 = datetime.datetime.now()
     runcmd(cmd, ignore_exitcode=True)  # exitcode of ocsync is not reliable
@@ -856,8 +875,9 @@ def modify_dummy_file(fn,size,bs=None,checksum=False):
         filemask = "{md5}"        
         new_fn = os.path.join(os.path.dirname(fn),filemask.replace('{md5}',md5.hexdigest()))
         os.rename(fn,new_fn)
-
-def curl_check_url(config):
+        
+@engine_dependence
+def check_settings():
     from smashbox.utilities import oc_webdav_url
     import smashbox.curl, sys
     

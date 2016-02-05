@@ -73,8 +73,8 @@ def main():
    # object (we use leading underscore for such internal stuff)
    config._loglevel = level
    
-   # check for mandatory configuration 
-   if not hasattr(config,'oc_account_password') or not config.oc_account_password:
+   # check for mandatory configuration - will be validated in check_settings()
+   if not hasattr(config,'oc_account_password'):
       logger.error("The oc_account_password not set in smashbox.conf")
       sys.exit(1)
             
@@ -124,14 +124,15 @@ def main():
    config.oc_sync_cmd = os.path.join(top_smash,config.oc_sync_cmd)
 
    import string
-
+   
+   #will be validated in check_settings()
    try:
       config.oc_server_shell_cmd = string.Template(config.oc_server_shell_cmd).substitute({'oc_server':config.oc_server})
    except ValueError,x:
       logger.critical('Malformed options oc_server_shell_cmd: %s %s'%(repr(config.oc_server_shell_cmd),repr(x)))
       sys.exit(1)
 
-
+   #will be validated in check_settings()
    try:
       config.oc_server_folder = string.Template(config.oc_server_folder).substitute({'runid':config.runid})
    except ValueError,x:
