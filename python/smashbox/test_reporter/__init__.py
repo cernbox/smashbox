@@ -4,7 +4,7 @@ class Test_Reporter:
     """
 
     def __init__(self,name,config):
-        self.LOG=True
+        self.LOG=False
         self.name = name
         self.config = config
         
