@@ -202,8 +202,6 @@ Reponse body example:
       </d:response>
     </d:multistatus>
     
-Besides the actual quota sizes in bytes the server also returns the fileId and the permissions
-of the top directory.
 
 ### Connection Validation Call
 
@@ -247,7 +245,7 @@ This call only happens to the server top directory.
 
 ### Modification Check on Top-level Directory
 
-FIXME
+FIXME: this section and its example is plain wrong and needs reviewing
 
 To detect changes of data on the server repository client issues stat-like calls to the 
 top level directory of a sync connection to request the last modification timestamp on a regular basis. 
