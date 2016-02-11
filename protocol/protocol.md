@@ -169,7 +169,7 @@ PROPFIND Depth:infinity is not supported: client will try this for compatibility
 ### Quota Check Call
 
 Client displays user quota information. For that it does a PROPFIND call to the root of the 
-user space on the webdav server.
+user space on the webdav server. Quota is reported per account (or per quota node) defined on the storage server. The result of this query will be the same for all directories (URI part of the request) which belong to the same account (or quota node).
 
 Syntax:
 
