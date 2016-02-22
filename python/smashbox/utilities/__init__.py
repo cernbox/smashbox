@@ -2,7 +2,7 @@ from smashbox.script import config
 
 import os.path
 import datetime
-import subprocess
+import subprocess,signal
 import time
 # Utilities to be used in the test-cases.
 
@@ -11,7 +11,9 @@ def OWNCLOUD_CHUNK_SIZE(factor=1):
     """
     return int(20*1024*1024*factor) # 20MB as of client 1.7 
 
-def setup_test():
+test_reporter = None
+
+def setup_test(_smash_,config,manager):
     """ Setup hooks run before any worker kicks-in. 
     This is run under the name of the "supervisor" worker.
 
@@ -23,18 +25,26 @@ def setup_test():
 
     """
     import imp,sys
+    global test_reporter
     #check prerequisites
     try:
+        imp.find_module('numpy')
+        imp.find_module('netifaces')
         imp.find_module('pycurl')
     except ImportError,e:
         logger.error(e) 
         sys.exit()
-
-    #check if configuration is correct  
-    setup_client()  
     
-
-def finalize_test(test_reporter):
+    try:
+        import smashbox.test_reporter
+        test_reporter = smashbox.test_reporter.Test_Reporter(os.path.basename(_smash_.args.test_target),config,_smash_.workers,manager)
+    except:
+        pass
+    
+    #initialize the synchronisation client
+    sync_client_start()  
+    
+def finalize_test():
     """ Finalize hooks run after last worker terminated.
     This is run under the name of the "supervisor" worker.
 
@@ -44,10 +54,56 @@ def finalize_test(test_reporter):
     
     If exception is raised then smashbox terminates with non-zero exit code,
     """
-    test_reporter.finalize_test()
+    global test_reporter
+    try:
+        test_reporter.finalize_test()
+    except:
+        pass
     d = make_workdir()
     scrape_log_file(d)
+    
+    sync_client_stop()  
 
+def finalize_step():
+    """ Finalize hooks run after each step run.
+    This is run under the name of the "supervisor" worker.
+
+    The behaviour of these hooks is entirely controlled by config
+    options. It should be possible to disable optional hooks by
+    configuration.
+    
+    If exception is raised then smashbox terminates with non-zero exit code,
+    """
+    global test_reporter
+    try:
+        test_reporter.finalize_step()
+    except:
+        pass
+    
+    sync_client_step()  
+
+def finalize_worker(fname):   
+    """ Finalize hooks run after each worker terminated.
+    This is run under the name of the "supervisor" worker.
+
+    The behaviour of these hooks is entirely controlled by config
+    options. It should be possible to disable optional hooks by
+    configuration.
+    
+    If exception is raised then smashbox terminates with non-zero exit code,
+    """
+    global test_reporter
+    try:
+        test_reporter.finalize_worker(sync_exec_time_array, reported_errors,fname)
+    except:
+        pass
+         
+    if reported_errors:
+        logger.error('%s error(s) reported',len(reported_errors))
+        import sys
+        sys.exit(2)
+        
+    sync_client_finish()  
 ######### HELPERS
 ######## TEST SETUP AND PREPARATION
 
@@ -350,7 +406,24 @@ def modify_dummy_file(fn,size,bs=None,checksum=False):
         filemask = "{md5}"        
         new_fn = os.path.join(os.path.dirname(fn),filemask.replace('{md5}',md5.hexdigest()))
         os.rename(fn,new_fn)
-            
+                
+def stop_execution(pid):      
+    pid = int(pid)
+    print ("killing %s: ok"%pid)
+    try:
+        os.killpg(pid, signal.SIGTERM)
+        time.sleep(2)
+        try:
+            os.killpg(pid, signal.SIGKILL)
+        except:
+            pass
+        time.sleep(2)
+    except Exception, e:
+        print (e)
+        print "dirty kill.."
+        subprocess.call("kill -TERM %s"%pid, shell=True)
+        
+                    
 """ This section defines the functions which could be overwriten by more than one sync client 
     implementations in order to perform scenario not dependent on the synchronisation client """
 sync_client = None      
@@ -372,7 +445,19 @@ def engine_dependence(func):
     return checker 
  
 @engine_dependence
-def setup_client():
+def sync_client_start():
+    pass
+
+@engine_dependence
+def sync_client_finish():
+    pass
+
+@engine_dependence
+def sync_client_step():
+    pass
+
+@engine_dependence
+def sync_client_stop():
     pass
 
 @engine_dependence
@@ -393,12 +478,24 @@ class owncloud:
         pass
     
     @staticmethod   
-    def setup_client(args,kwargs):
+    def sync_client_start(args,kwargs):
         check_settings()
         reset_owncloud_account(num_test_users=config.oc_number_test_users)
         reset_rundir()
         reset_server_log_file()
         
+    @staticmethod
+    def sync_client_finish(args,kwargs):
+        pass
+    
+    @staticmethod
+    def sync_client_step(args,kwargs):
+        pass
+    
+    @staticmethod
+    def sync_client_stop(args,kwargs):
+        pass    
+    
     @staticmethod      
     def sync_engine(args,kwargs):
         """ log_location is args[0], local_folder is args[1], remote_folder is args[2], 
@@ -479,6 +576,15 @@ class owncloud:
         logger.info('make_workdir %s',d)
         return d
     
+    @staticmethod
+    def hello():
+        print "Hello world!"
+        
+    @staticmethod
+    def stop(pid):
+        print "Stopping..",pid
+        stop_execution(pid)
+        
 """ owncloud utilities """
 
 def check_settings():
