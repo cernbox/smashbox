@@ -1440,10 +1440,10 @@ def start_seafile(fname, smashdir,directory,config):
         while (not os.path.exists(os.path.join(parentdir,'seafile'))) or (not os.path.exists(os.path.join(parentdir,'seafile-data'))):
             subprocess.call(["./seaf-cli", "stop", "-c",workerconfdir], cwd=parentdir)
             subprocess.call(["./seaf-cli", "start", "-c",workerconfdir], cwd=parentdir)
-        subprocess.call(["./seaf-cli", "stop", "-c",workerconfdir], cwd=parentdir)
-        subprocess.call(["./seaf-cli", "start", "-c",workerconfdir], cwd=parentdir)
         subprocess.call(["./seaf-cli", "config", "-c",workerconfdir,"-k","enable_http_sync","-v","true"], cwd=parentdir)
         subprocess.call(["./seaf-cli", "config", "-c",workerconfdir,"-k","disable_verify_certificate","-v","true"], cwd=parentdir)
+        subprocess.call(["./seaf-cli", "stop", "-c",workerconfdir], cwd=parentdir)
+        subprocess.call(["./seaf-cli", "start", "-c",workerconfdir], cwd=parentdir)
         cmd_arr = ["./seaf-cli", "sync", "-c",workerconfdir, "-l",config.oc_server_folder,"-s",config.oc_server,"-u",config.oc_account_name,"-p",config.oc_account_password,"-d",workerdir]
         subprocess.call(cmd_arr, cwd=parentdir)
     else:
