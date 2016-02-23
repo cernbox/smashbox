@@ -1312,24 +1312,19 @@ class seafile:
         directory = install_seafile(smashdir,config.oc_webdav_endpoint)
         start_seafile("boss", smashdir,directory,config)
         seafile_clean_directory(smashdir, "boss")
-        print "cleaned 1"
         start_seafile("boss", smashdir,directory,config)
         seafile_clean_directory(smashdir, "boss")
-        print "cleaned 2"
         worker_name_array = []   
         for i,f_n in enumerate(smash_workers):
             f = f_n[0]
             fname = f_n[1]
             if fname is None:
                 fname = f.__name__ 
-            print fname,directory
             worker_name_array.append(fname) 
             start_seafile(fname, smashdir,directory,config) 
             seafile_clean_directory(smashdir, fname)
-            print "cleaned 1"
             start_seafile(fname, smashdir,directory,config) 
             seafile_clean_directory(smashdir, fname)
-            print "cleaned 2"
         
     @staticmethod
     def sync_client_finish(args,kwargs):
@@ -1369,8 +1364,9 @@ class seafile:
         if stop==True:
             stop_seafile(worker_name, smashdir)
         if exclude==True:
-            return None
-        log_test(smashdir,log)
+            return None,sync_exec_time
+        if(log != None):
+            log_test(args[0],log)
         return result,sync_exec_time
     
     @staticmethod   
@@ -1450,7 +1446,6 @@ def start_seafile(fname, smashdir,directory,config):
         subprocess.call(["./seaf-cli", "stop", "-c",workerconfdir], cwd=parentdir)
         subprocess.call(["./seaf-cli", "start", "-c",workerconfdir], cwd=parentdir)
         cmd_arr = ["./seaf-cli", "sync", "-c",workerconfdir, "-l",config.oc_server_folder,"-s",oc_server,"-u",config.oc_account_name,"-p",config.oc_account_password,"-d",workerdir]
-        print cmd_arr
         subprocess.call(cmd_arr, cwd=parentdir)
     else:
         subprocess.call(["./seaf-cli", "start", "-c",workerconfdir], cwd=parentdir)
