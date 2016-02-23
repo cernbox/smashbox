@@ -1312,19 +1312,24 @@ class seafile:
         directory = install_seafile(smashdir,config.oc_webdav_endpoint)
         start_seafile("boss", smashdir,directory,config)
         seafile_clean_directory(smashdir, "boss")
+        print "cleaned 1"
         start_seafile("boss", smashdir,directory,config)
         seafile_clean_directory(smashdir, "boss")
+        print "cleaned 2"
         worker_name_array = []   
         for i,f_n in enumerate(smash_workers):
             f = f_n[0]
             fname = f_n[1]
             if fname is None:
                 fname = f.__name__ 
+            print fname,directory
             worker_name_array.append(fname) 
             start_seafile(fname, smashdir,directory,config) 
             seafile_clean_directory(smashdir, fname)
+            print "cleaned 1"
             start_seafile(fname, smashdir,directory,config) 
             seafile_clean_directory(smashdir, fname)
+            print "cleaned 2"
         
     @staticmethod
     def sync_client_finish(args,kwargs):
@@ -1340,6 +1345,7 @@ class seafile:
     
     @staticmethod      
     def sync_engine(args,kwargs):
+        worker_name = reflection.getProcessName()
         option = args[4]
         stop = True
         finish = False
@@ -1430,7 +1436,7 @@ def start_seafile(fname, smashdir,directory,config):
     protocol = "http"
     if config.oc_ssl_enabled:
         protocol += 's'
-    config.oc_server = protocol + '://' + config.oc_server
+    oc_server = protocol + '://' + config.oc_server
     if not os.path.exists(parentdir):
         subprocess.call(["cp", "-R", directory, parentdir], cwd=home)
         subprocess.call(["mkdir", workerdir], cwd=home) 
@@ -1443,7 +1449,8 @@ def start_seafile(fname, smashdir,directory,config):
         subprocess.call(["./seaf-cli", "config", "-c",workerconfdir,"-k","disable_verify_certificate","-v","true"], cwd=parentdir)
         subprocess.call(["./seaf-cli", "stop", "-c",workerconfdir], cwd=parentdir)
         subprocess.call(["./seaf-cli", "start", "-c",workerconfdir], cwd=parentdir)
-        cmd_arr = ["./seaf-cli", "sync", "-c",workerconfdir, "-l",config.oc_server_folder,"-s",config.oc_server,"-u",config.oc_account_name,"-p",config.oc_account_password,"-d",workerdir]
+        cmd_arr = ["./seaf-cli", "sync", "-c",workerconfdir, "-l",config.oc_server_folder,"-s",oc_server,"-u",config.oc_account_name,"-p",config.oc_account_password,"-d",workerdir]
+        print cmd_arr
         subprocess.call(cmd_arr, cwd=parentdir)
     else:
         subprocess.call(["./seaf-cli", "start", "-c",workerconfdir], cwd=parentdir)
