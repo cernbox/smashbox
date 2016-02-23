@@ -13,7 +13,7 @@ def OWNCLOUD_CHUNK_SIZE(factor=1):
 
 test_reporter = None
 
-def setup_test(_smash_,config,manager):
+def setup_test(_smash_,manager):
     """ Setup hooks run before any worker kicks-in. 
     This is run under the name of the "supervisor" worker.
 
@@ -42,7 +42,7 @@ def setup_test(_smash_,config,manager):
         pass
     
     #initialize the synchronisation client
-    sync_client_start()  
+    sync_client_start(_smash_)  
     
 def finalize_test():
     """ Finalize hooks run after last worker terminated.
@@ -128,14 +128,11 @@ def run_ocsync(local_folder, remote_folder="", n=None, user_num=None, option = [
 
     for i in range(n):
         log_location = config.rundir+"/%s-ocsync.step%02d.cnt%03d.log"%(reflection.getProcessName(),current_step,ocsync_cnt[current_step])
-        sync_exec_time = sync_engine(log_location, local_folder, remote_folder, user_num) 
+        sync_exec_time_pair,sync_exec_time = sync_engine(log_location, local_folder, remote_folder, user_num,option) 
         
-        logger.info('sync finished: %s s'%(sync_exec_time[1]-sync_exec_time[0]))
+        logger.info('sync finished: %s s'%(sync_exec_time))
         
-        for opt in option:
-            if opt=='exclude_time':
-                sync_exec_time=None
-        sync_exec_time_array.append(sync_exec_time) 
+        sync_exec_time_array.append(sync_exec_time_pair) 
         ocsync_cnt[current_step]+=1
 
 # #### SHELL COMMANDS AND TIME FUNCTIONS
@@ -437,7 +434,7 @@ def engine_dependence(func):
                 sync_client = globals()[config.engine]()
             elif sync_client is None:
                 sync_client = globals()["owncloud"]()
-                    
+                        
             return getattr(sync_client, func.__name__)(args,kwargs) #print "executing sync engine custom function %s"%func.__name__
         except Exception, e:
             logger.error(e)
@@ -499,8 +496,7 @@ class owncloud:
     @staticmethod      
     def sync_engine(args,kwargs):
         """ log_location is args[0], local_folder is args[1], remote_folder is args[2], 
-            user_num is args[3] """
-        
+            user_num is args[3], options are args[4] """
         cmd = config.oc_sync_cmd+' '+args[1]+' '+oc_webdav_url('owncloud',args[2],args[3])
         #defult ownCloud sync engine
         cmd = cmd + " >> "+ args[0] + " 2>&1" 
@@ -509,7 +505,11 @@ class owncloud:
         t1 = datetime.datetime.now()
         logger.info('sync cmd is: %s',cmd) 
         
-        return [t0,t1]
+        sync_exec_time_pair=[t0,t1]
+        for opt in args[4]:
+            if opt=='exclude_time':
+                sync_exec_time_pair=None
+        return sync_exec_time_pair,t1-t0
     
     @staticmethod   
     def oc_webdav_url(args,kwargs):
@@ -567,8 +567,6 @@ class owncloud:
                 name = value
                 
         if name is None:
-            #defult ownCloud make directory function
-            from smashbox.utilities import reflection
             name = reflection.getProcessName()
     
         d = os.path.join(config.rundir,name)
@@ -1056,3 +1054,529 @@ def webdav_mkcol(path, silent=False, user_num=None):
     if silent: # a workaround for super-verbose errors in case directory on the server already exists
         out = "> /dev/null 2>&1"
     runcmd('curl -k %s -X MKCOL %s %s'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num),out))
+
+""" dropbox section """                   
+class dropbox:
+    def __init__(self):
+        pass
+    
+    @staticmethod   
+    def sync_client_start(args,kwargs):
+        smash_workers = args[0].workers
+        smashdir = config.smashdir
+        install_dropbox()
+        check_if_dropbox_stopped()
+        boss="boss"
+        clean_directory(smashdir, boss)
+        import time
+        time.sleep(1)
+        start_dropbox(boss, smashdir) 
+        if(get_running_dropbox(boss, smashdir) != None):
+            clean_directory(smashdir, boss)
+            import time
+            time.sleep(1)
+        
+        worker_name_array = []   
+        if(get_running_dropbox(boss, smashdir) != None):
+            for i,f_n in enumerate(smash_workers):
+                f = f_n[0]
+                fname = f_n[1]
+                if fname is None:
+                    fname = f.__name__ 
+                worker_name_array.append(fname) 
+                dropbox_add_workers_to_conf(fname, smashdir)   
+            prepare_smashbox(smashdir,worker_name_array,boss)
+                
+    @staticmethod
+    def sync_client_finish(args,kwargs):
+        pass
+    
+    @staticmethod
+    def sync_client_step(args,kwargs):
+        check_if_stopped("dropbox")
+    
+    @staticmethod
+    def sync_client_stop(args,kwargs):
+        print "START FINISHING DROPBOX"
+        check_if_dropbox_stopped()    
+    
+    @staticmethod      
+    def sync_engine(args,kwargs):
+        """ log_location is args[0], local_folder is args[1], remote_folder is args[2], 
+            user_num is args[3], options are args[4] """
+        worker_name = reflection.getProcessName()
+        options = args[4]
+        stop = True
+        finish = False
+        exclude = False
+        if options:
+            for opt in options:
+                if opt=='exclude_time':
+                    exclude = True
+                elif opt=='start_only':
+                    stop = False
+                elif opt=='finish_only':
+                    finish = True
+        local_folder = os.path.abspath(os.path.join(config.smashdir,"dropbox-"+worker_name+"/Dropbox/"))
+        if finish==False:
+            dropbox_restart(config.smashdir, worker_name, local_folder)
+        t0 = datetime.datetime.now()
+        log = get_running_dropbox(worker_name, config.smashdir)
+        if(log != None):
+            result = [t0,datetime.datetime.now()]
+            sync_exec_time = result[1]-result[0]
+            if stop==True:
+                stop_dropbox(worker_name, config.smashdir)  
+            if exclude==True:
+                return None,sync_exec_time
+            log_test(args[0],log)
+            return result,sync_exec_time
+    
+    @staticmethod   
+    def oc_webdav_url(args,kwargs):
+        return "dropbox"
+    
+    @staticmethod 
+    def make_workdir(args,kwargs):
+        name = None
+        for key, value in kwargs.iteritems():
+            if key=='name':
+                name = value
+        if name is None:
+            name = reflection.getProcessName()
+            
+        d = os.path.abspath(os.path.join(config.smashdir,"dropbox-"+name+"/Dropbox"))
+        return d
+    
+    @staticmethod
+    def hello():
+        print "Hello world!"
+        
+    @staticmethod
+    def stop(pid):
+        print "Stopping..",pid
+        kill_if_not_stopped("dropbox")
+        stop_execution(pid)
+        
+""" dropbox utilities """
+
+def install_dropbox():
+    from os.path import expanduser
+    import platform,sys
+    def is_32bit():
+        if (platform.architecture()[0]).find("64") != -1:
+            return "x86_64"
+        else:
+            return "x86"
+    home = expanduser("~")
+    directory = home + "/.dropbox-dist"
+    if not os.path.exists(directory):
+        print "%s does not exists, begin installation.."%directory
+        dist = 'http://www.dropbox.com/download/?plat=lnx.%s'%is_32bit()
+        import subprocess
+        subprocess.call(["wget", "-O", "dropbox.tar.gz",dist], cwd=home)
+        print "downloaded, unpack"
+        subprocess.call(["tar", "-xvzf", "dropbox.tar.gz"], cwd=home)
+    print "dropbox installed"
+
+def check_if_dropbox_stopped():
+    import time
+    t_syncprepare = time_now() 
+    running = True
+    cmd = os.path.dirname(__file__)+"/running.sh dropbox"
+    status = "Process not running"
+    while(running):
+        process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        stdout = (process.communicate()[0]).encode('ascii','ignore')
+        if((stdout.find(status) != -1)):
+            running = False
+        else:
+            print "some dropbox process is still running"
+            time.sleep(1)
+    
+def clean_directory(smashdir, fname):        
+    d = os.path.abspath(os.path.join(smashdir,"dropbox-"+fname+"/Dropbox"))
+    cmd = ('rm -rf '+(d+"/*"))
+    process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    process.wait()
+    
+def start_dropbox(fname, smashdir, get_running=True):
+    import os
+    from os.path import expanduser
+    from multiprocessing import Process
+    d = os.path.abspath(os.path.join(smashdir,"dropbox-"+str(fname)))
+    cmd = os.path.dirname(__file__)+"/mdroboxinstances.sh "+expanduser("~")+" "+ d
+    process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,universal_newlines=True,)
+    if(get_running==True):
+        import time
+        nbsr = NonBlockingStreamReader(process.stdout)
+        while True:
+            output = nbsr.readline(0.1)
+            if output:
+                print output
+            stdout = check_status_dropbox(str(fname), smashdir)
+            if((stdout.find("Up to date") != -1)):
+                break
+            elif((stdout.find("link") != -1)):
+                print stdout
+            time.sleep(1)
+            
+                
+        cmd = os.path.dirname(__file__)+"/dropbox.py --set "+d+"/.dropbox lansync n"  
+        process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        process.wait() 
+        
+def get_running_dropbox(fname, smashdir,status="Up to date"):
+    import time
+    up_to_date_flag=0
+    timeout_flag=0
+    stdout_array=[]
+    while (up_to_date_flag < 2): 
+        stdout = check_status_dropbox(fname, smashdir)
+        stdout_array.append("%s - %s"%(time_now(),stdout))
+        if((stdout.find(status) != -1)):
+            up_to_date_flag += 1
+        else:
+            up_to_date_flag = 0
+        time.sleep(0.01)
+        
+    return { fname : stdout_array } 
+
+def dropbox_add_workers_to_conf(fname, smashdir):
+    clean_directory(smashdir, fname) 
+    
+    if(check_status_dropbox(fname, smashdir).find("Up to date") == -1):
+        start_dropbox(fname, smashdir)
+    
+    if(get_running_dropbox(str(fname), smashdir) != None):
+        pass
+
+def check_status_dropbox(fname, smashdir):
+    import os
+    d = os.path.abspath(os.path.join(smashdir,"dropbox-"+str(fname)))
+    cmd = os.path.dirname(__file__)+"/dropbox.py --set "+d+"/.dropbox status"    
+    process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    return (process.communicate()[0]).encode('ascii','ignore')
+
+def prepare_smashbox(smashdir,worker_name_array,boss):
+    if(get_running_dropbox(boss, smashdir) != None):
+        stop_dropbox(boss, smashdir)#stop_dropbox(boss, smashdir)
+        #print "BOSS DONE"
+        
+    for i in range(0, len(worker_name_array)):
+        fname = worker_name_array[i]
+        stop_dropbox(fname, smashdir)
+    
+    check_if_dropbox_stopped()  
+    
+def stop_dropbox(fname, smashdir):
+    import os
+    import time
+    d = os.path.abspath(os.path.join(smashdir,"dropbox-"+str(fname)))
+    cmd = os.path.dirname(__file__)+"/dropbox.py --set "+d+"/.dropbox stop"  
+    process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    process.wait() 
+
+def dropbox_restart(smashdir, worker_name, local_folder):
+    import time
+    def dropbox_check_resume_sync(smashdir, worker_name):
+        indexing_flag=True  
+        while(indexing_flag):
+            stdout = check_status_dropbox(worker_name, smashdir)
+            #(stdout.find("Connecting") != -1) or 
+            if((stdout.find("Indexing") != -1) or (stdout.find("Downloading") != -1) or (stdout.find("Up to date") != -1)):
+                indexing_flag = False
+        return time_now()
+    #main
+    start_dropbox(worker_name, smashdir, get_running=False)
+    d = os.path.abspath(os.path.join(smashdir,"dropbox-"+worker_name))
+    cmd = os.path.dirname(__file__)+"/dropbox.py --set "+d+"/.dropbox lansync n"  
+    process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    process.wait() 
+    cmd = os.path.dirname(__file__)+"/dropbox.py --set "+d+"/.dropbox exclude remove "+local_folder
+    process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    process.wait() 
+    indexing = dropbox_check_resume_sync(smashdir, worker_name)
+    return indexing
+      
+""" seafile section """                   
+class seafile:
+    def __init__(self):
+        pass
+    
+    @staticmethod   
+    def sync_client_start(args,kwargs):
+        import time
+        smash_workers = args[0].workers
+        smashdir = config.smashdir
+        directory = install_seafile(smashdir,config.oc_webdav_endpoint)
+        start_seafile("boss", smashdir,directory,config)
+        seafile_clean_directory(smashdir, "boss")
+        start_seafile("boss", smashdir,directory,config)
+        seafile_clean_directory(smashdir, "boss")
+        worker_name_array = []   
+        for i,f_n in enumerate(smash_workers):
+            f = f_n[0]
+            fname = f_n[1]
+            if fname is None:
+                fname = f.__name__ 
+            worker_name_array.append(fname) 
+            start_seafile(fname, smashdir,directory,config) 
+            seafile_clean_directory(smashdir, fname)
+            start_seafile(fname, smashdir,directory,config) 
+            seafile_clean_directory(smashdir, fname)
+        
+    @staticmethod
+    def sync_client_finish(args,kwargs):
+        pass
+    
+    @staticmethod
+    def sync_client_step(args,kwargs):
+        check_if_stopped("ccnet")
+    
+    @staticmethod
+    def sync_client_stop(args,kwargs):
+        pass    
+    
+    @staticmethod      
+    def sync_engine(args,kwargs):
+        option = args[4]
+        stop = True
+        finish = False
+        exclude = False
+        smashdir = config.smashdir
+        if option:
+            for opt in option:
+                if opt=='exclude_time':
+                    exclude = True
+                elif opt=='start_only':
+                    stop = False
+                elif opt=='finish_only':
+                    finish = True
+        if finish==False:
+            run_seafile(smashdir, worker_name)
+        get_running_seafile(worker_name, smashdir)
+        t0 = datetime.datetime.now()
+        log = get_synced_seafile(worker_name, smashdir)
+        result = [t0,datetime.datetime.now()]
+        sync_exec_time = result[1]-result[0]
+        if stop==True:
+            stop_seafile(worker_name, smashdir)
+        if exclude==True:
+            return None
+        log_test(smashdir,log)
+        return result,sync_exec_time
+    
+    @staticmethod   
+    def oc_webdav_url(args,kwargs):
+        return config.oc_server
+    
+    @staticmethod 
+    def make_workdir(args,kwargs):
+        name = None
+        for key, value in kwargs.iteritems():
+            if key=='name':
+                name = value
+        if name is None:
+            name = reflection.getProcessName()
+        workerdir = os.path.abspath(config.smashdir+"/seafile-"+name)
+        return workerdir
+    
+    @staticmethod
+    def hello():
+        print "Hello world!"
+        
+    @staticmethod
+    def stop(pid):
+        print "Stopping..",pid
+        kill_if_not_stopped("ccnet")
+        reinit_seafile()
+        stop_execution(pid)
+        
+""" seafile utilities """
+def run_seafile(smashdir, fname):
+    parentdir = os.path.abspath(smashdir+"/seafile-w-"+fname)
+    workerdir = os.path.abspath(smashdir+"/seafile-"+fname)
+    workerconfdir = os.path.abspath(smashdir+"/seafile-c-"+fname+"/.ccnet")
+    subprocess.call(["./seaf-cli", "start", "-c",workerconfdir], cwd=parentdir)
+    
+def install_seafile(smashdir,version):
+    from os.path import expanduser
+    import platform
+    def is_32bit():
+        if (platform.architecture()[0]).find("64") != -1:
+            return "seafile-cli_"+version+"_x86-64"
+        else:
+            return "seafile-cli_"+version+"_i386"
+    home = expanduser("~")
+    directory = home + "/seafile-cli-"+version
+    if not os.path.exists(directory):
+        print "%s does not exists, begin installation.."%directory
+        dist = 'https://bintray.com/artifact/download/seafile-org/seafile/%s.tar.gz'%is_32bit()
+        subprocess.call(["wget", "-O", "seafile-cli.tar.gz",dist], cwd=home)
+        print "downloaded, unpack"
+        subprocess.call(["tar", "-xvzf", "seafile-cli.tar.gz"], cwd=home)
+        print "seafile installed"
+    
+    return directory
+    
+def start_seafile(fname, smashdir,directory,config):
+    from os.path import expanduser
+    home = expanduser("~")
+    parentdir = os.path.abspath(smashdir+"/seafile-w-"+fname)
+    workerdir = os.path.abspath(smashdir+"/seafile-"+fname)
+    workerconfdir = os.path.abspath(smashdir+"/seafile-c-"+fname+"/.ccnet")
+    
+    protocol = "http"
+    if config.oc_ssl_enabled:
+        protocol += 's'
+    config.oc_server = protocol + '://' + config.oc_server
+    if not os.path.exists(parentdir):
+        subprocess.call(["cp", "-R", directory, parentdir], cwd=home)
+        subprocess.call(["mkdir", workerdir], cwd=home) 
+        subprocess.call(["mkdir", os.path.abspath(smashdir+"/seafile-c-"+fname)], cwd=home) 
+        subprocess.call(["./seaf-cli", "init", "-c",workerconfdir,"-d", parentdir], cwd=parentdir)
+        subprocess.call(["./seaf-cli", "start", "-c",workerconfdir], cwd=parentdir)
+        while (not os.path.exists(os.path.join(parentdir,'seafile'))) or (not os.path.exists(os.path.join(parentdir,'seafile-data'))):
+            subprocess.call(["./seaf-cli", "stop", "-c",workerconfdir], cwd=parentdir)
+            subprocess.call(["./seaf-cli", "start", "-c",workerconfdir], cwd=parentdir)
+        subprocess.call(["./seaf-cli", "stop", "-c",workerconfdir], cwd=parentdir)
+        subprocess.call(["./seaf-cli", "start", "-c",workerconfdir], cwd=parentdir)
+        subprocess.call(["./seaf-cli", "config", "-c",workerconfdir,"-k","enable_http_sync","-v","true"], cwd=parentdir)
+        subprocess.call(["./seaf-cli", "config", "-c",workerconfdir,"-k","disable_verify_certificate","-v","true"], cwd=parentdir)
+        cmd_arr = ["./seaf-cli", "sync", "-c",workerconfdir, "-l",config.oc_server_folder,"-s",config.oc_server,"-u",config.oc_account_name,"-p",config.oc_account_password,"-d",workerdir]
+        subprocess.call(cmd_arr, cwd=parentdir)
+    else:
+        subprocess.call(["./seaf-cli", "start", "-c",workerconfdir], cwd=parentdir)
+    get_synced_seafile(fname, smashdir)
+    stop_seafile(fname, smashdir)
+
+def stop_seafile(fname, smashdir):
+    import os
+    parentdir = os.path.abspath(smashdir+"/seafile-w-"+fname)
+    workerconfdir = os.path.abspath(smashdir+"/seafile-c-"+fname+"/.ccnet")
+    subprocess.call(["./seaf-cli", "stop", "-c",workerconfdir], cwd=parentdir)
+    
+
+def check_status_seafile(fname, smashdir):
+    parentdir = os.path.abspath(smashdir+"/seafile-w-"+fname)
+    workerconfdir = os.path.abspath(smashdir+"/seafile-c-"+fname+"/.ccnet")
+    cmd = "./seaf-cli status -c "+workerconfdir
+    process = subprocess.Popen(cmd, cwd=parentdir, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    return (process.communicate()[0]).encode('ascii','ignore')
+
+def get_synced_seafile(fname, smashdir):
+    import time
+    flag = 0 
+    stdout_array = []
+    while flag<3:
+        stdout = check_status_seafile(fname, smashdir)
+        stdout_array.append("%s - %s"%(time_now(),stdout))
+        if(stdout.find("synchronized") != -1):
+            flag+=1
+        else:
+            flag=0
+        time.sleep(0.05)
+    return { fname : stdout_array }
+    
+def get_running_seafile(fname, smashdir):
+    flag = 0
+    while flag<2:
+        if(((check_status_seafile(fname, smashdir)).find("waiting for sync") != -1)):
+            flag+=1
+    
+def seafile_clean_directory(smashdir, fname): 
+    workerdir = os.path.abspath(smashdir+"/seafile-"+fname)
+    cmd = ('rm -rf '+os.path.join(workerdir,"*"))
+    process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    process.wait()
+    
+def reinit_seafile():
+    print "reinitialize seafile after corruption of fs"
+    home = os.path.expanduser("~")
+    subprocess.call("find %s -type d -name 'sea*' -exec rm -rf {} \;"%home, shell=True)
+    
+""" non native engines utilities """
+
+def check_if_stopped(service):
+    import time
+    t_syncprepare = time_now() 
+    running = True
+    cmd = os.path.dirname(__file__)+"/running.sh "+service
+    status = "Process not running"
+    while(running):
+        process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        stdout = (process.communicate()[0]).encode('ascii','ignore')
+        if((stdout.find(status) != -1)):
+            running = False
+        else:
+            print "some %s process is still running: %s"%(service,stdout)
+            time.sleep(1)
+            
+def kill_if_not_stopped(service):
+    import time
+    running = True
+    cmd = os.path.dirname(__file__)+"/python/smashbox/test_manager/running.sh "+service
+    status = "Process not running"
+    while(running):
+        process = subprocess.Popen(cmd, shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        stdout = (process.communicate()[0]).encode('ascii','ignore')
+        if((stdout.find(status) != -1)):
+            running = False
+        else:
+            print "some %s process is still running: %s"%(service,stdout)
+            import re
+            kill_array = re.findall(r'\d+', stdout)
+            for pid in kill_array:
+                stop_execution(int(pid))
+            time.sleep(1)
+            
+def time_now(time_zero=None): 
+    import datetime
+    if time_zero==None:
+        return datetime.datetime.now()
+    else:
+        return (datetime.datetime.now()-time_zero)  
+
+def log_test(log_location,data):
+    import io,json
+    with io.open(log_location, 'a', encoding='utf-8') as file:
+        file.write(unicode(json.dumps(data, ensure_ascii=False, indent=4)))  
+  
+from threading import Thread
+from Queue import Queue, Empty
+
+class NonBlockingStreamReader:
+
+    def __init__(self, stream):
+        '''
+        stream: the stream to read from.
+                Usually a process' stdout or stderr.
+        '''
+
+        self._s = stream
+        self._q = Queue()
+
+        def _populateQueue(stream, queue):
+            '''
+            Collect lines from 'stream' and put them in 'quque'.
+            '''
+
+            while True:
+                line = stream.readline()
+                if line:
+                    queue.put(line)
+                else:
+                    pass
+
+        self._t = Thread(target = _populateQueue,
+                args = (self._s, self._q))
+        self._t.daemon = True
+        self._t.start() #start collecting lines from the stream
+
+    def readline(self, timeout = None):
+        try:
+            return self._q.get(block = timeout is not None,
+                    timeout = timeout)
+        except Empty:
+            return None            
