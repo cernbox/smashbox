@@ -197,7 +197,7 @@ class _smash_:
         _smash_.steps = manager.list([0 for x in range(len(_smash_.workers))])
         
         import smashbox.utilities
-        smashbox.utilities.setup_test(_smash_,config,manager) 
+        smashbox.utilities.setup_test(_smash_,manager) 
         # first worker => process number == 0
         for i,f_n in enumerate(_smash_.workers):
             f = f_n[0]
