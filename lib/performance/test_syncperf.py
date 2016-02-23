@@ -103,9 +103,7 @@ def worker1(step):
 """ TEST UTILITIES """
     
 def prepare_workdir(d):
-    reset_owncloud_account()
     wdir = os.path.join(d,"0")
-    remove_tree(wdir)
     if fullsyncdir!=False:
         conf = fullsyncdir.split('/')
         if len(conf)==3 and int(conf[0])>0:
@@ -117,7 +115,6 @@ def prepare_workdir(d):
                         create_test_file(dir,"%s%s"%(i,j),int(conf[2]))
             return (wdir,int(conf[0]))
         error_check(len(conf)==3,'Improper testdirstruct format, expects dir_n/file_n/file_size')
-    reset_rundir()
     mkdir(wdir)
     return (wdir,1)
 

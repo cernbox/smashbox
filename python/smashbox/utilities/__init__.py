@@ -1062,6 +1062,7 @@ class dropbox:
     
     @staticmethod   
     def sync_client_start(args,kwargs):
+        reset_rundir()
         smash_workers = args[0].workers
         smashdir = config.smashdir
         install_dropbox()
@@ -1306,7 +1307,7 @@ class seafile:
     
     @staticmethod   
     def sync_client_start(args,kwargs):
-        import time
+        reset_rundir()
         smash_workers = args[0].workers
         smashdir = config.smashdir
         directory = install_seafile(smashdir,config.oc_webdav_endpoint)
@@ -1357,9 +1358,9 @@ class seafile:
         if finish==False:
             run_seafile(smashdir, worker_name)
         get_running_seafile(worker_name, smashdir)
-        t0 = datetime.datetime.now()
+        t0 = time_now()
         log = get_synced_seafile(worker_name, smashdir)
-        result = [t0,datetime.datetime.now()]
+        result = [t0,time_now()]
         sync_exec_time = result[1]-result[0]
         if stop==True:
             stop_seafile(worker_name, smashdir)
