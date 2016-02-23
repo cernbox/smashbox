@@ -83,6 +83,8 @@ def configure(cmdline_opts,config_files=None):
          try:
             if val == "None":
                val = None
+            elif val=="True" or val=="False":
+               val = (True if val == "True" else False)
             else:
                attr = getattr(config,key)
                # coerce val type to attr's type unless attr is set to None (then leave as-is <string>)

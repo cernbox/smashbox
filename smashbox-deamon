@@ -1,0 +1,133 @@
+#!/usr/bin/python
+import sys,os,socket
+import subprocess,time
+from multiprocessing import Process
+
+class SmashboxCLI:
+    def __init__(self,full_config):
+        config = full_config["config"]
+        self.SMASHBOX_CMD_BASIC = ["bin/smash","--keep-going"]
+        for i in range(0, len(config)):
+            self.SMASHBOX_CMD_BASIC += ["-o",config[i]]
+        if full_config.has_key("timeout"):
+            self.timeout_time = full_config["timeout"]
+    def start(self,sync_engine,testset,test_name,runid): 
+        parentdir = os.path.dirname(os.path.realpath(__file__))    
+        SMASHBOX_CMD = self.SMASHBOX_CMD_BASIC[:]
+        for j in range(0, len(sync_engine)):
+            SMASHBOX_CMD += ["-o",sync_engine[j]]
+        if (testset == "all"):
+            SMASHBOX_CMD += ["-a"]
+        elif (testset != None):
+            SMASHBOX_CMD += ["-t",str(testset)] 
+        SMASHBOX_CMD += ["-o","runid=%s"%runid,"lib/%s"%test_name] 
+        process = subprocess.Popen(SMASHBOX_CMD,stdout=subprocess.PIPE, stderr=subprocess.STDOUT, preexec_fn=os.setsid, cwd=parentdir)
+        pid = str(os.getpgid(process.pid))
+        p = Process(target=timeout, args=(pid,self.timeout_time,sync_engine,))
+        p.start()
+        while True:
+            line = process.stdout.readline()
+            if line != '':
+                print line,
+            elif line == '' and process.poll() != None:
+                p.terminate()
+                p.join()
+                break         
+    
+def timeout(pid,timeout_time,sync_engine):
+    """stop the execution of the test according to the sync client class in utilities section """
+    print "PID: ",pid
+    start = time.time()
+    while True:
+        if int(time.time() - start) > timeout_time:
+            try:
+                import importlib
+                pythonDir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'python' )
+                sys.path.insert(0, pythonDir)
+                imported_mod = importlib.import_module('smashbox.utilities')
+                s = str(sync_engine)
+                start = s.find('engine=')
+                end = s.find("'",start)
+                sync_engine = str(s[start+7:end])
+                imported_sync_class = getattr(imported_mod, sync_engine)
+                imported_sync_class.stop(pid)
+            except Exception, e:
+                print "ERROR while stopping! Requires manual stop! ",e
+            break
+  
+def get_config(path):
+    import io    
+    path = os.path.abspath(path)    
+    if (os.path.exists(path)):
+        with io.open(path,'r') as file:
+            data = eval(file.read())
+        return data 
+    else:
+        print "path does not exists %s"%path
+        sys.exit()
+        
+def check_smashbox_basic_conf():
+    if not (os.path.exists('etc/smashbox.conf')):
+        cwd=os.path.dirname(os.path.realpath(__file__))
+        subprocess.call("\cp %s %s"%(os.path.join(cwd,"etc/smashbox.conf.template"),os.path.join(cwd,"etc/smashbox.conf")), shell=True)
+
+def run(testset_config): 
+    client = SmashboxCLI(testset_config)
+    sync_engines = testset_config["sync_engines"]
+    tests = testset_config["tests"]
+    for k in range(0, int(testset_config["loop"])):
+        for j in range(0, len(tests)):
+            for i in range(0, len(sync_engines)):
+                if (not testset_config.has_key("ensure_net_qos")) or testset_config.has_key("ensure_net_qos") and ensure_qos(testset_config["ensure_net_qos"])==True:
+                    test_name = tests[j]["test_name"]
+                    testset=None
+                    if tests[j].has_key("testset"):
+                    	testset = tests[j]["testset"]
+                    runid = tests[j]["runid"]
+                    client.start(sync_engines[i],testset,test_name,runid)     
+          
+def main(arguments):
+    check_smashbox_basic_conf()
+    for arg_i in range(1, len(arguments)):
+        testset_config = get_config(arguments[arg_i])
+        run(testset_config)            
+
+def ensure_qos(qos_min_dev):
+    import subprocess
+    print "Ensuring Network QoS..."
+    process = subprocess.Popen("ping -c 10 8.8.8.8 | grep 'rtt\|loss'", shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    s = (process.communicate()[0]).encode('ascii','ignore')
+    start = s.rfind('/') + 1
+    end = s.find(' ms', start)
+    try:
+        qos_min_dev = float(qos_min_dev)
+        if float(s[start:end]) > qos_min_dev and (s.find("0%")!=-1):
+            print "QoS FAIL rtt-stddev=%s, loss=0"%float(s[start:end])
+            return False
+        print "QoS OK rtt-stddev=%s, loss=0"%float(s[start:end])
+    except:
+        pass
+    return True
+    
+def get_lock():
+	process_name = 'running_test'		
+	global lock_socket   # Without this our lock gets garbage collected
+	lock_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+	try:
+		lock_socket.bind('\0' + process_name)
+		return 1
+	except socket.error:
+		return 0
+        
+if __name__ == '__main__':
+    """    """
+    arguments = sys.argv
+    if (get_lock()==1):
+        main(arguments)
+    else:
+        print ("Aborting - wait for the end of the previous smashbox run or ensure better QoS of your network to start tests")
+        sys.exit()
+
+
+
+

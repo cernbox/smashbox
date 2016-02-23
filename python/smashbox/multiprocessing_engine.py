@@ -107,6 +107,7 @@ class _smash_:
     def supervisor(steps):
 
         import time
+        import smashbox.utilities
         #print "SU",steps
         #print 'SU',[s for s in steps]
 
@@ -119,15 +120,14 @@ class _smash_:
                 #print [s for s in steps]
                 passed = all([_smash_.steps[i]>_smash_.supervisor_step.value for i in range(len(_smash_.steps))])
                 #print 'passed',supervisor_step.value,passed
+                
                 if passed:
                     break
 
             #print "supervisor step completed:",supervisor_step.value,steps
-
+            smashbox.utilities.finalize_step()
             _smash_.supervisor_step.value += 1
-
-        
-
+            
         if _smash_.DEBUG:
             log('stop',_smash_.supervisor_step.value,_smash_.steps)
 
@@ -172,10 +172,8 @@ class _smash_:
             step(_smash_.N_STEPS-1,None) # don't print any message
 
             import smashbox.utilities
-            if smashbox.utilities.reported_errors:
-               logger.error('%s error(s) reported',len(smashbox.utilities.reported_errors))
-               import sys
-               sys.exit(2)
+            
+            smashbox.utilities.finalize_worker(fname)
                   
 
     @staticmethod
@@ -183,24 +181,23 @@ class _smash_:
         """ Lunch worker processes and the supervisor loop. Block until all is finished.
         """
         from multiprocessing import Process, Manager
-
-        import smashbox.utilities
-        smashbox.utilities.setup_test()        
-
+       
         manager = Manager()
 
         _smash_.shared_object = _smash_.SmashSharedObject(os.path.join(config.rundir,'_shared_objects'))
         
         #_smash_.shared_object = shelve.open(os.path.join(config.rundir,'_shared_objects.shelve'))
 
-        #print "SUPERVISOR NAMESPACE",_smash_.shared_object.__dict__
+        #print "SUPERVISOR NAMESPACE",_smash_._smash_shared_object.__dict__
         
         _smash_.supervisor_step = manager.Value('i',0)
 
         _smash_.process_name = "supervisor"
 
         _smash_.steps = manager.list([0 for x in range(len(_smash_.workers))])
-
+        
+        import smashbox.utilities
+        smashbox.utilities.setup_test(_smash_,manager) 
         # first worker => process number == 0
         for i,f_n in enumerate(_smash_.workers):
             f = f_n[0]
@@ -213,9 +210,9 @@ class _smash_:
 
         for p in _smash_.all_procs:
             p.join()
-
+        
         smashbox.utilities.finalize_test()
-
+        
         for p in _smash_.all_procs:
            if p.exitcode != 0:
               import sys

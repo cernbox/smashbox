@@ -73,8 +73,8 @@ def main():
    # object (we use leading underscore for such internal stuff)
    config._loglevel = level
    
-   # check for mandatory configuration 
-   if not hasattr(config,'oc_account_password') or not config.oc_account_password:
+   # check for mandatory configuration - will be validated in check_settings()
+   if not hasattr(config,'oc_account_password'):
       logger.error("The oc_account_password not set in smashbox.conf")
       sys.exit(1)
             
@@ -124,14 +124,15 @@ def main():
    config.oc_sync_cmd = os.path.join(top_smash,config.oc_sync_cmd)
 
    import string
-
+   
+   #will be validated in check_settings()
    try:
       config.oc_server_shell_cmd = string.Template(config.oc_server_shell_cmd).substitute({'oc_server':config.oc_server})
    except ValueError,x:
       logger.critical('Malformed options oc_server_shell_cmd: %s %s'%(repr(config.oc_server_shell_cmd),repr(x)))
       sys.exit(1)
 
-
+   #will be validated in check_settings()
    try:
       config.oc_server_folder = string.Template(config.oc_server_folder).substitute({'runid':config.runid})
    except ValueError,x:
@@ -149,7 +150,7 @@ def main():
       logger.warning("No tests specified to run...")
       sys.exit(1)
 
-   def run_multiprocessing_engine(config,t,reporter):
+   def run_multiprocessing_engine(config,t):
        global global_exitcode_error
        import subprocess, pickle
        t0=datetime.datetime.now()
@@ -161,8 +162,6 @@ def main():
 
        assert(p.returncode is not None)
 
-       reporter.testcase_stop(p.returncode)
-
        if p.returncode != 0:
           if args.keep_going:
              logger.error('Non-zero exit code (%s)'%p.returncode)
@@ -172,17 +171,12 @@ def main():
              sys.exit(p.returncode)
           
 
-   from smashbox.utilities import  oc_webdav_url
+   from smashbox.utilities import oc_webdav_url
 
    log_quiet('runid: %s',config.runid) # log_quiet
    log_quiet('URL: %s',oc_webdav_url(hide_password=True))  # log_quiet
    
    user_defined_oc_account_name = config.oc_account_name
-
-   # report persistent information
-   import smashbox.reporter
-   reporter = smashbox.reporter.Reporter()
-   reporter.smashbox_start(args,config)
 
    for t in tests:
 
@@ -225,10 +219,8 @@ def main():
          
             log_quiet('running %s in %s as %s testset #%s %s',t,config.rundir,config.oc_account_name,i,repr(ts)) # log_quiet
 
-         reporter.testcase_start(barename(t),j,i,smashbox.no_engine)
-
          if not args.dry_run:
-            run_multiprocessing_engine(config,os.path.abspath(t),reporter)
+            run_multiprocessing_engine(config,os.path.abspath(t))
 
       # get introspection information from the test-case itself: all
       # symbols defined by the test-case are loaded into the namespace
