@@ -307,28 +307,67 @@ def run_ocsync(local_folder, remote_folder="", n=None, user_num=None):
         logger.info('sync finished: %s',datetime.datetime.now()-t0)
         ocsync_cnt[current_step]+=1
 
+def _prop_check(path,user_num=None,depth="0"):
+    """ Private function to implement other utilities.
+    """
+    import smashbox.curl
+    c = smashbox.curl.Client()
+    url = oc_webdav_url(remote_folder=path, user_num=user_num)
+    query = """<?xml version="1.0" encoding="UTF-8"?><D:propfind xmlns:D="DAV:"><D:allprop/></D:propfind>"""
+
+    r = c.PROPFIND(url,query,depth=depth)
+    return r
+
+
 
 def webdav_propfind_ls(path, user_num=None):
-    runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format -'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)))
+    import xml.dom.minidom
+    r = _prop_check(path,user_num,depth="1")
+    x=xml.dom.minidom.parseString(r.response_body)
+    logger.info('Listing %s by PROPFIND: %s'%(repr(path),x.toprettyxml()))
 
 def expect_webdav_does_not_exist(path, user_num=None):
-    exitcode,stdout,stderr = runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format - | grep NotFound | wc -l'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)))
-    not_exists = stdout.rstrip() == "1"
-    error_check(not_exists, "Remote path does not %s exist but should" % path)
+
+    r = _prop_check(path,user_num)
+    error_check(r.rc >= 400,"Remote path exists: %s" % path) # class 4xx response is OK
 
 def expect_webdav_exist(path, user_num=None):
-    exitcode,stdout,stderr = runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format - | grep NotFound | wc -l'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)))
-    exists = stdout.rstrip() == "0"
-    error_check(exists, "Remote path %s exists but should not" % path)
+
+    r = _prop_check(path,user_num)
+    error_check(200 <= r.rc and r.rc < 300,"Remote path does not exist: %s" % path) # class 2xx response is OK
+
 
 def webdav_delete(path, user_num=None):
-    runcmd('curl -k %s -X DELETE %s '%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)))
-
+    runcmd('curl --verbose -k %s -X DELETE %s '%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)))
+    
 def webdav_mkcol(path, silent=False, user_num=None):
     out=""
     if silent: # a workaround for super-verbose errors in case directory on the server already exists
         out = "> /dev/null 2>&1"
-    runcmd('curl -k %s -X MKCOL %s %s'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num),out))
+    runcmd('curl --verbose -k %s -X MKCOL %s %s'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num),out))
+
+
+# The two *_NEW functions below currently fail with:
+# * warning: ignoring value of ssl.verifyhost
+# * NSS error -8023
+# * Closing connection #0
+# * SSL connect error
+
+def webdav_delete_NEW(path, user_num=None):
+    import smashbox.curl
+    c = smashbox.curl.Client(verbose=True)
+    url = oc_webdav_url(remote_folder=path, user_num=user_num)
+    return c.DELETE(url)
+
+
+def webdav_mkcol_NEW(path, silent=False, user_num=None):
+
+    # silent is a workaround for super-verbose errors in case directory on the server already exists
+    import smashbox.curl
+    c = smashbox.curl.Client(verbose=not silent) 
+    url = oc_webdav_url(remote_folder=path, user_num=user_num)
+    return c.MKCOL(url)
+###############
 
 # #### SHELL COMMANDS AND TIME FUNCTIONS
 
