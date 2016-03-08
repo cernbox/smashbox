@@ -12,7 +12,7 @@ import pycurl, cStringIO
 
 class Client:
     
-    def __init__(self):
+    def __init__(self,verbose=None):
         c = pycurl.Curl()
 
         c.setopt(c.SSL_VERIFYPEER, 0)
@@ -24,11 +24,15 @@ class Client:
         if config.get('pycurl_USERAGENT',None):
             c.setopt(c.USERAGENT, config.pycurl_USERAGENT)
 
-        if config.get('pycurl_VERBOSE',None) is not None:
-            self.verbose = config.pycurl_VERBOSE
+        if verbose is None:
+            if config.get('pycurl_VERBOSE',None) is not None:
+                self.verbose = config.pycurl_VERBOSE
+            else:
+                from logging import DEBUG
+                self.verbose = config._loglevel <= DEBUG
         else:
-            from logging import DEBUG
-            self.verbose = config._loglevel <= DEBUG
+            self.verbose=verbose
+
 
         c.setopt(c.VERBOSE, self.verbose) 
 
@@ -54,13 +58,16 @@ class Client:
 
         self._perform_request(url,headers,response_obj=r)
 
+        r.response_body=r.body_stream.getvalue()
+
         if self.verbose:
             logger.info('PROPFIND response body: %s',r.body_stream.getvalue())
 
         if parse_check:
-            #TODO: multiple Content-Type response headers will confuse the client as well
-            fatal_check('application/xml; charset=utf-8' in r.headers['Content-Type'],'Wrong response header "Content-Type:%s"'%r.headers['Content-Type']) # as of client 1.7 and 1.8
-            r.propfind_response=_parse_propfind_response(r.body_stream.getvalue(),depth=depth)
+            if 200 <= r.rc and r.rc < 300: # only parse the reponse type for positive responses 
+                #TODO: multiple Content-Type response headers will confuse the client as well
+                fatal_check('application/xml; charset=utf-8' in r.headers['Content-Type'],'Wrong response header "Content-Type:%s"'%r.headers['Content-Type']) # as of client 1.7 and 1.8
+                r.propfind_response=_parse_propfind_response(r.response_body,depth=depth)
       
         return r
 
@@ -108,11 +115,25 @@ class Client:
         return r
 
     def MKCOL(self,url):
-        logger.debug('MKCOL %s %s %s',url)
+        logger.debug('MKCOL %s',url)
         
         c = self.c
         
         c.setopt(c.CUSTOMREQUEST, "MKCOL")
+
+        r = self._perform_request(url,{})
+
+        return r        
+
+
+    def DELETE(self,url):
+        print ">>>>>>>>>> DELETE",url
+
+        logger.debug('DELETE %s',url)
+        
+        c = self.c
+        
+        c.setopt(c.CUSTOMREQUEST, "DELETE")
 
         r = self._perform_request(url,{})
 
