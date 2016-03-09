@@ -27,34 +27,47 @@ filesizeKB = int(config.get('basicSync_filesizeKB',10000))
 # False => keep the loser 
 rmLocalStateDB = bool(config.get('basicSync_rmLocalStateDB',False))
 
+# subdirectory where to put files (if empty then use top level workdir)
+subdirPath = config.get('basicSync_subdirPath',"")
 
-testsets = [
-        { 'basicSync_filesizeKB': 1, 
-          'basicSync_rmLocalStateDB':False
-        },
-        { 'basicSync_filesizeKB': 5000, 
-          'basicSync_rmLocalStateDB':False
-        },
-        { 'basicSync_filesizeKB': 15000, 
-          'basicSync_rmLocalStateDB':False
-        },
-        { 'basicSync_filesizeKB': 50000, 
-          'basicSync_rmLocalStateDB':False
-        },
+#### testsets = [
+####         { 'basicSync_filesizeKB': 1, 
+####           'basicSync_rmLocalStateDB':False
+####         },
+####         { 'basicSync_filesizeKB': 5000, 
+####           'basicSync_rmLocalStateDB':False
+####         },
+####         { 'basicSync_filesizeKB': 15000, 
+####           'basicSync_rmLocalStateDB':False
+####         },
+####         { 'basicSync_filesizeKB': 50000, 
+####           'basicSync_rmLocalStateDB':False
+####         },
+#### 
+####         { 'basicSync_filesizeKB': 1, 
+####           'basicSync_rmLocalStateDB':True
+####         },
+####         { 'basicSync_filesizeKB': 5000, 
+####           'basicSync_rmLocalStateDB':True
+####         },
+####         { 'basicSync_filesizeKB': 15000, 
+####           'basicSync_rmLocalStateDB':True
+####         },
+####         { 'basicSync_filesizeKB': 50000, 
+####           'basicSync_rmLocalStateDB':True
+####         }
+#### ]
+#### 
 
-        { 'basicSync_filesizeKB': 1, 
-          'basicSync_rmLocalStateDB':True
-        },
-        { 'basicSync_filesizeKB': 5000, 
-          'basicSync_rmLocalStateDB':True
-        },
-        { 'basicSync_filesizeKB': 15000, 
-          'basicSync_rmLocalStateDB':True
-        },
-        { 'basicSync_filesizeKB': 50000, 
-          'basicSync_rmLocalStateDB':True
-        }
-]
+testsets = []
+
+# create cartesian product of all test configurations
+for s in [1, 5000, 15000, 50000]:
+  for t in [True, False]:
+      for p in [ "", "abc", "abc/abc", "abc/def/ghi" ]:
+          testsets.append( { 'basicSync_filesizeKB':s,
+                             'basicSync_rmLocalStateDB':t,
+                             'basicSync_subdirPath':p } )
 
 def expect_content(fn,md5):
     actual_md5 = md5sum(fn)
@@ -102,57 +115,65 @@ def creator(step):
 
     d = make_workdir()
 
+    # we put the files in the subdir
+    subdir = os.path.join(d,subdirPath)
+
+    mkdir(subdir) 
+
+
     # files *_NONE are not modified by anyone after initial sync
     # files *_LOSER are modified by the loser but not by the winner
     # files *_WINNER are modified by the winner but not by the loser
     # files *_BOTH are modified both by the winner and by the loser (always conflict on the loser)
 
-    createfile(os.path.join(d,'TEST_FILE_MODIFIED_NONE.dat'),'0',count=1000,bs=filesizeKB)
-    createfile(os.path.join(d,'TEST_FILE_MODIFIED_LOSER.dat'),'0',count=1000,bs=filesizeKB)
-    createfile(os.path.join(d,'TEST_FILE_MODIFIED_WINNER.dat'),'0',count=1000,bs=filesizeKB)
-    createfile(os.path.join(d,'TEST_FILE_MODIFIED_BOTH.dat'),'0',count=1000,bs=filesizeKB)
-    createfile(os.path.join(d,'TEST_FILE_DELETED_LOSER.dat'),'0',count=1000,bs=filesizeKB)
-    createfile(os.path.join(d,'TEST_FILE_DELETED_WINNER.dat'),'0',count=1000,bs=filesizeKB)
-    createfile(os.path.join(d,'TEST_FILE_DELETED_BOTH.dat'),'0',count=1000,bs=filesizeKB)
+    createfile(os.path.join(subdir,'TEST_FILE_MODIFIED_NONE.dat'),'0',count=1000,bs=filesizeKB)
+    createfile(os.path.join(subdir,'TEST_FILE_MODIFIED_LOSER.dat'),'0',count=1000,bs=filesizeKB)
+    createfile(os.path.join(subdir,'TEST_FILE_MODIFIED_WINNER.dat'),'0',count=1000,bs=filesizeKB)
+    createfile(os.path.join(subdir,'TEST_FILE_MODIFIED_BOTH.dat'),'0',count=1000,bs=filesizeKB)
+    createfile(os.path.join(subdir,'TEST_FILE_DELETED_LOSER.dat'),'0',count=1000,bs=filesizeKB)
+    createfile(os.path.join(subdir,'TEST_FILE_DELETED_WINNER.dat'),'0',count=1000,bs=filesizeKB)
+    createfile(os.path.join(subdir,'TEST_FILE_DELETED_BOTH.dat'),'0',count=1000,bs=filesizeKB)
 
     shared = reflection.getSharedObject()
-    shared['md5_creator'] = md5sum(os.path.join(d,'TEST_FILE_MODIFIED_NONE.dat'))
+    shared['md5_creator'] = md5sum(os.path.join(subdir,'TEST_FILE_MODIFIED_NONE.dat'))
     logger.info('md5_creator: %s',shared['md5_creator'])
 
-    list_files(d)
+    list_files(subdir)
     run_ocsync(d)
-    list_files(d)
+    list_files(subdir)
 
     step(7,'download the repository')
     run_ocsync(d,n=3)
 
     step(8,'final check')
 
-    final_check(d,shared)
-    expect_no_conflict_files(d) 
+    final_check(subdir,shared)
+    expect_no_conflict_files(subdir) 
 
 @add_worker
 def winner(step):
     step(2,'initial sync')
 
     d = make_workdir()
+    subdir = os.path.join(d,subdirPath)
+
     run_ocsync(d)
 
     step(3,'modify locally and sync to server')
 
-    list_files(d)
+    list_files(subdir)
 
-    remove_file(os.path.join(d,'TEST_FILE_DELETED_WINNER.dat'))
-    remove_file(os.path.join(d,'TEST_FILE_DELETED_BOTH.dat'))
+    remove_file(os.path.join(subdir,'TEST_FILE_DELETED_WINNER.dat'))
+    remove_file(os.path.join(subdir,'TEST_FILE_DELETED_BOTH.dat'))
 
-    createfile(os.path.join(d,'TEST_FILE_MODIFIED_WINNER.dat'),'1',count=1000,bs=filesizeKB)
-    createfile(os.path.join(d,'TEST_FILE_MODIFIED_BOTH.dat'),'1',count=1000,bs=filesizeKB)
+    createfile(os.path.join(subdir,'TEST_FILE_MODIFIED_WINNER.dat'),'1',count=1000,bs=filesizeKB)
+    createfile(os.path.join(subdir,'TEST_FILE_MODIFIED_BOTH.dat'),'1',count=1000,bs=filesizeKB)
 
-    createfile(os.path.join(d,'TEST_FILE_ADDED_WINNER.dat'),'1',count=1000,bs=filesizeKB)
-    createfile(os.path.join(d,'TEST_FILE_ADDED_BOTH.dat'),'1',count=1000,bs=filesizeKB)
+    createfile(os.path.join(subdir,'TEST_FILE_ADDED_WINNER.dat'),'1',count=1000,bs=filesizeKB)
+    createfile(os.path.join(subdir,'TEST_FILE_ADDED_BOTH.dat'),'1',count=1000,bs=filesizeKB)
 
     shared = reflection.getSharedObject()
-    shared['md5_winner'] = md5sum(os.path.join(d,'TEST_FILE_ADDED_WINNER.dat'))
+    shared['md5_winner'] = md5sum(os.path.join(subdir,'TEST_FILE_ADDED_WINNER.dat'))
     logger.info('md5_winner: %s',shared['md5_winner'])
 
     run_ocsync(d)
@@ -163,8 +184,8 @@ def winner(step):
 
     step(8,'final check')
 
-    final_check(d,shared)
-    expect_no_conflict_files(d) 
+    final_check(subdir,shared)
+    expect_no_conflict_files(subdir) 
 
 
 # this is the loser which lost it's local state db after initial sync
@@ -175,25 +196,27 @@ def loser(step):
     step(2,'initial sync')
 
     d = make_workdir()
+    subdir = os.path.join(d,subdirPath)
+
     run_ocsync(d)
 
     step(4,'modify locally and sync to the server')
 
-    list_files(d)
+    list_files(subdir)
 
     # now do the local changes
 
-    remove_file(os.path.join(d,'TEST_FILE_DELETED_LOSER.dat'))
-    remove_file(os.path.join(d,'TEST_FILE_DELETED_BOTH.dat'))
+    remove_file(os.path.join(subdir,'TEST_FILE_DELETED_LOSER.dat'))
+    remove_file(os.path.join(subdir,'TEST_FILE_DELETED_BOTH.dat'))
 
-    createfile(os.path.join(d,'TEST_FILE_MODIFIED_LOSER.dat'),'2',count=1000,bs=filesizeKB)
-    createfile(os.path.join(d,'TEST_FILE_MODIFIED_BOTH.dat'),'2',count=1000,bs=filesizeKB)
+    createfile(os.path.join(subdir,'TEST_FILE_MODIFIED_LOSER.dat'),'2',count=1000,bs=filesizeKB)
+    createfile(os.path.join(subdir,'TEST_FILE_MODIFIED_BOTH.dat'),'2',count=1000,bs=filesizeKB)
 
-    createfile(os.path.join(d,'TEST_FILE_ADDED_LOSER.dat'),'2',count=1000,bs=filesizeKB)
-    createfile(os.path.join(d,'TEST_FILE_ADDED_BOTH.dat'),'2',count=1000,bs=filesizeKB)
+    createfile(os.path.join(subdir,'TEST_FILE_ADDED_LOSER.dat'),'2',count=1000,bs=filesizeKB)
+    createfile(os.path.join(subdir,'TEST_FILE_ADDED_BOTH.dat'),'2',count=1000,bs=filesizeKB)
 
     shared = reflection.getSharedObject()
-    shared['md5_loser'] = md5sum(os.path.join(d,'TEST_FILE_ADDED_LOSER.dat'))
+    shared['md5_loser'] = md5sum(os.path.join(subdir,'TEST_FILE_ADDED_LOSER.dat'))
     logger.info('md5_loser: %s',shared['md5_loser'])
 
 
@@ -213,11 +236,11 @@ def loser(step):
 
     #os.system('sqlite3 -line /tmp/smashdir/test_basicSync/loser/.csync_journal.db  \'select * from metadata where path like "%TEST_FILE_MODIFIED_BOTH%"\'')
 
-    final_check(d,shared)
+    final_check(subdir,shared)
     if not rmLocalStateDB:
-        expect_conflict_files(d, ['TEST_FILE_ADDED_BOTH.dat', 'TEST_FILE_MODIFIED_BOTH.dat' ])
+        expect_conflict_files(subdir, ['TEST_FILE_ADDED_BOTH.dat', 'TEST_FILE_MODIFIED_BOTH.dat' ])
     else:
-        expect_conflict_files(d, ['TEST_FILE_ADDED_BOTH.dat', 'TEST_FILE_MODIFIED_BOTH.dat', 
+        expect_conflict_files(subdir, ['TEST_FILE_ADDED_BOTH.dat', 'TEST_FILE_MODIFIED_BOTH.dat', 
                                   'TEST_FILE_MODIFIED_LOSER.dat', 'TEST_FILE_MODIFIED_WINNER.dat']) # because the local and remote state is different and it is assumed that this is a conflict (FIXME: in the future timestamp-based last-restort check could improve this situation)
 
 @add_worker
@@ -226,12 +249,14 @@ def checker(step):
 
     step(7,'download the repository for final verification')
     d = make_workdir()
+    subdir = os.path.join(d,subdirPath)
+
     run_ocsync(d,n=3)
 
     step(8,'final check')
 
-    final_check(d,shared)
-    expect_no_conflict_files(d) 
+    final_check(subdir,shared)
+    expect_no_conflict_files(subdir) 
 
 
 def final_check(d,shared):
