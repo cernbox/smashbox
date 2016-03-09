@@ -209,6 +209,19 @@ def all_prop_android(url,depth=0):
     # which properites to expect? compare with sabre-dav implementation
     return client.PROPFIND(url,query,depth=depth)
 
+
+def ls_prop_ios_f1e09c(url,depth):
+    # fixed wrong propfind (our version has allprop)
+    # code ref:
+    # https://github.com/owncloud/ios-library/blame/c9897927fbe5f4695369412d9f2709b352a28f59/OCCommunicationLib/OCCommunicationLib/OCWebDavClient/OCWebDAVClient.m#L274
+
+    query="""<?xml version=\"1.0\" encoding=\"UTF-8\"?><D:propfind xmlns:D=\"DAV:\"><D:prop><D:resourcetype/><D:getlastmodified/><size xmlns=\"http://owncloud.org/ns\"/><D:creationdate/><id xmlns=\"http://owncloud.org/ns\"/><D:getcontentlength/><D:displayname/><D:quota-available-bytes/><D:getetag/><permissions xmlns=\"http://owncloud.org/ns\"/><D:quota-used-bytes/><D:getcontenttype/></D:prop></D:propfind>"""
+
+    client = smashbox.curl.Client()
+
+    return client.PROPFIND(url,query,depth=depth)
+
+
 def ls_prop_desktop17(url,depth=0):
     """ List directory: desktop sync client 1.7
     """
