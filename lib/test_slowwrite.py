@@ -57,6 +57,16 @@ testsets = [
 @add_worker
 def writer(step):    
 
+    ver=ocsync_version()
+
+    # sync client version 2.x.x and below were syncing indefinitely in case of local errors, so eventually the files got synced
+    # for newer clients, the default number of sync retries is 3 which is not enough to get the file synced if the writes are really slow
+    # so for newer client we set the --max-sync-retries explicitly to a higher number (this is a new option)
+    # ref: https://github.com/owncloud/client/issues/4586
+    
+    if ver[0] >= 2:
+        config.oc_sync_cmd += " --max-sync-retries 20"
+
     # do not cleanup server files from previous run
     reset_owncloud_account()
 
