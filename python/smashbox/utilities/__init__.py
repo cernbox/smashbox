@@ -287,11 +287,11 @@ def ocsync_version():
 
     # strip possible options from config.oc_sync_cmd
     cmd = config.oc_sync_cmd.split()[0] + " --version"
-    rc,stdout,stderr = runcmd(cmd, ignore_exitcode=True)
+    rc,stdout,stderr = runcmd(cmd, ignore_exitcode=True,log_warning=False) # do not warn about non-zero exit code (which is unfortunately normal)
 
     sver = stdout.strip().split()[-1] # the version is the last word on the first line
     
-    return (int(x) for x in sver.split("."))
+    return tuple([int(x) for x in sver.split(".")])
 
 # this is a local variable for each worker that keeps track of the repeat count for the current step
 ocsync_cnt = {}
