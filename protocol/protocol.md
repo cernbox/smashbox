@@ -139,7 +139,7 @@ Explanation of the capabilities:
 * `version`: detailed server version information
 * `meta`: ocs meta information
 
-Source code reference: client/src/libsync/capabilities.cpp
+Source code reference: client/src/libsync/capabilities.cpp (https://github.com/owncloud/client/blob/master/src/libsync/capabilities.cpp)
 
 ## WEBDAV
 
