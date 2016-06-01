@@ -242,7 +242,8 @@ def main():
          logger.critical("Wrong testset specification: %d index out of range for %s",args.testset,barename(t))
          sys.exit(1)
 
-      for j in range(1,args.loop+1):
+      j = 1
+      while j <= args.loop or args.loop == 0:
          log_quiet ("Running iteration %d" % j)
 
          if not smashbox.no_engine.testsets:
@@ -254,6 +255,7 @@ def main():
             else:
                i = args.testset # this may be None if no testset indicated
                run_test(t,j,i)
+         j=j+1
 
    if args.dry_run:
       log_quiet('*** DRY RUN ***')

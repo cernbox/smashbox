@@ -10,9 +10,10 @@ conf_file = os.environ.get('SMASHBOX_CONF',os.path.join(thisdir,"smashbox.conf")
 
 dirs = {'thisdir':thisdir,'smashdir':smashdir, 'conf_file':conf_file}
 
-os.environ['OWNCLOUD_MAX_PARALLEL'] = '10'
+os.environ['OWNCLOUD_MAX_PARALLEL'] = '3'
 
-os.environ['OWNCLOUD_USE_LEGACY_JOBS'] = '1'
+# this disables the checksumming!
+#os.environ['OWNCLOUD_USE_LEGACY_JOBS'] = '1'
 
 import datetime
 now = datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S')
@@ -35,6 +36,9 @@ i = 1
 
 dirs['options']="-o nplusone_nfiles=20 -o nplusone_filesize='(5.0,1.37)'" # --keep-state"
 #dirs['options']="-o nplusone_nfiles=20 -o nplusone_filesize=30000000"
+
+# infinite loop and ignore any casual errors (stop on fatal errors only)
+dirs['options'] += " --loop=0 --keep-going "
 
 cmd = '%(smashdir)s/bin/smash -c %(conf_file)s %(options)s %(smashdir)s/lib/test_nplusone.py' % dirs
 
