@@ -1,10 +1,10 @@
 File chunking (new generation)
 ====
 
-This is a work in progress to introduce a better chunking protocol than currently implemented 
+This is a work in progress (July 2016) to introduce a better chunking protocol than currently implemented 
 (which has many drawbacks such server keeping the tranfser state implicitly which results poor error recovery possibilities).
 
-The specification will be added gradually here based.
+The specification will be added gradually here.
 
 
 References
