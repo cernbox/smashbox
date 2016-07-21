@@ -561,6 +561,9 @@ Specific error code handling:
 
 ### Chunked File Upload 
 
+Note: new generation fo chunked upload is under development and it is described here: 
+https://github.com/cernbox/smashbox/blob/master/protocol/chunking.md
+
 If the file size exceeds a certain size, the file uploads happens
 through so called "big file chunking". The file is split into chunks
 of equal sizes and each chunk is transfered to the server through its
