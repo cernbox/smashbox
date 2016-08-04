@@ -11,8 +11,9 @@ from smashbox.utilities.hash_files import *
 
 nfiles = int(config.get('fs_nplusone_nfiles',10))
 filesize = config.get('fs_nplusone_filesize',1000)
-fsop = config.get('nplusone_fs','')
-ocop = config.get('nplusone_oc','')
+wkr0 = config.get('nplusone_worker0_fs','')
+wkr1 = config.get('nplusone_worker1_fs','')
+conf = config['oc_server_folder']
 
 if type(filesize) is type(''):
     filesize = eval(filesize)
@@ -50,13 +51,13 @@ def worker0(step):
     reset_rundir()
 
     step(1,'Preparation')
-    if fsop != "":
+    if wkr0:
         d = make_workdir()
         run_ocsync(d)
     else:
-        d = ocop+config['oc_server_folder']
+        d = os.path.join(wkr1,conf)
 
-    if (fsop!="" and ocop!=""): 
+    if (wkr0 and wkr1): 
         d = make_workdir()
         run_ocsync(d)
         
@@ -64,10 +65,13 @@ def worker0(step):
 
     step(2,'Add %s files and check if we still have k1+nfiles after resync'%nfiles)
 
-    for i in range(nfiles):
-        create_hashfile(d,size=filesize)
 
-    if fsop != "":
+    for i in range(nfiles):
+        print 'File number {}'.format(i+1)
+        create_hashfile(d,size=filesize) 
+
+
+    if wkr0:
         run_ocsync(d)
 
     
@@ -87,12 +91,14 @@ def worker0(step):
 def worker1(step):
     step(1,'Preparation')
 
-    if fsop != "":
-        d = fsop+config['oc_server_folder']
+    if wkr0:
+        d = os.path.join(wkr0,conf)
+        #d = wkr0+config['oc_server_folder']
     else:
         d = make_workdir()
         run_ocsync(d)
-    if (fsop!="" and ocop!=""):
+    
+    if (wkr0 and wkr1):
         d = make_workdir()
         run_ocsync(d)
     
@@ -101,9 +107,9 @@ def worker1(step):
 
     step(3,'Resync and check files added by worker0')
 
-    if fsop == "":
+    if not wkr0:
         run_ocsync(d)
-    if(fsop !="" and ocop !=""):
+    if(wkr0 and wkr1):
         run_ocsync(d)
     
     
