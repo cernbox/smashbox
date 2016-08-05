@@ -51,13 +51,17 @@ def worker0(step):
     reset_rundir()
 
     step(1,'Preparation')
+    if (wkr0 and wkr1):
+        d = os.path.join(wkr0,conf)
+
     if wkr0:
         d = make_workdir()
         run_ocsync(d)
-    else:
+
+    if wkr1:
         d = os.path.join(wkr1,conf)
 
-    if (wkr0 and wkr1): 
+    if (not wkr0 and not wkr1): 
         d = make_workdir()
         run_ocsync(d)
         
@@ -65,17 +69,15 @@ def worker0(step):
 
     step(2,'Add %s files and check if we still have k1+nfiles after resync'%nfiles)
 
-
     for i in range(nfiles):
-        print 'File number {}'.format(i+1)
+        logger.info('File number {}'.format(i+1))
         create_hashfile(d,size=filesize) 
 
 
     if wkr0:
         run_ocsync(d)
-
-    
-    
+    if(not wkr0 and not wkr1):
+        run_ocsync(d)
 
     ncorrupt = analyse_hashfiles(d)[2]
     
@@ -90,15 +92,17 @@ def worker0(step):
 @add_worker
 def worker1(step):
     step(1,'Preparation')
+    if (wkr0 and wkr1):
+        d = os.path.join(wkr1,conf)
+
+    if wkr1:
+        d = os.path.join(wkr1,conf)
 
     if wkr0:
-        d = os.path.join(wkr0,conf)
-        #d = wkr0+config['oc_server_folder']
-    else:
         d = make_workdir()
         run_ocsync(d)
-    
-    if (wkr0 and wkr1):
+
+    if (not wkr0 and not wkr1):
         d = make_workdir()
         run_ocsync(d)
     
@@ -107,9 +111,9 @@ def worker1(step):
 
     step(3,'Resync and check files added by worker0')
 
-    if not wkr0:
+    if wkr0:
         run_ocsync(d)
-    if(wkr0 and wkr1):
+    if(not wkr0 and not wkr1):
         run_ocsync(d)
     
     
@@ -120,7 +124,5 @@ def worker1(step):
     error_check(k1-k0==nfiles,'Expecting to have %d files more: see k1=%d k0=%d'%(nfiles,k1,k0))
 
     fatal_check(ncorrupt==0, 'Corrupted files (%s) found'%ncorrupt)
-
-
 
 
