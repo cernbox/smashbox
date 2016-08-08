@@ -11,8 +11,8 @@ from smashbox.utilities.hash_files import *
 
 nfiles = int(config.get('fs_nplusone_nfiles',10))
 filesize = config.get('fs_nplusone_filesize',1000)
-wkr0 = config.get('nplusone_worker0_fs','')
-wkr1 = config.get('nplusone_worker1_fs','')
+fspath0 = config.get('fs_nplusone_worker0',"")
+wkr1 = config.get('fs_nplusone_worker1',"")
 conf = config['oc_server_folder']
 
 if type(filesize) is type(''):
@@ -51,34 +51,29 @@ def worker0(step):
     reset_rundir()
 
     step(1,'Preparation')
-    if (wkr0 and wkr1):
-        d = os.path.join(wkr0,conf)
-
-    if wkr0:
+    
+    if fspath0:
+        d = os.path.join(fspath0,conf)
+    else:
         d = make_workdir()
         run_ocsync(d)
-
-    if wkr1:
-        d = os.path.join(wkr1,conf)
-
-    if (not wkr0 and not wkr1): 
-        d = make_workdir()
-        run_ocsync(d)
-        
+    
     k0 = count_files(d)
 
     step(2,'Add %s files and check if we still have k1+nfiles after resync'%nfiles)
 
     for i in range(nfiles):
-        logger.info('File number {}'.format(i+1))
-        create_hashfile(d,size=filesize) 
+        create_hashfile(d,size=filesize)
 
-
-    if wkr0:
+    if fspath0:
+        d = os.path.join(fspath0,conf)
+        
+    if wkr1:
         run_ocsync(d)
-    if(not wkr0 and not wkr1):
-        run_ocsync(d)
 
+    if (not fspath0 and not wkr1):
+        run_ocsync(d)
+        
     ncorrupt = analyse_hashfiles(d)[2]
     
     k1 = count_files(d)
@@ -92,31 +87,26 @@ def worker0(step):
 @add_worker
 def worker1(step):
     step(1,'Preparation')
-    if (wkr0 and wkr1):
-        d = os.path.join(wkr1,conf)
 
     if wkr1:
         d = os.path.join(wkr1,conf)
 
-    if wkr0:
-        d = make_workdir()
-        run_ocsync(d)
+    else:
+        d = make_workdir() 
+        run_ocsync(d) 
 
-    if (not wkr0 and not wkr1):
-        d = make_workdir()
-        run_ocsync(d)
-    
 
     k0 = count_files(d)
 
     step(3,'Resync and check files added by worker0')
 
-    if wkr0:
-        run_ocsync(d)
-    if(not wkr0 and not wkr1):
+    if fspath0:
+        d = os.path.join(fspath0,conf)
+    if wkr1:
         run_ocsync(d)
     
-    
+    if (not fspath0 and not wkr1):
+        run_ocsync(d)
 
     ncorrupt = analyse_hashfiles(d)[2]
     k1 = count_files(d)
@@ -124,5 +114,7 @@ def worker1(step):
     error_check(k1-k0==nfiles,'Expecting to have %d files more: see k1=%d k0=%d'%(nfiles,k1,k0))
 
     fatal_check(ncorrupt==0, 'Corrupted files (%s) found'%ncorrupt)
+
+
 
 
