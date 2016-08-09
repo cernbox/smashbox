@@ -107,6 +107,8 @@ def worker1(step):
     
     if (not fspath0 and not wkr1):
         run_ocsync(d)
+    if (fspath0 and wkr1):
+        d = os.path.join(wkr1,conf)
 
     ncorrupt = analyse_hashfiles(d)[2]
     k1 = count_files(d)
