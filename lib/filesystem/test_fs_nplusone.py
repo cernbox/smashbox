@@ -11,8 +11,8 @@ from smashbox.utilities.hash_files import *
 
 nfiles = int(config.get('fs_nplusone_nfiles',10))
 filesize = config.get('fs_nplusone_filesize',1000)
-fspath0 = config.get('fs_nplusone_worker0',"")
-wkr1 = config.get('fs_nplusone_worker1',"")
+fspath0 = config.get('fs_nplusone_fspath0',"")
+fspath1 = config.get('fs_nplusone_fspath1',"")
 conf = config['oc_server_folder']
 
 if type(filesize) is type(''):
@@ -63,15 +63,13 @@ def worker0(step):
     step(2,'Add %s files and check if we still have k1+nfiles after resync'%nfiles)
 
     for i in range(nfiles):
+        logger.info('file number {}'.format(i+1)) 
         create_hashfile(d,size=filesize)
 
     if fspath0:
         d = os.path.join(fspath0,conf)
         
-    if wkr1:
-        run_ocsync(d)
-
-    if (not fspath0 and not wkr1):
+    else:
         run_ocsync(d)
         
     ncorrupt = analyse_hashfiles(d)[2]
@@ -88,8 +86,8 @@ def worker0(step):
 def worker1(step):
     step(1,'Preparation')
 
-    if wkr1:
-        d = os.path.join(wkr1,conf)
+    if fspath1:
+        d = os.path.join(fspath1,conf)
 
     else:
         d = make_workdir() 
@@ -100,15 +98,12 @@ def worker1(step):
 
     step(3,'Resync and check files added by worker0')
 
-    if fspath0:
-        d = os.path.join(fspath0,conf)
-    if wkr1:
+    if (fspath1 and fspath0):
+        d = os.path.join(fspath1,conf)
+
+    else:
         run_ocsync(d)
-    
-    if (not fspath0 and not wkr1):
-        run_ocsync(d)
-    if (fspath0 and wkr1):
-        d = os.path.join(wkr1,conf)
+
 
     ncorrupt = analyse_hashfiles(d)[2]
     k1 = count_files(d)
