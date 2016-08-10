@@ -66,10 +66,10 @@ def worker0(step):
         logger.info('file number {}'.format(i+1)) 
         create_hashfile(d,size=filesize)
 
-    if fspath0:
-        d = os.path.join(fspath0,conf)
+    #if fspath0:
+        #d = os.path.join(fspath0,conf)
         
-    else:
+    if not fspath0:
         run_ocsync(d)
         
     ncorrupt = analyse_hashfiles(d)[2]
@@ -88,20 +88,17 @@ def worker1(step):
 
     if fspath1:
         d = os.path.join(fspath1,conf)
-
     else:
         d = make_workdir() 
         run_ocsync(d) 
-
 
     k0 = count_files(d)
 
     step(3,'Resync and check files added by worker0')
 
-    if (fspath1 and fspath0):
-        d = os.path.join(fspath1,conf)
-
-    else:
+    #if fspath1:
+        #d = os.path.join(fspath1,conf)
+    if not fspath1:
         run_ocsync(d)
 
 
