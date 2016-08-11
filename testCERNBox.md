@@ -1,4 +1,4 @@
-| Test#         | Short/Long    |  Action           |  Test            |  Expected Result               | Comment | Test result |
+| Test#         | Short/Long    |  Action             |  Test            |  Expected Result               | Comment | Test result |
 | ------------- |:-------------:| -----------------:|:-----------------|:-------------------------------|:----------------|:----------|
 | 1.1             | Short         | Login             | Case sensitive   | It is possible to login        | [login.feature](https://github.com/owncloud/acceptance-testing/blob/master/features/login.feature) | |
 | 1.2             | Short         | Login             | Wrong credentials| An alert message is displayed  | | |
