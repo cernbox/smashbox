@@ -22,7 +22,7 @@
 | 2.17           | Short          | Upload             | Upload a single document with a long name (100 characters) | File gets uploaded | | |
 | 2.18           | Short          | Upload            | Create a folder with a long name (100 characters) | Folder is created | | |
 | 2.19           | Short          | Upload            | Create a folder whose name is Shared | Not possible, an alert message is shown | | |
-| 2.20           | Short          | Upload            | Having reached the maximum storage capacity, upload a file | An alert message is shown | Create a new account with a small capacity| |
+| 2.20           | Short          | Upload           | Having reached the maximum storage capacity, upload a file | An alert message is shown | Create a new account with a small capacity| |
 | 2.21           | Short          | Upload            | Upload a file whose size is larger than the maximum available size | An alert message is shown | Create a new account with a small capacity| |
 | 2.22           | Short           | Upload          |  Set maximum upload to 1 Gb | upload a file of 1 Gb| Create a new account| |
 | 2.23           | Short           | Upload        | Lots of documents | Upload 100 documents, 1 G | | |
