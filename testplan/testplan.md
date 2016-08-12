@@ -74,8 +74,10 @@ NPLUSONE test
 The way to perform a nplusone test is the following : 
 Whithout parameter ocsync/ocsync
 Whith parameter it's file transfer.
-e.g : bin/smash -v -o fs_nplusone_fspath0=/eos/user1/m/mecosse2 -o fs_nplusone_fspath1=/tmp/samba2 lib/filesystem/test_fs_nplusone.py   
-| 6.1        | Short              | upload / download            |  Upload files via OC and download via File transfert | | | |
+e.g : bin/smash -v -o fs_nplusone_fspath0=/eos/user1/m/mecosse2 -o fs_nplusone_fspath1=/tmp/samba2 lib/filesystem/test_fs_nplusone.py
+| Test#         | Short/Long    |  Action               |  Test            |  Expected Result               | Comment | Test result |
+| ------------- |:-------------:| -----------------:|:-----------------|:-------------------------------|:----------------|:----------|   
+| 6.1           | Short         | upload / download |  Upload files via OC and download via File transfert | | | |
 | 6.2       | Short              | upload / download           |  Upload files via file transfert and download via OC | | | |
 | 6.3        | Short              | upload / download           |  Upload files via file transfert and download via file transfert | Please use two different mount point for path0 and path1| | |
 | 6.4        | Short              | upload / download            |  Upload files via OC and download via OC | | | |
