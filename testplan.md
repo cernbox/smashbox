@@ -70,8 +70,7 @@
 | 5.6        | Short              | Anonymous upload            | Upload a file using "Password protect"   |  Files get upload | | |
 | 5.7       | Short              | Anonymous upload            | Check the uploads are visible from the desktop client |  The files are visible from the desktop client| | |  
 | 5.8        | Short              | Anonymous upload            |  Shared a file and enable "Allow public upload" via email| The file is shared | | |
-|NPLUSONE test 			The way to perform a nplusone test is the following :Whithout parameter ocsync/ocsync Whith parameter it's file transfer.	e.g : bin/smash -v -o fs_nplusone_fspath0=/eos/user1/m/mecosse2 -o fs_nplusone_fspath1=/tmp/samba2 lib/filesystem/test_fs_nplusone.py|
-| ------------- |:-------------:| -----------------:|:-----------------|:-------------------------------|:----------------|:----------| 
+|NPLUSONE test 	e.g : bin/smash -v -o fs_nplusone_fspath0=/eos/user1/m/mecosse2 -o fs_nplusone_fspath1=/tmp/samba2 lib/filesystem/test_fs_nplusone.py|
 | 6.1           | Short         | upload / download |  Upload files via OC and download via File transfert | | | |
 | 6.2       | Short              | upload / download           |  Upload files via file transfert and download via OC | | | |
 | 6.3        | Short              | upload / download           |  Upload files via file transfert and download via file transfert | Please use two different mount point for path0 and path1| | |
