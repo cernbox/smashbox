@@ -12,24 +12,26 @@ As of version 1.7.2-cernbox and port to 1.8(.2) the type of the checksum is defi
    
     [General]
     tranmissionChecksum=Adler32
-    
-BITS NOT YET IMPLEMENTED/UNDER DISCUSSION: [see comments in the source of this file]
-<!---
+   
+Since client 2.2.0 checksumming is configured as server capability: https://github.com/owncloud/client/issues/4638#issuecomment-210369951   
 Client discovers from the server if server supports this capability.
 
-Checksum functionality in the client is enabled by the respose to status.php:
+Checksum functionality in the client is enabled by the respose to capabilities call: https://github.com/cernbox/smashbox/blob/master/protocol/protocol.md#capabilities-call
 
-    GET /status.php HTTP/1.1
+Supported checksum types are defined here: https://github.com/owncloud/client/blob/d7bd1300a8397c2782e8d75cf7c595b1ada70d88/src/libsync/propagatorjobs.h#L24
 
-Response body examples:
+For example this response will enable Adler32 checksum on file upload and download:
 
-    {...., "transfer_checksum":""}
-    {...., "transfer_checksum":"Adler32"}
-    {...., "transfer_checksum":"MD5"}
-
-In the future "transfer_checksum" may be enabled on per-folder basis as a PROPFIND property on the remote folder.
--->
-
+      {
+          "ocs": {
+              "data": {
+                  "capabilities": {   
+                      "checksums" : {"supportedTypes" : ["Adler32"], "preferredUploadType":"Adler32"},
+                      ...
+                                  }
+       }}}
+       
+                      
 ## Simple PUT (not-chunked)
 
 Client computes the checksum and sends it in the request header OC-Checksum. The OC-Checksum is defined as: checkum_type:checksum_value 
