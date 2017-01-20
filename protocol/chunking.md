@@ -37,7 +37,7 @@ MKCOL
 
 First, the client generates a transfer id and creates a directory for uploading the chunks
 
-   MKCOL /remote.php/dav/uploads/<user-id>/<transfer-id>
+   `MKCOL /remote.php/dav/uploads/<user-id>/<transfer-id>`
 
 The MKCOL SHOULD have a `OC-Total-Length` header which is the final size of the file
 
@@ -49,7 +49,9 @@ PUT
 The client can upload the chunks in any order or in parallel, chunks size can vary
 during upload. Chunk should be ordered, and the name is the chunk number
 
-   PUT /remote.php/dav/uploads/<user-id>/<transfer-id>/<chunk-number>
+   `PUT /remote.php/dav/uploads/<user-id>/<transfer-id>/<chunk-number>`
+
+400 Bad Request is returned by the server if chunk-number does not convert to integer, transfer-id does not exist or if the chunk does not fit in the declared OC-Total-Length (OC-Chunk-Offset+Content-Length>OC-Total-Length).
 
 The client sends an additional header with every chunk: `OC-Chunk-Offset` is the
 starting position of the chunk in the final files, in bytes.
@@ -60,8 +62,8 @@ MOVE
 When all the chunk have been uploaded, the client can issue a MOVE of a special
 `.file` to the final destination of the file
 
-  MOVE /remote.php/dav/uploads/<user-id>/<transfer-id>/.file
-  Destination: /remote.php/dav/files/<user-id>/path/to/file.dat
+  `MOVE /remote.php/dav/uploads/<user-id>/<transfer-id>/.file`
+  `Destination: /remote.php/dav/files/<user-id>/path/to/file.dat`
 
 Additional headers:
 
