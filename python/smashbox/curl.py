@@ -108,10 +108,20 @@ class Client:
 
         c = self.c
 
-        f = open(fn,'w')
-        c.setopt(c.WRITEFUNCTION,f.write)
+        if fn:
+            f = open(fn,'w')
+            c.setopt(c.WRITEFUNCTION,f.write)
+        else:
+            body_stream =  cStringIO.StringIO()
+            c.setopt(c.WRITEFUNCTION,body_stream.write)
+
         r = self._perform_request(url,headers)
-        f.close()
+
+        if fn:
+            f.close()
+        else:
+            r.response_body=body_stream.getvalue()
+
         return r
 
     def MKCOL(self,url):
