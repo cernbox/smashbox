@@ -47,6 +47,8 @@ def workerA(step):
     #createfile(os.path.join(syncdir,'touch'),'0',count=1,bs=1)
 
     expect_webdav_exist(topLevelDir)
+    webdav_propfind_ls(topLevelDir)
+
     run_ocsync(syncdir)
     
     expect_does_not_exist(d2)
