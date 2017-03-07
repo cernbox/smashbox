@@ -11,6 +11,19 @@ __doc__ = """ Concurrently upload the same large file by two sync clients. It ma
 
 2013-11-13 15:54:24,337 - ERROR - checker - a version af27141daa272ef2285695fe8e709d9f (filename test.BIG.v1384354395) does not correspond to any previously generated file
 
+ISSUE WITH 1.7.2 CERNBOX Client: in step4 both worker0 and worker1 use the same transfer id for chunked upload
+
+Possible reason: random number initialization sqrand() missing?
+
+TO BE CHECKED WITH 2.x client and report to owncloud if needed.
+
+The side effect is that with EOS 1.151 update the final chunk PUT always terminates with 412 response and the sync never finishes.
+This is an effect of fixing checksum checks of chunked uploads:
+git blame ./fst/http/HttpHandler.cc
+a4594ec8 (Andreas Peters 2015-04-08 14:11:17 +0200 639)         response->SetResponseCode(eos::common::HttpResponse::PRECONDITION_FAILED);
+
+To be checked with interactive clients.
+
 
 """
 import time
@@ -92,7 +105,7 @@ def worker1(step):
     step(4,'sync modified file')
 
     # add a bit of delay to make sure worker1 starts later than worker0
-    sleep(2)
+    sleep(2.1)
 
     run_ocsync(d)
 
