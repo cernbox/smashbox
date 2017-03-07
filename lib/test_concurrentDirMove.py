@@ -19,8 +19,12 @@ testsets = [
      'concurrentMoveDir_filesize':10,
      'concurrentMoveDir_delaySeconds':10 },  # removing the directory while lots of tiny files are uploaded
 
-    {'concurrentMoveDir_nfiles':3,
+    {'concurrentMoveDir_nfiles':10,
      'concurrentMoveDir_filesize':OWNCLOUD_CHUNK_SIZE(1.1),
+     'concurrentMoveDir_delaySeconds':5 },  # removing the directory while a large file is chunk-uploaded
+
+    {'concurrentMoveDir_nfiles':2,
+     'concurrentMoveDir_filesize':OWNCLOUD_CHUNK_SIZE(5),
      'concurrentMoveDir_delaySeconds':5 },  # removing the directory while a large file is chunk-uploaded
 
     {'concurrentMoveDir_nfiles':20,
@@ -54,7 +58,7 @@ def creator(step):
     mkdir(d2)
     run_ocsync(d)
 
-    step(5,'final check')
+    step(6,'final check')
     run_ocsync(d)
     final_check(d)
 
@@ -75,9 +79,19 @@ def adder(step):
     step(4,'sync the added files in parallel')
     if delaySeconds<0:
         sleep(-delaySeconds)
-    run_ocsync(d,n=2)
 
-    step(5,'final check')
+    run_ocsync(d)
+
+    # when directory is renamed while file is uploaded the PUT request finishes with Conflict error code
+    
+    step(5,'mover has finished synchronizing')
+
+    # extra sync run to make sure that changes from mover have been correctly propagated
+    # first run will not be successful because files with Conflict response are blacklisted
+    # second run removes the blacklist and updates the files from scratch again
+    run_ocsync(d,n=2) 
+
+    step(6,'final check')
     run_ocsync(d)
     final_check(d)
 
@@ -98,14 +112,14 @@ def mover(step):
         sleep(delaySeconds)
     run_ocsync(d)
 
-    step(5,'final check')
+    step(6,'final check')
     run_ocsync(d)
     final_check(d)
 
 @add_worker
 def checker(step):
 
-    step(5,'sync the final state of the repository into a fresh local folder')
+    step(6,'sync the final state of the repository into a fresh local folder')
     d = make_workdir()
     run_ocsync(d)
 
