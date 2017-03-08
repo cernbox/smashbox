@@ -178,6 +178,8 @@ def winner(step):
 
     run_ocsync(d)
 
+    sleep(1.1) # csync: mtime diff < 1s => conflict not detected, see: #5589 https://github.com/owncloud/client/issues/5589
+
     step(5,'final sync')
 
     run_ocsync(d,n=3)
