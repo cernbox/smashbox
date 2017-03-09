@@ -61,14 +61,16 @@ def worker0(step):
         
 @add_worker
 def worker1(step):
+    shared = reflection.getSharedObject()
     step(1,'Preparation')
     d = make_workdir('worker1')
     run_ocsync(d)
     k0 = count_files(d)
 
     step(3,'Sync the file down')
+    shared['worker1_sync_status'] = 'started'
     run_ocsync(d)
-
+    shared['worker1_sync_status'] = 'finished'
     step(4)
 
 @add_worker
@@ -81,6 +83,10 @@ def tinkerer(step):
     sleep(tinker_wait)
 
     fn,md5 = create_hashfile2(d,filemask='TINKER.DAT',size=filesize)
+
+    if shared['worker1_sync_status'] == 'finished':
+        logger.warning("test ignored: tinker_wait too long (%d s), sync already finished before tinkering started...",tinker_wait)
+        return
 
     step(4) # worker1 ended syncing
 
