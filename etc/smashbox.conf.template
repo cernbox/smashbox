@@ -72,11 +72,15 @@ oc_server_tools_path = "server-tools"
 # a path to ocsync command with options
 # this path should work for all client hosts
 #
-# it may be specified as relative path "dir" and then resolves to
+# it may be specified as relative path "./dir" and then resolves to
 # <smashbox>/dir where <smashbox> is the top-level of of the tree
-# containing THIS configuration file
+# containing THIS configuration file, e.g.: "./client/build/mirall/bin/owncloudcmd --trust"
 #
-oc_sync_cmd = "client/build/mirall/bin/owncloudcmd --trust"
+# it may be specified as a basename executable (PATH will be used), e.g. "cernboxcmd --trust"
+#
+# it may be specified as absolute executable path, e.g. "/usr/bin/cernboxcmd --trust"
+#
+oc_sync_cmd = "cernboxcmd"
 
 # number of times to repeat ocsync run every time
 oc_sync_repeat = 1
