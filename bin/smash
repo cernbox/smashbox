@@ -118,10 +118,32 @@ def main():
 
    top_smash = os.path.abspath(os.path.normpath(os.path.dirname(os.path.dirname(sys.argv[0]))))
 
-   # relative paths are resolved wrt to <top_smash>
+   # relative paths are resolved wrt to <top_smash> and MUST start with ./
    # absolute paths are left as-is
+   # plain basename exectuable is found via PATH
+
    config.oc_server_tools_path = os.path.join(top_smash,config.oc_server_tools_path)
-   config.oc_sync_cmd = os.path.join(top_smash,config.oc_sync_cmd)
+
+   if not config.oc_sync_cmd:
+      logger.critical("config error: undefined oc_sync_cmd")
+      sys.exit(1)
+
+   oc_sync_cmd_exe = config.oc_sync_cmd.split(' ')[0]
+   oc_sync_cmd_exe_dirname = os.path.dirname(oc_sync_cmd_exe) # take first word of the string (other words may be arguments)
+
+   if oc_sync_cmd_exe_dirname:
+      if not oc_sync_cmd_exe_dirname.startswith('./') or not oc_sync_cmd_exe_dirname.startswith('/'):
+         logger.critical("config error: relative paths for oc_sync_cmd must start with ./ : %s",config.oc_sync_cmd)
+         sys.exit(1)
+      config.oc_sync_cmd = os.path.normpath(os.path.join(top_smash,config.oc_sync_cmd))
+   else:
+      # just a plain base name: find executable using which and 
+      from smashbox.utilities import which 
+      oc_sync_cmd_exe = which(oc_sync_cmd_exe)
+      if not oc_sync_cmd_exe:
+         logger.critical("config error: oc_sync_cmd not found in PATH: %s",config.oc_sync_cmd)
+         sys.exit(1)
+      config.oc_sync_cmd = oc_sync_cmd_exe + config.oc_sync_cmd[config.oc_sync_cmd.find(' '):]
 
    import string
 
