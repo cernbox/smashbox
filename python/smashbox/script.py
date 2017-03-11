@@ -99,7 +99,7 @@ def configure(cmdline_opts,config_files=None):
 
          setattr(config,key,val)
 
-   config_log(level=logging.DEBUG)
+   config_log(level=logging.DEBUG) 
    
    return config
 
