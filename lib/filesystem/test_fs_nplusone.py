@@ -11,7 +11,8 @@ from smashbox.utilities.hash_files import *
 
 nfiles = int(config.get('fs_nplusone_nfiles',10))
 filesize = config.get('fs_nplusone_filesize',1000)
-fsop = config.get('fs_nplusone_operation','reader')
+fspath0 = config.get('fs_nplusone_fspath0',"")
+fspath1 = config.get('fs_nplusone_fspath1',"")
 
 if type(filesize) is type(''):
     filesize = eval(filesize)
@@ -49,23 +50,24 @@ def worker0(step):
     reset_rundir()
 
     step(1,'Preparation')
-    if fsop == "reader":
+    
+    if fspath0:
+        d = os.path.join(fspath0,config['oc_server_folder'])
+    else:
         d = make_workdir()
         run_ocsync(d)
-    else:
-        d = "/eos/user/c/cboxtu/"+config['oc_server_folder']
-
-
+    
     k0 = count_files(d)
 
     step(2,'Add %s files and check if we still have k1+nfiles after resync'%nfiles)
 
     for i in range(nfiles):
+        logger.info('file number {}'.format(i+1)) 
         create_hashfile(d,size=filesize)
-
-    if fsop == "reader":
+        
+    if not fspath0:
         run_ocsync(d)
-
+        
     ncorrupt = analyse_hashfiles(d)[2]
     
     k1 = count_files(d)
@@ -80,8 +82,8 @@ def worker0(step):
 def worker1(step):
     step(1,'Preparation')
 
-    if fsop == "reader":
-        d = "/eos/user/c/cboxtu/"+config['oc_server_folder']
+    if fspath1:
+        d = os.path.join(fspath1,config['oc_server_folder'])
     else:
         d = make_workdir()
         run_ocsync(d)
@@ -90,8 +92,9 @@ def worker1(step):
 
     step(3,'Resync and check files added by worker0')
 
-    if fsop != "reader":
+    if not fspath1:
         run_ocsync(d)
+
 
     ncorrupt = analyse_hashfiles(d)[2]
     k1 = count_files(d)
