@@ -113,13 +113,44 @@ Response Example for ownCloud 8.0.x:
                         "undelete": true, 
                         "versioning": true
                     }
+                    "files_sharing": {
+                        "api_enabled": true, 
+                        "federation": {
+                            "incoming": true, 
+                            "outgoing": true
+                        }, 
+                        "group_sharing": true, 
+                        "public": {
+                            "enabled": true, 
+                            "expire_date": {
+                                "enabled": false
+                            }, 
+                            "password": {
+                                "enforced": false
+                            }, 
+                            "send_mail": false, 
+                            "upload": true
+                        }, 
+                        "resharing": true, 
+                        "user": {
+                            "send_mail": false
+                        }
+                    }
+                }, 
+                "notifications": {
+                    "ocs-endpoints": [
+                        "list", 
+                        "get", 
+                        "delete"
+                    ]
+                }
                 }, 
                 "version": {
                     "edition": "", 
-                    "major": 8, 
-                    "micro": 7, 
-                    "minor": 0, 
-                    "string": "8.0.7"
+                    "major": 9, 
+                    "micro": 0, 
+                    "minor": 1, 
+                    "string": "9.0.1"
                 }
             }, 
             "meta": {
@@ -139,7 +170,11 @@ Explanation of the capabilities:
 * `version`: detailed server version information
 * `meta`: ocs meta information
 
+
 Source code reference: client/src/libsync/capabilities.cpp (https://github.com/owncloud/client/blob/master/src/libsync/capabilities.cpp)
+
+Other apps add detail information to the capabilities, to indicate
+the availability of certain features, for example notifications.
 
 ## WEBDAV
 
@@ -265,9 +300,10 @@ Reponse: 207
 
 Response body example:
 
+
     < PROPFIND
 
-    <?xml version='1.0' encoding='utf-8'?>
+    <?xml version='1.0' encoding='UTF-8'?>
     <d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:oc="http://owncloud.org/ns">
       <d:response>
         <d:href>/remote.php/webdav/</d:href>
@@ -281,16 +317,15 @@ Response body example:
        <d:response>
         <d:href>/remote.php/webdav/%d7%91%d7%a2%d7%91%d7%a8%d7%99%d7%aa-.txt</d:href>
         <d:propstat>
-          <d:prop>
-            <oc:id>00004227ocobzus5kn6s</oc:id>
-            <oc:permissions>RDNVW</oc:permissions>
-            <d:getetag>"ed3bcb4907f9ebdfd8998242993545ba"</d:getetag>
-          </d:prop>
-          <d:status>HTTP/1.1 200 OK</d:status>
+        <d:prop>
+            <d:getetag>"93ae1a06ce4340d6502496228f43718d"</d:getetag>
+        </d:prop>
+        <d:status>HTTP/1.1 200 OK</d:status>
         </d:propstat>
-      </d:response>
-    </d:multistatus> 
-        
+    </d:response>
+    </d:multistatus>
+
+
 Client returns with a listing of all top level files and directories with their meta data.
 Comparing the ETag of the toplevel directory with the one from the previous call, client 
 can detect data changes on the server. In case the top level ETag changed, client can 
