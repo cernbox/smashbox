@@ -132,8 +132,8 @@ def main():
    oc_sync_cmd_exe_dirname = os.path.dirname(oc_sync_cmd_exe) # take first word of the string (other words may be arguments)
 
    if oc_sync_cmd_exe_dirname:
-      if not oc_sync_cmd_exe_dirname.startswith('./') or not oc_sync_cmd_exe_dirname.startswith('/'):
-         logger.critical("config error: relative paths for oc_sync_cmd must start with ./ : %s",config.oc_sync_cmd)
+      if not (oc_sync_cmd_exe_dirname.startswith('./') or oc_sync_cmd_exe_dirname.startswith('/')):
+         logger.critical("config error: relative or absolute paths for oc_sync_cmd must start with ./ or /: %s",config.oc_sync_cmd)
          sys.exit(1)
       config.oc_sync_cmd = os.path.normpath(os.path.join(top_smash,config.oc_sync_cmd))
    else:
