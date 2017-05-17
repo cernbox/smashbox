@@ -230,7 +230,6 @@ def add_worker(f,name=None):
 
     
 if __name__ == "__main__":
-
     import smashbox.compatibility.argparse
     import smashbox.script
 
@@ -238,8 +237,8 @@ if __name__ == "__main__":
     _smash_.parser = smashbox.compatibility.argparse.ArgumentParser()
     _smash_.parser.add_argument('test_target')
     _smash_.parser.add_argument('config_blob')
-
     _smash_.args = _smash_.parser.parse_args()
+
 
     # this is OK: config and logger will be visible symbols in the user's test code
     config = smashbox.script.configure_from_blob(_smash_.args.config_blob)

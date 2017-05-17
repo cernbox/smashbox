@@ -5,6 +5,7 @@ import datetime
 import subprocess
 import time
 import urllib
+from sys import platform
 
 # Utilities to be used in the test-cases.
 
@@ -419,13 +420,15 @@ def sleep(n):
 ######## BASIC FILE AND DIRECTORY OPERATIONS
 
 def mkdir(d):
-    runcmd('mkdir -p '+d)
+    os.makedirs(d)
     return d
 
 
 def remove_tree(path):
-    runcmd('rm -rf '+path)
-
+    if platform.system() == "Windows":
+       runcmd('rd / s / q ' + path)
+    else:
+       runcmd('rm -rf ' + path)
 
 def remove_file(path):
     logger.info('remove file %s',path)
@@ -440,8 +443,10 @@ def remove_file(path):
             raise
 
 def mv(a,b):
-    runcmd('mv %s %s'%(a,b))
-
+    if platform.system() == "Windows":
+       runcmd('move %s %s' % (a, b))
+    else:
+       runcmd('mv %s %s' % (a, b))
 
 def list_files(path,recursive=False):
     if platform.system() == 'Darwin':
@@ -519,9 +524,7 @@ def delete_file(fn):
 def createfile_zero(fn,count,bs):
     createfile(fn,'\0',count,bs)
 
-
 import platform
-
 if platform.system() == 'Darwin':
 
     def md5sum(fn):

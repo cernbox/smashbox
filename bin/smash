@@ -132,7 +132,7 @@ def main():
    oc_sync_cmd_exe_dirname = os.path.dirname(oc_sync_cmd_exe) # take first word of the string (other words may be arguments)
 
    if oc_sync_cmd_exe_dirname:
-      if not (oc_sync_cmd_exe_dirname.startswith('./') or oc_sync_cmd_exe_dirname.startswith('/')):
+      if not (os.path.isabs(oc_sync_cmd_exe_dirname) or  os.path.realpath(oc_sync_cmd_exe_dirname)):
          logger.critical("config error: relative or absolute paths for oc_sync_cmd must start with ./ or /: %s",config.oc_sync_cmd)
          sys.exit(1)
       config.oc_sync_cmd = os.path.normpath(os.path.join(top_smash,config.oc_sync_cmd))
@@ -175,13 +175,16 @@ def main():
        global global_exitcode_error
        import subprocess, pickle
        t0=datetime.datetime.now()
-       cmd = ['python2',os.path.join(os.path.dirname(os.path.dirname(__file__)),'python/smashbox/multiprocessing_engine.py'), t, pickle.dumps(config)]
+       cmd = [sys.executable,os.path.join(os.path.dirname(os.path.dirname(__file__)),'python/smashbox/multiprocessing_engine.py'), t, pickle.dumps(config)]
        p = subprocess.Popen(cmd)
        p.communicate()
        t1=datetime.datetime.now()
        log_quiet("Elapsed time: %ss (%s)",(t1-t0).seconds,str(t1-t0))
 
+
+
        assert(p.returncode is not None)
+
 
        reporter.testcase_stop(p.returncode)
 
