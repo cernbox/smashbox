@@ -42,7 +42,8 @@ class _smash_:
 
     process_name = None
     process_number = 0
-    
+    steps = []
+
     DEBUG = False
 
     # this is a hardcoded maximum number of steps
@@ -134,7 +135,7 @@ class _smash_:
     @staticmethod
     def _step(i,wi,message):
         import time
-        _smash_.steps[wi] = i
+        _smash_.steps.insert(wi,i)
 
         def supervisor_status():
             return "(supervisor_step="+str(_smash_.supervisor_step.value)+" worker_steps="+str(_smash_.steps)+")"
@@ -239,81 +240,82 @@ def wrapper(i,funct,fname):
 
 
     
+
+import smashbox.compatibility.argparse
+import smashbox.script
+
+# let's use _smash_ namespace to avoid name pollution...
+_smash_.parser = smashbox.compatibility.argparse.ArgumentParser()
+_smash_.parser.add_argument('test_target')
+_smash_.parser.add_argument('config_blob')
+_smash_.args = _smash_.parser.parse_args()
+
+
+# this is OK: config and logger will be visible symbols in the user's test code
+config = smashbox.script.configure_from_blob(_smash_.args.config_blob)
+
+import smashbox.utilities.reflection
+smashbox.utilities.reflection._smash_ = _smash_
+
+def getLogger():
+   import logging
+   import os.path
+   import smashbox.utilities
+   import sys
+
+   logger = smashbox.script.getLogger('run')
+
+   logger.setLevel(logging.NOTSET)
+
+   class SmashFilter(logging.Filter):
+      def filter(self, record):
+         record.smash_process_name = smashbox.utilities.reflection.getProcessName()
+         return True
+
+   logger.addFilter(SmashFilter())
+
+   logdir,logfn = os.path.split(config.rundir)
+   try:
+      fh = logging.FileHandler(os.path.join(logdir,'log-'+logfn+'.log'),mode='w')
+   except IOError:
+      print 'File %s cannot be created (missing directory?) ' % (os.path.join(logdir,'log-'+logfn+'.log'))
+      sys.exit(-1)
+
+   fh.setLevel(logging.DEBUG)
+   # create console handler with a higher log level
+   ch = logging.StreamHandler()
+   ch.setLevel(config._loglevel) # set the loglevel as defined in the config
+   # create formatter and add it to the handlers
+   formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(smash_process_name)s - %(message)s')
+   ch.setFormatter(formatter)
+   fh.setFormatter(formatter)
+   # add the handlers to logger
+   logger.addHandler(ch)
+   logger.addHandler(fh)
+   logger.propagate=False
+   return logger
+
+try:
+   import os
+   os.makedirs(config.rundir)
+except OSError,x:
+   import errno
+   if x.errno != errno.EEXIST:
+      raise
+
+logger = getLogger()
+
+import logging
+smashbox.script.config_log(logging.DEBUG)
+
+logger.info('BEGIN SMASH RUN - rundir: %s',config.rundir)
+
+smashbox.utilities.logger = logger
+
+# load test case file directly into the global namespace of this script
+execfile(_smash_.args.test_target)
+
 if __name__ == "__main__":
-    import smashbox.compatibility.argparse
-    import smashbox.script
-
-    # let's use _smash_ namespace to avoid name pollution...
-    _smash_.parser = smashbox.compatibility.argparse.ArgumentParser()
-    _smash_.parser.add_argument('test_target')
-    _smash_.parser.add_argument('config_blob')
-    _smash_.args = _smash_.parser.parse_args()
-
-
-    # this is OK: config and logger will be visible symbols in the user's test code
-    config = smashbox.script.configure_from_blob(_smash_.args.config_blob)
-
-    import smashbox.utilities.reflection
-    smashbox.utilities.reflection._smash_ = _smash_
-
-    def getLogger():
-       import logging
-       import os.path
-       import smashbox.utilities
-       import sys
-
-       logger = smashbox.script.getLogger('run')
-
-       logger.setLevel(logging.NOTSET)
-       
-       class SmashFilter(logging.Filter):
-          def filter(self, record):
-             record.smash_process_name = smashbox.utilities.reflection.getProcessName()
-             return True
-
-       logger.addFilter(SmashFilter())
-
-       logdir,logfn = os.path.split(config.rundir)
-       try:
-          fh = logging.FileHandler(os.path.join(logdir,'log-'+logfn+'.log'),mode='w')
-       except IOError:
-          print 'File %s cannot be created (missing directory?) ' % (os.path.join(logdir,'log-'+logfn+'.log'))
-          sys.exit(-1)
-
-       fh.setLevel(logging.DEBUG)
-       # create console handler with a higher log level
-       ch = logging.StreamHandler()
-       ch.setLevel(config._loglevel) # set the loglevel as defined in the config
-       # create formatter and add it to the handlers
-       formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(smash_process_name)s - %(message)s')
-       ch.setFormatter(formatter)
-       fh.setFormatter(formatter)
-       # add the handlers to logger
-       logger.addHandler(ch)
-       logger.addHandler(fh)
-       logger.propagate=False
-       return logger
-    
-    try:
-       import os
-       os.makedirs(config.rundir)
-    except OSError,x:
-       import errno
-       if x.errno != errno.EEXIST:
-          raise
-
-    logger = getLogger()
-
-    import logging
-    smashbox.script.config_log(logging.DEBUG)
-    
-    logger.info('BEGIN SMASH RUN - rundir: %s',config.rundir)
-
-    smashbox.utilities.logger = logger
-    
-    # load test case file directly into the global namespace of this script
-    execfile(_smash_.args.test_target)
-
     # start the framework and dispatch workers
     _smash_.run()
 
