@@ -205,7 +205,7 @@ class _smash_:
         for i,f_n in enumerate(_smash_.workers):
             f = f_n[0]
             fname = f_n[1]
-            p = Process(target=_smash_.worker_wrap,args=(i,f,fname))
+            p = Process(target=wrapper,args=(i,f,fname))
             p.start()
             _smash_.all_procs.append(p)
 
@@ -227,6 +227,16 @@ def add_worker(f,name=None):
     to define synchronization points.
     """
     _smash_.workers.append((f,name))
+    return f
+
+def wrapper(i,funct,fname):
+    """ Wrapper of worker_wrap() static method.
+    Static methods methods cannot be used directly as the target
+    argument on Windows. Since windows lacks of os.fork(), it is needed
+    to ensure that all the arguments to Process.__init__() are picklable.
+    """
+    _smash_.worker_wrap(i,funct,fname)
+
 
     
 if __name__ == "__main__":
