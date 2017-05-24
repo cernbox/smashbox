@@ -31,6 +31,60 @@ def log(*args,**kwds):
 
 
 #import shelve
+from multiprocessing import  freeze_support, Value
+import pickle
+
+
+class SmashSharedObject:
+    """ A bunch of shared attributes stored in a directory as separate files.
+    """
+
+    def __init__(self, d):
+        self._dir = d
+        self._makedir()
+
+    def _makedir(self):
+        try:
+            os.makedirs(self._dir)
+        except OSError, x:
+            import errno
+            if x.errno != errno.EEXIST:
+                raise
+
+    def __getitem__(self, key):
+        self._makedir()
+        import pickle
+        try:
+            return pickle.load(file(os.path.join(self._dir, '_attr_' + key)))
+        except Exception, x:
+            logger.debug(x)
+            raise AttributeError(x)
+
+    def __setitem__(self, key, val):
+        self._makedir()
+        import pickle
+        import time
+        tmp_name = os.path.join(self._dir, 'tmp.%s.%s._attr_%s' % (os.getpid(), time.time(), key))
+        dest_name = os.path.join(self._dir, '_attr_' + key)
+        pickle.dump(val, file(tmp_name, 'w'))
+
+        import shutil
+        shutil.move(tmp_name, dest_name)
+
+    def keys(self):
+        import glob
+        self._makedir()
+        attrs = [os.path.basename(a)[len('_attr_'):] for a in glob.glob(os.path.join(self._dir, '_attr_*'))]
+        return attrs
+
+    def dict(self):
+        keys = {}
+        for a in self.keys():
+            keys[a] = self[a]
+        return keys
+
+    def __str__(self):
+        return repr(self.dict())
 
 class _smash_:
     """ Internals of the stepper synchronization framework. This class
@@ -43,6 +97,7 @@ class _smash_:
     process_name = None
     process_number = 0
     steps = []
+    supervisor_step = Value('i', 0)
 
     DEBUG = False
 
@@ -51,56 +106,7 @@ class _smash_:
     
     workers = []
 
-    class SmashSharedObject:
-        """ A bunch of shared attributes stored in a directory as separate files.
-        """
-        
-        def __init__(self,d):
-           self._dir = d
-           self._makedir()
 
-        def _makedir(self):
-           try:
-              os.makedirs(self._dir)
-           except OSError,x:
-              import errno
-              if x.errno != errno.EEXIST:
-                 raise
-                       
-        def __getitem__(self,key):
-           self._makedir()
-           import pickle
-           try:
-              return pickle.load(file(os.path.join(self._dir,'_attr_'+key)))
-           except Exception,x:
-              logger.debug(x)
-              raise AttributeError(x)
-        
-        def __setitem__(self,key,val):
-           self._makedir()
-           import pickle
-           import time
-           tmp_name = os.path.join(self._dir,'tmp.%s.%s._attr_%s'%(os.getpid(),time.time(),key))
-           dest_name = os.path.join(self._dir,'_attr_'+key)
-           pickle.dump(val,file(tmp_name,'w'))
-
-           import shutil
-           shutil.move(tmp_name,dest_name)
-
-        def keys(self):
-           import glob
-           self._makedir()
-           attrs = [os.path.basename(a)[len('_attr_'):] for a in glob.glob(os.path.join(self._dir,'_attr_*'))]
-           return attrs
-
-        def dict(self):
-           keys = {}
-           for a in self.keys():
-              keys[a] = self[a]
-           return keys
-
-        def __str__(self):
-           return repr(self.dict())
                 
     all_procs = []
 
@@ -112,25 +118,25 @@ class _smash_:
         #print 'SU',[s for s in steps]
 
         if _smash_.DEBUG:
-            log('start',_smash_.supervisor_step.value,_smash_.steps)
+            log('start',_smash_.supervisor_step,_smash_.steps)
 
-        while _smash_.supervisor_step.value < _smash_.N_STEPS-1:
+        while _smash_.supervisor_step < _smash_.N_STEPS-1:
             while 1:
                 time.sleep(0.01)
                 #print [s for s in steps]
-                passed = all([_smash_.steps[i]>_smash_.supervisor_step.value for i in range(len(_smash_.steps))])
+                passed = all([_smash_.steps[i]>_smash_.supervisor_step for i in range(len(_smash_.steps))])
                 #print 'passed',supervisor_step.value,passed
                 if passed:
                     break
 
             #print "supervisor step completed:",supervisor_step.value,steps
 
-            _smash_.supervisor_step.value += 1
+            _smash_.supervisor_step += 1
 
         
 
         if _smash_.DEBUG:
-            log('stop',_smash_.supervisor_step.value,_smash_.steps)
+            log('stop',_smash_.supervisor_step,_smash_.steps)
 
     @staticmethod
     def _step(i,wi,message):
@@ -138,11 +144,11 @@ class _smash_:
         _smash_.steps.insert(wi,i)
 
         def supervisor_status():
-            return "(supervisor_step="+str(_smash_.supervisor_step.value)+" worker_steps="+str(_smash_.steps)+")"
+            return "(supervisor_step="+str(_smash_.supervisor_step)+" worker_steps="+str(_smash_.steps)+")"
 
         if _smash_.DEBUG:
             logger.debug('step %d waiting (wi=%d) %s'%(i,wi,supervisor_status()))
-        while _smash_.supervisor_step.value<i:
+        while _smash_.supervisor_step<i:
             time.sleep(0.01)
 
         if _smash_.DEBUG:
@@ -152,6 +158,7 @@ class _smash_:
             sep='*'*80
             logger.info( 'entering new step \n'+sep+'\n'+'(%d) %s:  %s\n'%(i,_smash_.process_name,message.upper())+sep)
 
+
     @staticmethod
     def worker_wrap(wi,f,fname):
         if fname is None:
@@ -160,9 +167,11 @@ class _smash_:
         _smash_.process_number = wi
         def step(i,message=""):
             _smash_._step(i,wi,message)
+
         try:
             try:
                 f(step)
+
             except Exception,x:
                 import traceback
                 logger.fatal("Exception occured: %s \n %s", x,traceback.format_exc())
@@ -190,23 +199,20 @@ class _smash_:
 
         manager = Manager()
 
-        _smash_.shared_object = _smash_.SmashSharedObject(os.path.join(config.rundir,'_shared_objects'))
-        
         #_smash_.shared_object = shelve.open(os.path.join(config.rundir,'_shared_objects.shelve'))
 
         #print "SUPERVISOR NAMESPACE",_smash_.shared_object.__dict__
-        
-        _smash_.supervisor_step = manager.Value('i',0)
 
+        _smash_.shared_object = SmashSharedObject(os.path.join(config.rundir, '_shared_objects'))
         _smash_.process_name = "supervisor"
 
         _smash_.steps = manager.list([0 for x in range(len(_smash_.workers))])
 
         # first worker => process number == 0
-        for i,f_n in enumerate(_smash_.workers):
+        for i,f_n in enumerate(_smash_.workers, ):
             f = f_n[0]
             fname = f_n[1]
-            p = Process(target=wrapper,args=(i,f,fname))
+            p = Process(target=wrapper,args=(i,f,fname, _smash_.shared_object))
             p.start()
             _smash_.all_procs.append(p)
 
@@ -230,12 +236,16 @@ def add_worker(f,name=None):
     _smash_.workers.append((f,name))
     return f
 
-def wrapper(i,funct,fname):
+def wrapper(i,funct,fname, shared_object):
     """ Wrapper of worker_wrap() static method.
     Static methods methods cannot be used directly as the target
     argument on Windows. Since windows lacks of os.fork(), it is needed
     to ensure that all the arguments to Process.__init__() are picklable.
     """
+
+    _smash_.shared_object = shared_object
+    globals().update(_smash_.shared_object)
+
     _smash_.worker_wrap(i,funct,fname)
 
 
@@ -243,6 +253,7 @@ def wrapper(i,funct,fname):
 
 import smashbox.compatibility.argparse
 import smashbox.script
+import os.path
 
 # let's use _smash_ namespace to avoid name pollution...
 _smash_.parser = smashbox.compatibility.argparse.ArgumentParser()
@@ -259,7 +270,6 @@ smashbox.utilities.reflection._smash_ = _smash_
 
 def getLogger():
    import logging
-   import os.path
    import smashbox.utilities
    import sys
 
@@ -316,6 +326,8 @@ smashbox.utilities.logger = logger
 execfile(_smash_.args.test_target)
 
 if __name__ == "__main__":
+    freeze_support() # add support for when a program which uses multiprocessing has been frozen to produce a Windows executable
+
     # start the framework and dispatch workers
     _smash_.run()
 
