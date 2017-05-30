@@ -118,20 +118,20 @@ class _smash_:
         #print 'SU',[s for s in steps]
 
         if _smash_.DEBUG:
-            log('start',_smash_.supervisor_step,_smash_.steps)
+            log('start',_smash_.supervisor_step.value,_smash_.steps)
 
-        while _smash_.supervisor_step < _smash_.N_STEPS-1:
+        while _smash_.supervisor_step.value < _smash_.N_STEPS-1:
             while 1:
                 time.sleep(0.01)
                 #print [s for s in steps]
-                passed = all([_smash_.steps[i]>_smash_.supervisor_step for i in range(len(_smash_.steps))])
+                passed = all([_smash_.steps[i]>_smash_.supervisor_step.value for i in range(len(_smash_.steps))])
                 #print 'passed',supervisor_step.value,passed
                 if passed:
                     break
 
             #print "supervisor step completed:",supervisor_step.value,steps
 
-            _smash_.supervisor_step += 1
+            _smash_.supervisor_step.value += 1
 
         
 
@@ -141,14 +141,14 @@ class _smash_:
     @staticmethod
     def _step(i,wi,message):
         import time
-        _smash_.steps.insert(wi,i)
+        _smash_.steps[wi]=i
 
         def supervisor_status():
             return "(supervisor_step="+str(_smash_.supervisor_step)+" worker_steps="+str(_smash_.steps)+")"
 
         if _smash_.DEBUG:
             logger.debug('step %d waiting (wi=%d) %s'%(i,wi,supervisor_status()))
-        while _smash_.supervisor_step<i:
+        while _smash_.supervisor_step.value<i:
             time.sleep(0.01)
 
         if _smash_.DEBUG:
@@ -167,6 +167,7 @@ class _smash_:
         _smash_.process_number = wi
         def step(i,message=""):
             _smash_._step(i,wi,message)
+
 
         try:
             try:
@@ -205,14 +206,14 @@ class _smash_:
 
         _smash_.shared_object = SmashSharedObject(os.path.join(config.rundir, '_shared_objects'))
         _smash_.process_name = "supervisor"
-
+        _smash_.supervisor_step = manager.Value('i', 0)
         _smash_.steps = manager.list([0 for x in range(len(_smash_.workers))])
 
         # first worker => process number == 0
         for i,f_n in enumerate(_smash_.workers, ):
             f = f_n[0]
             fname = f_n[1]
-            p = Process(target=wrapper,args=(i,f,fname, _smash_.shared_object,_smash_.steps))
+            p = Process(target=wrapper,args=(i,f,fname, _smash_.shared_object,_smash_.steps,_smash_.supervisor_step))
             p.start()
             _smash_.all_procs.append(p)
 
@@ -236,9 +237,9 @@ def add_worker(f,name=None):
     _smash_.workers.append((f,name))
     return f
 
-def wrapper(i,funct,fname, shared_object, steps):
+def wrapper(i,funct,fname, shared_object, steps,supervisor_step):
     """ Wrapper of worker_wrap() static method.
-    Static methods methods cannot be used directly as the target
+    Static methods cannot be used directly as the target
     argument on Windows. Since windows lacks of os.fork(), it is needed
     to ensure that all the arguments to Process.__init__() are picklable.
     """
@@ -246,8 +247,8 @@ def wrapper(i,funct,fname, shared_object, steps):
     _smash_.shared_object = shared_object
     globals().update(_smash_.shared_object)
 
-    _smash_.steps = steps
-
+    _smash_.steps=steps
+    _smash_.supervisor_step=supervisor_step
     _smash_.worker_wrap(i,funct,fname)
 
 
