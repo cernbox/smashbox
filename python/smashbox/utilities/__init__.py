@@ -250,7 +250,7 @@ def create_owncloud_group(group_name):
     oc_api.login(config.oc_admin_user, config.oc_admin_password)
     oc_api.create_group(group_name)
 
-
+import platform
 ######### WEBDAV AND SYNC UTILITIES #####################
 
 def oc_webdav_url(protocol='http',remote_folder="",user_num=None,webdav_endpoint=None,hide_password=False):
@@ -538,30 +538,19 @@ def delete_file(fn):
 def createfile_zero(fn,count,bs):
     createfile(fn,'\0',count,bs)
 
-import platform
-if platform.system() == 'Darwin':
-
-    def md5sum(fn):
-        process = subprocess.Popen('md5 %s'%fn,shell=True,stdout=subprocess.PIPE)
-        out = process.communicate()[0]
-        try:
-            return out.split()[-1]
-        except IndexError:
-            return "NO_CHECKSUM_ERROR"
-
-else:  # linux
-
-    def md5sum(fn):
-        process=subprocess.Popen('md5sum %s'%fn,shell=True,stdout=subprocess.PIPE)
-        out = process.communicate()[0]
-        try:
-            return out.split()[0]
-        except IndexError:
-            return "NO_CHECKSUM_ERROR"
+import hashlib
+def md5sum(fn):
+    out = hashlib.md5(fn).hexdigest()
+    try:
+        return out.split()[0]
+    except IndexError:
+        return "NO_CHECKSUM_ERROR"
 
 
 def hexdump(fn):
-    runcmd('hexdump %s'%fn)
+    with open(fn, 'rb') as f:
+        for chunk in iter(lambda: f.read(32), b''):
+            chunk.encode('hex')
 
 
 def list_versions_on_server(fn):
