@@ -250,7 +250,7 @@ def create_owncloud_group(group_name):
     oc_api.login(config.oc_admin_user, config.oc_admin_password)
     oc_api.create_group(group_name)
 
-import platform
+
 ######### WEBDAV AND SYNC UTILITIES #####################
 
 def oc_webdav_url(protocol='http',remote_folder="",user_num=None,webdav_endpoint=None,hide_password=False):
@@ -538,13 +538,41 @@ def delete_file(fn):
 def createfile_zero(fn,count,bs):
     createfile(fn,'\0',count,bs)
 
-import hashlib
-def md5sum(fn):
-    out = hashlib.md5(fn).hexdigest()
-    try:
-        return out.split()[0]
-    except IndexError:
-        return "NO_CHECKSUM_ERROR"
+import platform
+if platform.system() == 'Darwin':
+
+    def md5sum(fn):
+        process = subprocess.Popen('md5 %s'%fn,shell=True,stdout=subprocess.PIPE)
+        out = process.communicate()[0]
+        try:
+            return out.split()[-1]
+        except IndexError:
+            return "NO_CHECKSUM_ERROR"
+
+elif platform.system() == 'Windows':
+
+    def md5sum(fn):
+        process=subprocess.Popen('certutil -hashfile %s MD5'%fn,shell=True,stdout=subprocess.PIPE)
+        out = process.communicate()[0]
+        try:
+            return out.split()[0]
+        except IndexError:
+            return "NO_CHECKSUM_ERROR"
+
+
+else:  # linux
+
+    def md5sum(fn):
+        process=subprocess.Popen('md5sum %s'%fn,shell=True,stdout=subprocess.PIPE)
+        out = process.communicate()[0]
+        try:
+            return out.split()[0]
+        except IndexError:
+            return "NO_CHECKSUM_ERROR"
+
+
+
+
 
 
 def hexdump(fn):
