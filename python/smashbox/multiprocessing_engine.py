@@ -32,8 +32,7 @@ def log(*args,**kwds):
 
 #import shelve
 from multiprocessing import  freeze_support, Value
-import pickle
-
+import platform
 
 class SmashSharedObject:
     """ A bunch of shared attributes stored in a directory as separate files.
@@ -136,7 +135,7 @@ class _smash_:
         
 
         if _smash_.DEBUG:
-            log('stop',_smash_.supervisor_step,_smash_.steps)
+            log('stop',_smash_.supervisor_step.value,_smash_.steps)
 
     @staticmethod
     def _step(i,wi,message):
@@ -213,7 +212,10 @@ class _smash_:
         for i,f_n in enumerate(_smash_.workers, ):
             f = f_n[0]
             fname = f_n[1]
-            p = Process(target=wrapper,args=(i,f,fname, _smash_.shared_object,_smash_.steps,_smash_.supervisor_step))
+            if platform.system() == "Windows":
+                p = Process(target=wrapper,args=(i,f,fname, _smash_.shared_object,_smash_.steps,_smash_.supervisor_step))
+            else:
+                p = Process(target=_smash_.worker_wrap,args=(i, f, fname))
             p.start()
             _smash_.all_procs.append(p)
 
@@ -237,22 +239,21 @@ def add_worker(f,name=None):
     _smash_.workers.append((f,name))
     return f
 
+
 def wrapper(i,funct,fname, shared_object, steps,supervisor_step):
     """ Wrapper of worker_wrap() static method.
     Static methods cannot be used directly as the target
     argument on Windows. Since windows lacks of os.fork(), it is needed
     to ensure that all the arguments to Process.__init__() are picklable.
     """
-
     _smash_.shared_object = shared_object
     globals().update(_smash_.shared_object)
-
     _smash_.steps=steps
     _smash_.supervisor_step=supervisor_step
+
     _smash_.worker_wrap(i,funct,fname)
 
 
-    
 
 import smashbox.compatibility.argparse
 import smashbox.script

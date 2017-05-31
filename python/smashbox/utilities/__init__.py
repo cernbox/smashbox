@@ -321,10 +321,7 @@ def run_ocsync(local_folder, remote_folder="", n=None, user_num=None):
 
     for i in range(n):
         t0 = datetime.datetime.now()
-        if platform.system() == "Windows":
-           cmd = config.oc_sync_cmd  + " " + local_folder + " " +  oc_webdav_url('owncloud', remote_folder,user_num) + " >> " + config.rundir + "\%s-ocsync.step%02d.cnt%03d.log 2>&1" % (reflection.getProcessName(), current_step, ocsync_cnt[current_step])
-        else:
-           cmd = config.oc_sync_cmd,local_folder,oc_webdav_url('owncloud',remote_folder,user_num) + " >> "+config.rundir+"/%s-ocsync.step%02d.cnt%03d.log 2>&1"%(reflection.getProcessName(),current_step,ocsync_cnt[current_step])
+        cmd = config.oc_sync_cmd  + ' ' + local_folder + ' ' +  oc_webdav_url('owncloud', remote_folder,user_num) + " >> " + config.rundir + "\%s-ocsync.step%02d.cnt%03d.log 2>&1" % (reflection.getProcessName(), current_step, ocsync_cnt[current_step])
         runcmd(cmd, ignore_exitcode=True)  # exitcode of ocsync is not reliable
         logger.info('sync cmd is: %s',cmd)
         logger.info('sync finished: %s',datetime.datetime.now()-t0)
@@ -402,7 +399,6 @@ def webdav_mkcol_NEW(path, silent=False, user_num=None):
 
 def runcmd(cmd,ignore_exitcode=False,echo=True,allow_stderr=True,shell=True,log_warning=True):
     logger.info('running %s', repr(cmd))
-    import sys
     process = subprocess.Popen(cmd, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout,stderr = process.communicate()
 
