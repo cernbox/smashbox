@@ -3,6 +3,9 @@ import pickle
 import struct
 import socket
 import sys
+import logging
+logger = logging.getLogger()
+
 # simple monitoring to grafana (disabled if not set in config)
 
 def push_to_monitoring(metric,value,timestamp=None):
@@ -20,13 +23,10 @@ def push_to_monitoring(metric,value,timestamp=None):
 #--------------------------------------------------------------------------------
 def send_metric(data):
 
-    monitoring_host=config.get('monitoring_host',None)
+    monitoring_host=config.get('monitoring_host',"filer-carbon.cern.ch")
     monitoring_port=config.get('monitoring_port',2003)
 
-    if not monitoring_host:
-        return
-
-    print("publishing logs to grafana")
+    logger.info("publishing logs to grafana")
     payload = pickle.dumps(data, protocol=2)
     header = struct.pack("!L", len(payload))
     message = header + payload
@@ -38,20 +38,20 @@ def send_metric(data):
     try:
         s.bind((monitoring_host, monitoring_port))
     except socket.error as msg:
-        print 'Bind failed. Error Code : ' + str(msg[0]) + ' Message : ' + msg[1]
+        logger.info('Bind failed. Error Code : ' + str(msg[0]) + ' Message : ' + msg[1])
         sys.exit()
 
-    print 'Socket bind complete'
+    logger.info('Socket bind complete')
 
     # Start listening on socket
     s.listen(10)
-    print 'Socket now listening'
+    logger.info('Socket now listening')
 
     # now keep talking with the client
     while 1:
         # wait to accept a connection - blocking call
         conn, addr = s.accept()
-        print 'Connected with ' + addr[0] + ':' + str(addr[1])
+        logger.info('Connected with ' + addr[0] + ':' + str(addr[1]))
 
     s.sendall(message)
 
