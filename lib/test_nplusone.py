@@ -111,7 +111,7 @@ def worker0(step):
     push_to_monitoring("cernbox.cboxsls.nplusone." + ostype + ".transfer_rate",total_size/(time1-time0))
     push_to_monitoring("cernbox.cboxsls.nplusone." + ostype + ".worker0.synced_files",k1-k0)
 
-        
+
 @add_worker
 def worker1(step):
     step(1,'Preparation')

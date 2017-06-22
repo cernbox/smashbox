@@ -63,6 +63,8 @@ def reset_owncloud_account(reset_procedure=None, num_test_users=None):
     if reset_procedure is None:
         reset_procedure = config.oc_account_reset_procedure
 
+    import logging
+    logger = logging.getLogger()
     if num_test_users is None:
         logger.info('reset_owncloud_account (%s)', reset_procedure)
 
