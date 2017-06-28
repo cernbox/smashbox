@@ -12,10 +12,6 @@ The test has been run on Windows OS (which is case insensitive) in order to repr
      
  - Actual behaviour:
      Windows: Only one file is downloaded since it is case insensitive. This file is not always the same.
-     
-For example: if it is generated 
-
-bug #1914: case conflict in MacOSX leading to lost files (https://github.com/owncloud/client/issues/1914)
 
 Test input params:
   - filename : Name of the file in UpperCamelCase. For example: "TestCaseConflicts" 
