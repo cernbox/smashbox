@@ -23,9 +23,6 @@ Test input params:
         ['TestCaseConflicts', 'testcaseconflicts', 'testCaseConflicts', 'testcaseConflicts', 'TestcaseConflicts', 'Testcaseconflicts', 'TestCaseconflicts', 'testCaseconflicts']
 """
 
-logger = logging.getLogger()
-
-
 """ --- Auxiliar functions  --- """
 
 
@@ -63,6 +60,7 @@ def generateConflitiveCases(filename):
 
 
 """ --- Test input params --- """
+
 filename = config.get('filename', "TestCaseConflicts")
 
 conflict_case_list = generateConflitiveCases(filename)
@@ -71,7 +69,6 @@ nfiles = len(conflict_cases)
 
 filesizeKB = int(config.get('filenames_filesizeKB', 10))
 ndownloaders =  int(config.get('ndownloaders', nfiles))
-
 
 logger =  logging.getLogger()
 URL = oc_webdav_url()
@@ -109,7 +106,6 @@ def creator(step):
     N = count_files(d)
 
     files = get_files(d)
-
 
     logger.info("The following files has been downloaded by the creator %s ", str(files))
 
