@@ -124,7 +124,7 @@ def create_hashfile2(wdir,filemask=None,size=None,bs=None,slow_write=None):
 
     fn = os.path.join(wdir,filemask.replace('{md5}',md5.hexdigest()))
 
-    f = file(fn,'w')
+    f = file(fn,'wb')
 
     # write data blocks
     for i in range(nblocks):
@@ -208,16 +208,12 @@ def analyse_hashfiles(wdir,filemask=None):
 def md5sum(fn):
     import hashlib
     md5 = hashlib.md5()
-        
     f = file(fn,'rb')
-    
     while True:
         chunk = f.read(BLOCK_SIZE)
         if not chunk: break
         md5.update(chunk)
-
     f.close()
-        
     return md5.hexdigest()
 
 def adler32(fn):

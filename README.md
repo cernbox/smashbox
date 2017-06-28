@@ -51,8 +51,6 @@ General layout:
 Installation
 ============
 
-Note: Currently this framework works on Unix-like systems only. Windows port is needed.
-
 Clone git repository into your local ``smashbox`` directory.
 
 Copy the etc/smashbox.conf.template into etc/smashbox.conf
