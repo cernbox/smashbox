@@ -129,7 +129,7 @@ def file_upload(filename,dest_dir_url,header_if_match=None,checksum=None):
         else:
             headers['OC-Checksum'] = checksum
 
-    r = client.PUT(filename,os.path.join(dest_dir_url,os.path.basename(filename)),headers)
+    r = client.PUT(filename,dest_dir_url+"/"+os.path.basename(filename),headers)
 
     if header_if_match and r.rc == 412: # allow precondition failed
         return r

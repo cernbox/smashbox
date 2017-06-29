@@ -21,6 +21,7 @@ def push_to_monitoring(data):
 # Send metrics to Grafana
 #   Report tests results and statistics to the Grafana monitoring dashboard
 #--------------------------------------------------------------------------------
+
 def send_metric(data):
     monitoring_host=config.get('monitoring_host',"filer-carbon.cern.ch")
     monitoring_port=config.get('monitoring_port',2003)
@@ -38,5 +39,5 @@ def send_metric(data):
 
     s.sendall(data)
     logger.info("--->publishing logs to grafana")
-    s.close()
 
+    s.close()
