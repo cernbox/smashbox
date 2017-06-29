@@ -6,7 +6,6 @@ import tempfile
 __doc__ = """ Add nfiles to a directory and check consistency.
 """
 
-from smashbox.utilities import *
 from smashbox.utilities.hash_files import *
 from smashbox.utilities.monitoring import push_to_monitoring
 import platform
@@ -18,8 +17,10 @@ filesize = config.get('nplusone_filesize',10000)
 # optional fs check before files are uploaded by worker0
 fscheck = config.get('nplusone_fscheck',False)
 
-ostype = platform.system() + platform.release()
 logger = logging.getLogger()
+
+ostype = platform.system() + platform.release()
+logger.info(platform.system() + platform.release())
 
 if type(filesize) is type(''):
     filesize = eval(filesize)
@@ -103,15 +104,12 @@ def worker0(step):
 
     time1 = time.time()
 
+    push_to_monitoring("cernbox.cboxsls.nplusone." + ostype + ".nfiles" + " " + str(nfiles))
+    push_to_monitoring("cernbox.cboxsls.nplusone." + ostype + ".worker0.synced_files" + " " + str(k1 - k0))
+    push_to_monitoring("cernbox.cboxsls.nplusone." + ostype + ".elapsed" + " " + str(time1-time0))
+    push_to_monitoring("cernbox.cboxsls.nplusone." + ostype + ".transfer_rate" + " " + str(total_size/(time1-time0)))
 
-    push_to_monitoring("cernbox.cboxsls.nplusone." + ostype + ".nfiles",nfiles)
-    push_to_monitoring("cernbox.cboxsls.nplusone." + ostype + ".total_size",total_size)
-    push_to_monitoring("cernbox.cboxsls.nplusone." + ostype + ".elapsed",time1-time0)
-    push_to_monitoring("cernbox.cboxsls.nplusone." + ostype + ".total_size",total_size)
-    push_to_monitoring("cernbox.cboxsls.nplusone." + ostype + ".transfer_rate",total_size/(time1-time0))
-    push_to_monitoring("cernbox.cboxsls.nplusone." + ostype + ".worker0.synced_files",k1-k0)
 
-        
 @add_worker
 def worker1(step):
     step(1,'Preparation')
@@ -124,14 +122,13 @@ def worker1(step):
     run_ocsync(d)
     ncorrupt = analyse_hashfiles(d)[2]
     k1 = count_files(d)
-    push_to_monitoring("cernbox.cboxsls.nplusone." + ostype + ".worker1.synced_files",k1-k0)
-    push_to_monitoring("cernbox.cboxsls.nplusone." + ostype + ".worker1.cor",ncorrupt)
+
                        
     error_check(k1-k0==nfiles,'Expecting to have %d files more: see k1=%d k0=%d'%(abs(k1-nfiles),k1,k0))
 
     fatal_check(ncorrupt==0, 'Corrupted files (%d) found'%ncorrupt) #Massimo 12-APR
 
-
+    push_to_monitoring("cernbox.cboxsls.nplusone." + ostype + ".worker0.synced_files" + " " + str(k1 - k0))
 
 
 
