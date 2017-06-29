@@ -102,14 +102,6 @@ def worker0(step):
     step(4, "Final report")
 
     time1 = time.time()
-    tuples = ([])
-    tuples.append(("cernbox.cboxsls.nplusone." + ostype + ".nfiles", (time1, nfiles)))
-    tuples.append(("cernbox.cboxsls.nplusone." + ostype + ".total_size", (time1, total_size)))
-    tuples.append(("cernbox.cboxsls.nplusone." + ostype + ".elapsed", (time1, time1 - time0)))
-    tuples.append(("cernbox.cboxsls.nplusone." + ostype + ".transfer_rate", (time1, total_size / (time1 - time0))))
-    tuples.append(("cernbox.cboxsls.nplusone." + ostype + ".worker0.synced_files", (time1, k1 - k0)))
-    print(tuples)
-    push_to_monitoring(tuples)
 
     push_to_monitoring("cernbox.cboxsls.nplusone." + ostype + ".nfiles" + " " + str(nfiles))
     push_to_monitoring("cernbox.cboxsls.nplusone." + ostype + ".worker0.synced_files" + " " + str(k1 - k0))
