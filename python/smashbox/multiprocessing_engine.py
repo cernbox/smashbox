@@ -31,6 +31,59 @@ def log(*args,**kwds):
 
 
 #import shelve
+from multiprocessing import  freeze_support, Value
+import platform
+
+class SmashSharedObject:
+    """ A bunch of shared attributes stored in a directory as separate files.
+    """
+
+    def __init__(self, d):
+        self._dir = d
+        self._makedir()
+
+    def _makedir(self):
+        try:
+            os.makedirs(self._dir)
+        except OSError, x:
+            import errno
+            if x.errno != errno.EEXIST:
+                raise
+
+    def __getitem__(self, key):
+        self._makedir()
+        import pickle
+        try:
+            return pickle.load(file(os.path.join(self._dir, '_attr_' + key)))
+        except Exception, x:
+            logger.debug(x)
+            raise AttributeError(x)
+
+    def __setitem__(self, key, val):
+        self._makedir()
+        import pickle
+        import time
+        tmp_name = os.path.join(self._dir, 'tmp.%s.%s._attr_%s' % (os.getpid(), time.time(), key))
+        dest_name = os.path.join(self._dir, '_attr_' + key)
+        pickle.dump(val, file(tmp_name, 'w'))
+
+        import shutil
+        shutil.move(tmp_name, dest_name)
+
+    def keys(self):
+        import glob
+        self._makedir()
+        attrs = [os.path.basename(a)[len('_attr_'):] for a in glob.glob(os.path.join(self._dir, '_attr_*'))]
+        return attrs
+
+    def dict(self):
+        keys = {}
+        for a in self.keys():
+            keys[a] = self[a]
+        return keys
+
+    def __str__(self):
+        return repr(self.dict())
 
 class _smash_:
     """ Internals of the stepper synchronization framework. This class
@@ -42,7 +95,9 @@ class _smash_:
 
     process_name = None
     process_number = 0
-    
+    steps = []
+    supervisor_step = Value('i', 0)
+
     DEBUG = False
 
     # this is a hardcoded maximum number of steps
@@ -50,56 +105,7 @@ class _smash_:
     
     workers = []
 
-    class SmashSharedObject:
-        """ A bunch of shared attributes stored in a directory as separate files.
-        """
-        
-        def __init__(self,d):
-           self._dir = d
-           self._makedir()
 
-        def _makedir(self):
-           try:
-              os.makedirs(self._dir)
-           except OSError,x:
-              import errno
-              if x.errno != errno.EEXIST:
-                 raise
-                       
-        def __getitem__(self,key):
-           self._makedir()
-           import pickle
-           try:
-              return pickle.load(file(os.path.join(self._dir,'_attr_'+key)))
-           except Exception,x:
-              logger.debug(x)
-              raise AttributeError(x)
-        
-        def __setitem__(self,key,val):
-           self._makedir()
-           import pickle
-           import time
-           tmp_name = os.path.join(self._dir,'tmp.%s.%s._attr_%s'%(os.getpid(),time.time(),key))
-           dest_name = os.path.join(self._dir,'_attr_'+key)
-           pickle.dump(val,file(tmp_name,'w'))
-
-           import shutil
-           shutil.move(tmp_name,dest_name)
-
-        def keys(self):
-           import glob
-           self._makedir()
-           attrs = [os.path.basename(a)[len('_attr_'):] for a in glob.glob(os.path.join(self._dir,'_attr_*'))]
-           return attrs
-
-        def dict(self):
-           keys = {}
-           for a in self.keys():
-              keys[a] = self[a]
-           return keys
-
-        def __str__(self):
-           return repr(self.dict())
                 
     all_procs = []
 
@@ -134,10 +140,10 @@ class _smash_:
     @staticmethod
     def _step(i,wi,message):
         import time
-        _smash_.steps[wi] = i
+        _smash_.steps[wi]=i
 
         def supervisor_status():
-            return "(supervisor_step="+str(_smash_.supervisor_step.value)+" worker_steps="+str(_smash_.steps)+")"
+            return "(supervisor_step="+str(_smash_.supervisor_step)+" worker_steps="+str(_smash_.steps)+")"
 
         if _smash_.DEBUG:
             logger.debug('step %d waiting (wi=%d) %s'%(i,wi,supervisor_status()))
@@ -151,6 +157,7 @@ class _smash_:
             sep='*'*80
             logger.info( 'entering new step \n'+sep+'\n'+'(%d) %s:  %s\n'%(i,_smash_.process_name,message.upper())+sep)
 
+
     @staticmethod
     def worker_wrap(wi,f,fname):
         if fname is None:
@@ -159,9 +166,12 @@ class _smash_:
         _smash_.process_number = wi
         def step(i,message=""):
             _smash_._step(i,wi,message)
+
+
         try:
             try:
                 f(step)
+
             except Exception,x:
                 import traceback
                 logger.fatal("Exception occured: %s \n %s", x,traceback.format_exc())
@@ -189,23 +199,23 @@ class _smash_:
 
         manager = Manager()
 
-        _smash_.shared_object = _smash_.SmashSharedObject(os.path.join(config.rundir,'_shared_objects'))
-        
         #_smash_.shared_object = shelve.open(os.path.join(config.rundir,'_shared_objects.shelve'))
 
         #print "SUPERVISOR NAMESPACE",_smash_.shared_object.__dict__
-        
-        _smash_.supervisor_step = manager.Value('i',0)
 
+        _smash_.shared_object = SmashSharedObject(os.path.join(config.rundir, '_shared_objects'))
         _smash_.process_name = "supervisor"
-
+        _smash_.supervisor_step = manager.Value('i', 0)
         _smash_.steps = manager.list([0 for x in range(len(_smash_.workers))])
 
         # first worker => process number == 0
-        for i,f_n in enumerate(_smash_.workers):
+        for i,f_n in enumerate(_smash_.workers, ):
             f = f_n[0]
             fname = f_n[1]
-            p = Process(target=_smash_.worker_wrap,args=(i,f,fname))
+            if platform.system() == "Windows":
+                p = Process(target=wrapper,args=(i,f,fname, _smash_.shared_object,_smash_.steps,_smash_.supervisor_step))
+            else:
+                p = Process(target=_smash_.worker_wrap,args=(i, f, fname))
             p.start()
             _smash_.all_procs.append(p)
 
@@ -227,83 +237,100 @@ def add_worker(f,name=None):
     to define synchronization points.
     """
     _smash_.workers.append((f,name))
+    return f
 
-    
+
+def wrapper(i,funct,fname, shared_object, steps,supervisor_step):
+    """ Wrapper of worker_wrap() static method.
+    Static methods cannot be used directly as the target
+    argument on Windows. Since windows lacks of os.fork(), it is needed
+    to ensure that all the arguments to Process.__init__() are picklable.
+    """
+    _smash_.shared_object = shared_object
+    globals().update(_smash_.shared_object)
+    _smash_.steps=steps
+    _smash_.supervisor_step=supervisor_step
+
+    _smash_.worker_wrap(i,funct,fname)
+
+
+
+import smashbox.compatibility.argparse
+import smashbox.script
+import os.path
+
+# let's use _smash_ namespace to avoid name pollution...
+_smash_.parser = smashbox.compatibility.argparse.ArgumentParser()
+_smash_.parser.add_argument('test_target')
+_smash_.parser.add_argument('config_blob')
+_smash_.args = _smash_.parser.parse_args()
+
+
+# this is OK: config and logger will be visible symbols in the user's test code
+config = smashbox.script.configure_from_blob(_smash_.args.config_blob)
+
+import smashbox.utilities.reflection
+smashbox.utilities.reflection._smash_ = _smash_
+
+def getLogger():
+   import logging
+   import smashbox.utilities
+   import sys
+
+   logger = smashbox.script.getLogger('run')
+
+   logger.setLevel(logging.NOTSET)
+
+   class SmashFilter(logging.Filter):
+      def filter(self, record):
+         record.smash_process_name = smashbox.utilities.reflection.getProcessName()
+         return True
+
+   logger.addFilter(SmashFilter())
+
+   logdir,logfn = os.path.split(config.rundir)
+   try:
+      fh = logging.FileHandler(os.path.join(logdir,'log-'+logfn+'.log'),mode='w')
+   except IOError:
+      print 'File %s cannot be created (missing directory?) ' % (os.path.join(logdir,'log-'+logfn+'.log'))
+      sys.exit(-1)
+
+   fh.setLevel(logging.DEBUG)
+   # create console handler with a higher log level
+   ch = logging.StreamHandler()
+   ch.setLevel(config._loglevel) # set the loglevel as defined in the config
+   # create formatter and add it to the handlers
+   formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(smash_process_name)s - %(message)s')
+   ch.setFormatter(formatter)
+   fh.setFormatter(formatter)
+   # add the handlers to logger
+   logger.addHandler(ch)
+   logger.addHandler(fh)
+   logger.propagate=False
+   return logger
+
+try:
+   import os
+   os.makedirs(config.rundir)
+except OSError,x:
+   import errno
+   if x.errno != errno.EEXIST:
+      raise
+
+logger = getLogger()
+
+import logging
+smashbox.script.config_log(logging.DEBUG)
+
+logger.info('BEGIN SMASH RUN - rundir: %s',config.rundir)
+
+smashbox.utilities.logger = logger
+
+# load test case file directly into the global namespace of this script
+execfile(_smash_.args.test_target)
+
 if __name__ == "__main__":
-
-    import smashbox.compatibility.argparse
-    import smashbox.script
-
-    # let's use _smash_ namespace to avoid name pollution...
-    _smash_.parser = smashbox.compatibility.argparse.ArgumentParser()
-    _smash_.parser.add_argument('test_target')
-    _smash_.parser.add_argument('config_blob')
-
-    _smash_.args = _smash_.parser.parse_args()
-
-    # this is OK: config and logger will be visible symbols in the user's test code
-    config = smashbox.script.configure_from_blob(_smash_.args.config_blob)
-
-    import smashbox.utilities.reflection
-    smashbox.utilities.reflection._smash_ = _smash_
-
-    def getLogger():
-       import logging
-       import os.path
-       import smashbox.utilities
-       import sys
-
-       logger = smashbox.script.getLogger('run')
-
-       logger.setLevel(logging.NOTSET)
-       
-       class SmashFilter(logging.Filter):
-          def filter(self, record):
-             record.smash_process_name = smashbox.utilities.reflection.getProcessName()
-             return True
-
-       logger.addFilter(SmashFilter())
-
-       logdir,logfn = os.path.split(config.rundir)
-       try:
-          fh = logging.FileHandler(os.path.join(logdir,'log-'+logfn+'.log'),mode='w')
-       except IOError:
-          print 'File %s cannot be created (missing directory?) ' % (os.path.join(logdir,'log-'+logfn+'.log'))
-          sys.exit(-1)
-
-       fh.setLevel(logging.DEBUG)
-       # create console handler with a higher log level
-       ch = logging.StreamHandler()
-       ch.setLevel(config._loglevel) # set the loglevel as defined in the config
-       # create formatter and add it to the handlers
-       formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(smash_process_name)s - %(message)s')
-       ch.setFormatter(formatter)
-       fh.setFormatter(formatter)
-       # add the handlers to logger
-       logger.addHandler(ch)
-       logger.addHandler(fh)
-       logger.propagate=False
-       return logger
-    
-    try:
-       import os
-       os.makedirs(config.rundir)
-    except OSError,x:
-       import errno
-       if x.errno != errno.EEXIST:
-          raise
-
-    logger = getLogger()
-
-    import logging
-    smashbox.script.config_log(logging.DEBUG)
-    
-    logger.info('BEGIN SMASH RUN - rundir: %s',config.rundir)
-
-    smashbox.utilities.logger = logger
-    
-    # load test case file directly into the global namespace of this script
-    execfile(_smash_.args.test_target)
+    freeze_support() # add support for when a program which uses multiprocessing has been frozen to produce a Windows executable
 
     # start the framework and dispatch workers
     _smash_.run()

@@ -164,7 +164,6 @@ class Client:
 
         return r
 
-
     def _perform_request(self,url,headers,response_obj=None):
         c = self.c
 
@@ -173,7 +172,8 @@ class Client:
 
         ret_headers=[]
         c.setopt(pycurl.HEADERFUNCTION, ret_headers.append)
-
+        c.setopt(pycurl.SSL_VERIFYPEER, 0)
+        c.setopt(pycurl.SSL_VERIFYHOST, 0)
         c.perform()
 
         if response_obj is None:

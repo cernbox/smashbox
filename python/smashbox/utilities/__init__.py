@@ -5,6 +5,7 @@ import datetime
 import subprocess
 import time
 import urllib
+from sys import platform
 
 # Utilities to be used in the test-cases.
 
@@ -62,6 +63,8 @@ def reset_owncloud_account(reset_procedure=None, num_test_users=None):
     if reset_procedure is None:
         reset_procedure = config.oc_account_reset_procedure
 
+    import logging
+    logger = logging.getLogger()
     if num_test_users is None:
         logger.info('reset_owncloud_account (%s)', reset_procedure)
 
@@ -277,6 +280,9 @@ def oc_webdav_url(protocol='http',remote_folder="",user_num=None,webdav_endpoint
     else:
         password = config.oc_account_password
 
+    if platform.system() == "Windows":
+        remote_path = remote_path[:-1]
+
     return protocol + '://' + urllib.quote(username, safe='') + ':' + urllib.quote(password, safe='') + '@' + config.oc_server + '/' + remote_path
 
 
@@ -312,11 +318,12 @@ def run_ocsync(local_folder, remote_folder="", n=None, user_num=None):
 
     ocsync_cnt.setdefault(current_step,0)
 
-    local_folder += '/' # FIXME: HACK - is a trailing slash really needed by 1.6 owncloudcmd client?
+    if platform.system() != "Windows":
+        local_folder += '/' # FIXME: HACK - is a trailing slash really needed by 1.6 owncloudcmd client?
 
     for i in range(n):
         t0 = datetime.datetime.now()
-        cmd = config.oc_sync_cmd+' '+local_folder+' '+oc_webdav_url('owncloud',remote_folder,user_num) + " >> "+config.rundir+"/%s-ocsync.step%02d.cnt%03d.log 2>&1"%(reflection.getProcessName(),current_step,ocsync_cnt[current_step])
+        cmd = config.oc_sync_cmd  + ' ' + local_folder + ' ' +  oc_webdav_url('owncloud', remote_folder,user_num) + " >> " + config.rundir + "\%s-ocsync.step%02d.cnt%03d.log 2>&1" % (reflection.getProcessName(), current_step, ocsync_cnt[current_step])
         runcmd(cmd, ignore_exitcode=True)  # exitcode of ocsync is not reliable
         logger.info('sync cmd is: %s',cmd)
         logger.info('sync finished: %s',datetime.datetime.now()-t0)
@@ -353,13 +360,19 @@ def expect_webdav_exist(path, user_num=None):
 
 
 def webdav_delete(path, user_num=None):
-    runcmd('curl --verbose -k %s -X DELETE %s '%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)))
+    if platform.system() == "Windows":
+        webdav_delete_NEW(path, user_num)
+    else:
+       runcmd('curl --verbose -k %s -X DELETE %s '%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)))
     
 def webdav_mkcol(path, silent=False, user_num=None):
     out=""
-    if silent: # a workaround for super-verbose errors in case directory on the server already exists
-        out = "> /dev/null 2>&1"
-    runcmd('curl --verbose -k %s -X MKCOL %s %s'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num),out))
+    if platform.system() == "Windows":
+        webdav_mkcol_NEW(path,silent, user_num)
+    else:
+        if silent: # a workaround for super-verbose errors in case directory on the server already exists
+            out = "> /dev/null 2>&1"
+        runcmd('curl --verbose -k %s -X MKCOL %s %s'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num),out))
 
 
 # The two *_NEW functions below currently fail with:
@@ -388,8 +401,7 @@ def webdav_mkcol_NEW(path, silent=False, user_num=None):
 
 def runcmd(cmd,ignore_exitcode=False,echo=True,allow_stderr=True,shell=True,log_warning=True):
     logger.info('running %s', repr(cmd))
-
-    process = subprocess.Popen(cmd, shell=shell,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    process = subprocess.Popen(cmd, shell=shell, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout,stderr = process.communicate()
 
     if echo:
@@ -402,7 +414,7 @@ def runcmd(cmd,ignore_exitcode=False,echo=True,allow_stderr=True,shell=True,log_
                 logger.error("stderr: %s",stderr)
 
     if process.returncode != 0:
-        msg = "Non-zero exit code %d from command %s" % (ignore_exitcode,repr(cmd))
+        msg = "Non-zero exit code %s from command %s" % (ignore_exitcode,repr(cmd))
         if log_warning:
             logger.warning(msg)
         if not ignore_exitcode:
@@ -418,14 +430,16 @@ def sleep(n):
 
 ######## BASIC FILE AND DIRECTORY OPERATIONS
 
+import shutil
+
 def mkdir(d):
-    runcmd('mkdir -p '+d)
+    if not os.path.exists(d):
+       os.makedirs(d)
     return d
 
 
 def remove_tree(path):
-    runcmd('rm -rf '+path)
-
+    shutil.rmtree(path)
 
 def remove_file(path):
     logger.info('remove file %s',path)
@@ -440,19 +454,22 @@ def remove_file(path):
             raise
 
 def mv(a,b):
-    runcmd('mv %s %s'%(a,b))
-
+    shutil.move(a, b)
 
 def list_files(path,recursive=False):
-    if platform.system() == 'Darwin':
-        opts = ""
+    if platform.system() == 'Windows':
+        runcmd('dir /s /b ' + path)
     else:
-        opts = "--full-time"
+        if platform.system() == 'Darwin':
+            opts = ""
+        else:
+            opts = "--full-time"
 
-    if recursive:
-        runcmd('ls -lR %s %s'%(opts,path))
-    else:
-        runcmd('ls -lh %s %s'%(opts,path))
+        if recursive:
+            runcmd('ls -lR %s %s'%(opts,path))
+        else:
+            runcmd('ls -lh %s %s'%(opts,path))
+
 
 #http://stackoverflow.com/questions/377017/test-if-executable-exists-in-python#377028
 def which(program):
@@ -519,32 +536,12 @@ def delete_file(fn):
 def createfile_zero(fn,count,bs):
     createfile(fn,'\0',count,bs)
 
-
 import platform
 
-if platform.system() == 'Darwin':
-
-    def md5sum(fn):
-        process = subprocess.Popen('md5 %s'%fn,shell=True,stdout=subprocess.PIPE)
-        out = process.communicate()[0]
-        try:
-            return out.split()[-1]
-        except IndexError:
-            return "NO_CHECKSUM_ERROR"
-
-else:  # linux
-
-    def md5sum(fn):
-        process=subprocess.Popen('md5sum %s'%fn,shell=True,stdout=subprocess.PIPE)
-        out = process.communicate()[0]
-        try:
-            return out.split()[0]
-        except IndexError:
-            return "NO_CHECKSUM_ERROR"
-
-
 def hexdump(fn):
-    runcmd('hexdump %s'%fn)
+    with open(fn, 'rb') as f:
+        for chunk in iter(lambda: f.read(32), b''):
+            chunk.encode('hex')
 
 
 def list_versions_on_server(fn):
