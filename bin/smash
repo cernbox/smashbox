@@ -116,7 +116,8 @@ def main():
        import socket
        config.oc_server = socket.gethostname()
 
-   top_smash = os.path.abspath(os.path.normpath(os.path.dirname(os.path.dirname(sys.argv[0]))))
+   
+   top_smash = os.path.normpath(os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0]))))
 
    # relative paths are resolved wrt to <top_smash> and MUST start with ./
    # absolute paths are left as-is
@@ -129,21 +130,31 @@ def main():
       sys.exit(1)
 
    oc_sync_cmd_exe = config.oc_sync_cmd.split(' ')[0]
-   oc_sync_cmd_exe_dirname = os.path.dirname(oc_sync_cmd_exe) # take first word of the string (other words may be arguments)
+   oc_sync_cmd_args = config.oc_sync_cmd.split(' ')[1:]
 
-   if oc_sync_cmd_exe_dirname:
-      if not oc_sync_cmd_exe_dirname.startswith('./') or not oc_sync_cmd_exe_dirname.startswith('/'):
-         logger.critical("config error: relative paths for oc_sync_cmd must start with ./ : %s",config.oc_sync_cmd)
-         sys.exit(1)
-      config.oc_sync_cmd = os.path.normpath(os.path.join(top_smash,config.oc_sync_cmd))
+   if oc_sync_cmd_exe.startswith('./') or oc_sync_cmd_exe.startswith('/'):
+      oc_sync_cmd_exe = os.path.normpath(os.path.join(top_smash,oc_sync_cmd_exe))
    else:
-      # just a plain base name: find executable using which and 
-      from smashbox.utilities import which 
+
+      if '/' in oc_sync_cmd_exe:
+         logger.error("config error: %s: relative path to oc_sync_cmd must start with ./", config.oc_sync_cmd)
+         sys.exit(1)
+
+      # just a plain base name: find executable using which
+      from smashbox.utilities import which
       oc_sync_cmd_exe = which(oc_sync_cmd_exe)
       if not oc_sync_cmd_exe:
-         logger.critical("config error: oc_sync_cmd not found in PATH: %s",config.oc_sync_cmd)
+         logger.critical("config error: oc_sync_cmd not found in PATH: %s (specified as plain executable)",config.oc_sync_cmd)
          sys.exit(1)
-      config.oc_sync_cmd = oc_sync_cmd_exe + config.oc_sync_cmd[config.oc_sync_cmd.find(' '):]
+         
+   from smashbox.utilities import is_exe
+   if not is_exe(oc_sync_cmd_exe):
+      logger.critical("config_error: oc_sync_cmd not found %s (specified as: '%s')",oc_sync_cmd_exe,config.oc_sync_cmd)
+      sys.exit(1)
+
+   # executable is found, now append the arguments if any
+      
+   config.oc_sync_cmd = " ".join([oc_sync_cmd_exe] + oc_sync_cmd_args)
 
    import string
 

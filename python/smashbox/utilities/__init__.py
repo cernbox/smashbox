@@ -455,11 +455,13 @@ def list_files(path,recursive=False):
         runcmd('ls -lh %s %s'%(opts,path))
 
 #http://stackoverflow.com/questions/377017/test-if-executable-exists-in-python#377028
+    
+def is_exe(fpath):
+    import os
+    return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
 def which(program):
     import os
-    def is_exe(fpath):
-        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
-
     fpath, fname = os.path.split(program)
     if fpath:
         if is_exe(program):
