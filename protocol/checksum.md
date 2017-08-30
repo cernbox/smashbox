@@ -31,7 +31,11 @@ For example this response will enable Adler32 checksum on file upload and downlo
                                   }
        }}}
        
-                      
+
+## Assumptions on the checksum value
+
+The value of Adler32 checksum MUST NOT be zero padded (2.2.4 client will complain).
+
 ## Simple PUT (not-chunked)
 
 Client computes the checksum and sends it in the request header OC-Checksum. The OC-Checksum is defined as: checkum_type:checksum_value 
