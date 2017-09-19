@@ -227,7 +227,15 @@ def loser(step):
 
     # remove the sync db
     if rmLocalStateDB:
-        remove_file(os.path.join(d,'.csync_journal.db'))
+       statedb_files=[]
+       # pre-2.3 clients used a fixed name
+       # 2.3 onwards use variable names: https://github.com/owncloud/client/blob/master/src/common/syncjournaldb.cpp#L69
+       for p in ['.csync_journal.db','._sync_*.db','.sync_*.db']:
+          statedb_files += glob.glob(os.path.join(d,p))
+
+       fatal_check(len(statedb_files)==1,"expected journal file, not found")
+
+       remove_file(statedb_files[0])
 
     run_ocsync(d,n=3) # conflict file will be synced to the server but it requires more than one sync run
 
