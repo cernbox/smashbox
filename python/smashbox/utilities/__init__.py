@@ -352,36 +352,48 @@ def expect_webdav_exist(path, user_num=None):
     error_check(200 <= r.rc and r.rc < 300,"Remote path does not exist: %s" % path) # class 2xx response is OK
 
 
-def webdav_delete(path, user_num=None):
-    runcmd('curl --verbose -k %s -X DELETE %s '%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)))
-    
-def webdav_mkcol(path, silent=False, user_num=None):
-    out=""
-    if silent: # a workaround for super-verbose errors in case directory on the server already exists
-        out = "> /dev/null 2>&1"
-    runcmd('curl --verbose -k %s -X MKCOL %s %s'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num),out))
-
-
-# The two *_NEW functions below currently fail with:
+# The two functions implementations below with pycurl currently fail with:
 # * warning: ignoring value of ssl.verifyhost
 # * NSS error -8023
 # * Closing connection #0
 # * SSL connect error
 
-def webdav_delete_NEW(path, user_num=None):
-    import smashbox.curl
-    c = smashbox.curl.Client(verbose=True)
-    url = oc_webdav_url(remote_folder=path, user_num=user_num)
-    return c.DELETE(url)
+def webdav_delete(path, user_num=None):
 
+    # work around buggy pycurl.so on MacOSX...
+    if platform.system() == "Darwin":
+        import logging
+        if config._loglevel <= logging.DEBUG:
+            verbose = "--verbose"
+            echo=True
+        else:
+            verbose = ""
+            echo=False
+        runcmd('curl %s -k %s -X DELETE %s '%(verbose,config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)),echo=echo)
+    else:
+        import smashbox.curl
+        c = smashbox.curl.Client(verbose=not silent) # FIXME: handle config.get('curl_opts','')
+        url = oc_webdav_url(remote_folder=path, user_num=user_num)
+        return c.DELETE(url)
+    
+def webdav_mkcol(path, silent=False, user_num=None):
 
-def webdav_mkcol_NEW(path, silent=False, user_num=None):
+    # work around buggy pycurl.so on MacOSX...
+    if platform.system() == "Darwin":
+        out=""
+        import logging
+        if silent or config._loglevel > logging.DEBUG: # a workaround for super-verbose errors in case directory on the server already exists
+            out = "> /dev/null 2>&1"
+            echo=False
+        else:
+            echo=True
+        runcmd('curl --verbose -k %s -X MKCOL %s %s'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num),out),echo=echo)
+    else:
+        import smashbox.curl
+        c = smashbox.curl.Client(verbose=not silent) 
+        url = oc_webdav_url(remote_folder=path, user_num=user_num)
+        return c.MKCOL(url)
 
-    # silent is a workaround for super-verbose errors in case directory on the server already exists
-    import smashbox.curl
-    c = smashbox.curl.Client(verbose=not silent) 
-    url = oc_webdav_url(remote_folder=path, user_num=user_num)
-    return c.MKCOL(url)
 ###############
 
 # #### SHELL COMMANDS AND TIME FUNCTIONS
