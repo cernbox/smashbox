@@ -5,6 +5,7 @@ import datetime
 import subprocess
 import time
 import urllib
+import platform
 
 # Utilities to be used in the test-cases.
 
@@ -533,29 +534,8 @@ def delete_file(fn):
 def createfile_zero(fn,count,bs):
     createfile(fn,'\0',count,bs)
 
-
-import platform
-
-if platform.system() == 'Darwin':
-
-    def md5sum(fn):
-        process = subprocess.Popen('md5 %s'%fn,shell=True,stdout=subprocess.PIPE)
-        out = process.communicate()[0]
-        try:
-            return out.split()[-1]
-        except IndexError:
-            return "NO_CHECKSUM_ERROR"
-
-else:  # linux
-
-    def md5sum(fn):
-        process=subprocess.Popen('md5sum %s'%fn,shell=True,stdout=subprocess.PIPE)
-        out = process.communicate()[0]
-        try:
-            return out.split()[0]
-        except IndexError:
-            return "NO_CHECKSUM_ERROR"
-
+# some tests depend on md5sum here
+from hash_files import md5sum 
 
 def hexdump(fn):
     runcmd('hexdump %s'%fn)
