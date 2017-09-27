@@ -414,7 +414,7 @@ def runcmd(cmd,ignore_exitcode=False,echo=True,allow_stderr=True,shell=True,log_
                 logger.error("stderr: %s",stderr)
 
     if process.returncode != 0:
-        msg = "Non-zero exit code %d from command %s" % (ignore_exitcode,repr(cmd))
+        msg = "Non-zero exit code %d from command %s" % (process.returncode,repr(cmd))
         if log_warning:
             logger.warning(msg)
         if not ignore_exitcode:
