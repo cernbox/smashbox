@@ -16,6 +16,7 @@ class Client:
         c = pycurl.Curl()
 
         c.setopt(c.SSL_VERIFYPEER, 0)
+        c.setopt(c.SSL_VERIFYHOST, 0) # allow self-signed or invalid certs etc.
         c.setopt(c.CONNECTTIMEOUT, 60)
         c.setopt(c.TIMEOUT, 60)
         c.setopt(c.COOKIEFILE, '')
