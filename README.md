@@ -51,16 +51,22 @@ General layout:
 Supported OSes
 ============
 
+Requires:
+ * python 2.7+
+ * pycurl
+
 Linux
 -----
 
 This framework should work out-of-the-box on any recent Linux
 which supports python2.
 
+Sync clients will usually be in the PATH.
+
 MacOSX
 -------
 
-You may need to install packages which are normally not shipped with the system:
+Dependency installation via pip (example):
   * sudo pip install pycurl
 
 You may need to run the smashbox executable by calling python
@@ -75,8 +81,17 @@ Location of sync clients:
  
 Windows
 --------
-Windows port is preparation. Requires python to be installed.
 
+Dependency installation via pip (example):
+ * c:/Python27/python.exe -m pip install pycurl
+
+ You may need to call python interpreter directly:
+
+c:/Python27/python.exe bin/smash
+
+Location of sync client may be configured like this:
+
+ * oc_sync_cmd = ['C:\Program Files (x86)\cernbox\cernboxcmd.exe',"--trust"]
 
 Installation
 ============
