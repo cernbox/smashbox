@@ -48,10 +48,38 @@ General layout:
    
 </pre>
 
-Installation
+Supported OSes
 ============
 
-Note: Currently this framework works on Unix-like systems only. Windows port is needed.
+Linux
+-----
+
+This framework should work out-of-the-box on any recent Linux
+which supports python2.
+
+MacOSX
+-------
+
+You may need to install packages which are normally not shipped with the system:
+  * sudo pip install pycurl
+
+You may need to run the smashbox executable by calling python
+interpreter directly like this:
+
+python bin/smash
+
+Location of sync clients:
+
+ * /Applications/cernbox.app/Contents/MacOS/cernboxcmd
+ * /Applications/owncloud.app/Contents/MacOS/owncloudcmd
+ 
+Windows
+--------
+Windows port is preparation. Requires python to be installed.
+
+
+Installation
+============
 
 Clone git repository into your local ``smashbox`` directory.
 
