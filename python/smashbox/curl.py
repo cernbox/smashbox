@@ -138,7 +138,6 @@ class Client:
 
 
     def DELETE(self,url):
-        print ">>>>>>>>>> DELETE",url
 
         logger.debug('DELETE %s',url)
         
@@ -146,8 +145,13 @@ class Client:
         
         c.setopt(c.CUSTOMREQUEST, "DELETE")
 
-        r = self._perform_request(url,{})
+        # we are usually not interested in response body of this kind of request
+        # if present, we capture it to a variable, otherwise it gets printed to stdout by pycurl
+        body_stream = cStringIO.StringIO()
+        c.setopt(c.WRITEFUNCTION, body_stream.write)
 
+        r = self._perform_request(url,{})
+        r.response_body=body_stream.getvalue()
         return r        
 
     def MOVE(self,url,destination,overwrite=None):
