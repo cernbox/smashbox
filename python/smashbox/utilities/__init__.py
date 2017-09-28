@@ -261,13 +261,13 @@ def oc_webdav_url(protocol='http',remote_folder="",user_num=None,webdav_endpoint
     if config.oc_ssl_enabled:
         protocol += 's'
 
-    # strip-off any leading / characters to prevent 1) abspath result from the join below, 2) double // and alike...
-    remote_folder = remote_folder.lstrip('/')
-
     if webdav_endpoint is None:
         webdav_endpoint = config.oc_webdav_endpoint
 
-    remote_path = os.path.join(webdav_endpoint, config.oc_server_folder, remote_folder)
+    # strip off any leading/trailing slashes so that remote path does not start or end with / nor it contains double //
+    remote_path = "/".join([p.strip('/') for p in [webdav_endpoint, config.oc_server_folder, remote_folder]])
+
+    remote_path = remote_path.strip('/')
 
     if user_num is None:
         username = "%s" % config.oc_account_name
@@ -314,13 +314,23 @@ def run_ocsync(local_folder, remote_folder="", n=None, user_num=None):
 
     ocsync_cnt.setdefault(current_step,0)
 
-    local_folder += '/' # FIXME: HACK - is a trailing slash really needed by 1.6 owncloudcmd client?
+    if platform.system() != "Windows":
+        local_folder += os.sep # FIXME: HACK - is a trailing slash really needed by 1.6 owncloudcmd client?
 
     for i in range(n):
         t0 = datetime.datetime.now()
-        cmd = config.oc_sync_cmd+' '+local_folder+' '+oc_webdav_url('owncloud',remote_folder,user_num) + " >> "+config.rundir+"/%s-ocsync.step%02d.cnt%03d.log 2>&1"%(reflection.getProcessName(),current_step,ocsync_cnt[current_step])
-        runcmd(cmd, ignore_exitcode=True)  # exitcode of ocsync is not reliable
-        logger.info('sync cmd is: %s',cmd)
+        cmd = config.oc_sync_cmd+[local_folder,oc_webdav_url('owncloud',remote_folder,user_num)]
+        logf = file(os.path.join(config.rundir,"%s-ocsync.step%02d.cnt%03d.log"%(reflection.getProcessName(),current_step,ocsync_cnt[current_step])),"wb")
+
+        logger.info('sync cmd is: %s',repr(cmd))
+
+        process = subprocess.Popen(cmd, shell=False, stdout=logf, stderr=subprocess.STDOUT)
+        process.communicate()
+
+        if process.returncode != 0:
+            msg = "Non-zero exit code %d from command %s" % (process.returncode, repr(cmd))
+            logger.warning(msg)
+
         logger.info('sync finished: %s',datetime.datetime.now()-t0)
         ocsync_cnt[current_step]+=1
 
@@ -360,7 +370,7 @@ def expect_webdav_exist(path, user_num=None):
 # * Closing connection #0
 # * SSL connect error
 
-def webdav_delete(path, user_num=None):
+def webdav_delete(path, silent=True, user_num=None):
 
     # work around buggy pycurl.so on MacOSX...
     if platform.system() == "Darwin":
@@ -378,7 +388,7 @@ def webdav_delete(path, user_num=None):
         url = oc_webdav_url(remote_folder=path, user_num=user_num)
         return c.DELETE(url)
     
-def webdav_mkcol(path, silent=False, user_num=None):
+def webdav_mkcol(path, silent=True, user_num=None):
 
     # work around buggy pycurl.so on MacOSX...
     if platform.system() == "Darwin":
