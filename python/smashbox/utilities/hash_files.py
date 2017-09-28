@@ -124,7 +124,7 @@ def create_hashfile2(wdir,filemask=None,size=None,bs=None,slow_write=None):
 
     fn = os.path.join(wdir,filemask.replace('{md5}',md5.hexdigest()))
 
-    f = file(fn,'w')
+    f = file(fn,'wb')
 
     # write data blocks
     for i in range(nblocks):
