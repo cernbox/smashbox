@@ -6,6 +6,7 @@ import subprocess
 import time
 import urllib
 import platform
+import shutil
 
 # Utilities to be used in the test-cases.
 
@@ -432,12 +433,15 @@ def sleep(n):
 ######## BASIC FILE AND DIRECTORY OPERATIONS
 
 def mkdir(d):
-    runcmd('mkdir -p '+d)
+    logger.info('mkdir %s',d)
+    if not os.path.exists(d):
+        os.makedirs(d)
     return d
 
 
 def remove_tree(path):
-    runcmd('rm -rf '+path)
+    logger.info('remove directory tree %s',path)
+    shutil.rmtree(path)
 
 
 def remove_file(path):
@@ -453,10 +457,16 @@ def remove_file(path):
             raise
 
 def mv(a,b):
-    runcmd('mv %s %s'%(a,b))
+    logger.info("move %s %s",a,b)
+    shutil.move(a, b)
 
 
 def list_files(path,recursive=False):
+
+    if platform.system() == 'Windows':
+        runcmd('dir /s /b ' + path)
+        return
+ 
     if platform.system() == 'Darwin':
         opts = ""
     else:
@@ -534,11 +544,21 @@ def delete_file(fn):
 def createfile_zero(fn,count,bs):
     createfile(fn,'\0',count,bs)
 
-# some tests depend on md5sum here
-from hash_files import md5sum 
+# some tests depend on md5sum in this module
+# use portable implementation of md5sum
+def md5sum(fn):
+    from hash_files import md5sum as _md5sum
+    return _md5sum(fn)
 
 def hexdump(fn):
-    runcmd('hexdump %s'%fn)
+    if platform.system() == "Windows":
+        # FIXME: this implementation is missing some formatting features of hexdump:
+        # byte offset column and spacing between bytes
+        with open(fn, 'rb') as f:
+            for chunk in iter(lambda: f.read(32), b''):
+                chunk.encode('hex')
+    else:
+        runcmd('hexdump %s'%fn)
 
 
 def list_versions_on_server(fn):
