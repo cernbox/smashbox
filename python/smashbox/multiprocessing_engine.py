@@ -24,13 +24,67 @@ standardSetup()
 del standardSetup
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+# all internal symbols start with _smash_
+# other symbols defined in this file are available in the user's test scripts
+
+
 # obsolete to be removed
 def log(*args,**kwds):
     import time
     print time.ctime(),_smash_.process_name,(" ".join([str(s) for s in args]))%kwds
 
-
 #import shelve
+
+class _smash_SmashSharedObject:
+    """ A bunch of shared attributes stored in a directory as separate files.
+    """
+
+    def __init__(self, d):
+        self._dir = d
+        self._makedir()
+
+    def _makedir(self):
+        try:
+            os.makedirs(self._dir)
+        except OSError, x:
+            import errno
+            if x.errno != errno.EEXIST:
+                raise
+
+    def __getitem__(self, key):
+        self._makedir()
+        import pickle
+        try:
+            return pickle.load(file(os.path.join(self._dir, '_attr_' + key)))
+        except Exception, x:
+            logger.debug(x)
+            raise AttributeError(x)
+
+    def __setitem__(self, key, val):
+        self._makedir()
+        import pickle
+        import time
+        tmp_name = os.path.join(self._dir, 'tmp.%s.%s._attr_%s' % (os.getpid(), time.time(), key))
+        dest_name = os.path.join(self._dir, '_attr_' + key)
+        pickle.dump(val, file(tmp_name, 'w'))
+
+        import shutil
+        shutil.move(tmp_name, dest_name)
+
+    def keys(self):
+        import glob
+        self._makedir()
+        attrs = [os.path.basename(a)[len('_attr_'):] for a in glob.glob(os.path.join(self._dir, '_attr_*'))]
+        return attrs
+
+    def dict(self):
+        keys = {}
+        for a in self.keys():
+            keys[a] = self[a]
+        return keys
+
+    def __str__(self):
+        return repr(self.dict())
 
 class _smash_:
     """ Internals of the stepper synchronization framework. This class
@@ -49,58 +103,6 @@ class _smash_:
     N_STEPS = 100
     
     workers = []
-
-    class SmashSharedObject:
-        """ A bunch of shared attributes stored in a directory as separate files.
-        """
-        
-        def __init__(self,d):
-           self._dir = d
-           self._makedir()
-
-        def _makedir(self):
-           try:
-              os.makedirs(self._dir)
-           except OSError,x:
-              import errno
-              if x.errno != errno.EEXIST:
-                 raise
-                       
-        def __getitem__(self,key):
-           self._makedir()
-           import pickle
-           try:
-              return pickle.load(file(os.path.join(self._dir,'_attr_'+key)))
-           except Exception,x:
-              logger.debug(x)
-              raise AttributeError(x)
-        
-        def __setitem__(self,key,val):
-           self._makedir()
-           import pickle
-           import time
-           tmp_name = os.path.join(self._dir,'tmp.%s.%s._attr_%s'%(os.getpid(),time.time(),key))
-           dest_name = os.path.join(self._dir,'_attr_'+key)
-           pickle.dump(val,file(tmp_name,'w'))
-
-           import shutil
-           shutil.move(tmp_name,dest_name)
-
-        def keys(self):
-           import glob
-           self._makedir()
-           attrs = [os.path.basename(a)[len('_attr_'):] for a in glob.glob(os.path.join(self._dir,'_attr_*'))]
-           return attrs
-
-        def dict(self):
-           keys = {}
-           for a in self.keys():
-              keys[a] = self[a]
-           return keys
-
-        def __str__(self):
-           return repr(self.dict())
-                
     all_procs = []
 
     @staticmethod
@@ -189,7 +191,7 @@ class _smash_:
 
         manager = Manager()
 
-        _smash_.shared_object = _smash_.SmashSharedObject(os.path.join(config.rundir,'_shared_objects'))
+        _smash_.shared_object = _smash_SmashSharedObject(os.path.join(config.rundir,'_shared_objects'))
         
         #_smash_.shared_object = shelve.open(os.path.join(config.rundir,'_shared_objects.shelve'))
 
@@ -205,7 +207,7 @@ class _smash_:
         for i,f_n in enumerate(_smash_.workers):
             f = f_n[0]
             fname = f_n[1]
-            p = Process(target=_smash_.worker_wrap,args=(i,f,fname))
+            p = Process(target=_smash_worker_starter,args=(i,f,fname,_smash_.shared_object,_smash_.steps,_smash_.supervisor_step))
             p.start()
             _smash_.all_procs.append(p)
 
@@ -227,10 +229,25 @@ def add_worker(f,name=None):
     to define synchronization points.
     """
     _smash_.workers.append((f,name))
+    return f
 
-    
-if __name__ == "__main__":
+def _smash_worker_starter(i,funct,fname, shared_object, steps,supervisor_step):
+    """ Wrapper of worker_wrap() static method.
+        Static methods cannot be used directly as the target
+        argument on Windows. Since windows lacks of os.fork(), it is needed
+        to ensure that all the arguments to Process.__init__() are picklable.
+    """
+    logger.debug('Starting worker process %d %s',i,fname or funct.__name__)
+    _smash_.shared_object = shared_object
+    globals().update(_smash_.shared_object)
+    _smash_.steps=steps
+    _smash_.supervisor_step=supervisor_step
+    _smash_.worker_wrap(i, funct, fname)
 
+### HERE IS THE START OF THE EXECUTABLE SCRIPT
+
+# common initialization
+if True:
     import smashbox.compatibility.argparse
     import smashbox.script
 
@@ -297,14 +314,17 @@ if __name__ == "__main__":
 
     import logging
     smashbox.script.config_log(logging.DEBUG)
-    
-    logger.info('BEGIN SMASH RUN - rundir: %s',config.rundir)
 
     smashbox.utilities.logger = logger
-    
+
     # load test case file directly into the global namespace of this script
     execfile(_smash_.args.test_target)
 
+if __name__ == "__main__":
+    import multiprocessing
+    multiprocessing.freeze_support()  # add support for when a program which uses multiprocessing has been frozen to produce a Windows executable
+
+    logger.info('BEGIN SMASH RUN - rundir: %s', config.rundir)
     # start the framework and dispatch workers
     _smash_.run()
 
