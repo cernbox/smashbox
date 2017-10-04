@@ -174,6 +174,8 @@ class _smash_:
             step(_smash_.N_STEPS-1,None) # don't print any message
 
             import smashbox.utilities
+            _smash_.worker_results.put([smashbox.utilities.reported_errors])
+
             if smashbox.utilities.reported_errors:
                logger.error('%s error(s) reported',len(smashbox.utilities.reported_errors))
                import sys
@@ -203,11 +205,15 @@ class _smash_:
 
         _smash_.steps = manager.list([0 for x in range(len(_smash_.workers))])
 
+        import smashbox.monitoring.kibana_monitoring
+        _smash_.monitor = smashbox.monitoring.kibana_monitoring.StateMonitor(manager,_smash_.args, config)
+        _smash_.worker_results = _smash_.monitor.worker_results
+
         # first worker => process number == 0
         for i,f_n in enumerate(_smash_.workers):
             f = f_n[0]
             fname = f_n[1]
-            p = Process(target=_smash_worker_starter,args=(i,f,fname,_smash_.shared_object,_smash_.steps,_smash_.supervisor_step))
+            p = Process(target=_smash_worker_starter,args=(i,f,fname,_smash_.shared_object,_smash_.steps,_smash_.supervisor_step,_smash_.monitor.worker_results))
             p.start()
             _smash_.all_procs.append(p)
 
@@ -215,8 +221,10 @@ class _smash_:
 
         for p in _smash_.all_procs:
             p.join()
+            _smash_.monitor.join_worker_results() # Get process results from the queue
 
         smashbox.utilities.finalize_test()
+        _smash_.monitor.test_finish()
 
         for p in _smash_.all_procs:
            if p.exitcode != 0:
@@ -231,7 +239,7 @@ def add_worker(f,name=None):
     _smash_.workers.append((f,name))
     return f
 
-def _smash_worker_starter(i,funct,fname, shared_object, steps,supervisor_step):
+def _smash_worker_starter(i,funct,fname, shared_object, steps,supervisor_step,worker_results):
     """ Wrapper of worker_wrap() static method.
         Static methods cannot be used directly as the target
         argument on Windows. Since windows lacks of os.fork(), it is needed
@@ -242,6 +250,7 @@ def _smash_worker_starter(i,funct,fname, shared_object, steps,supervisor_step):
     globals().update(_smash_.shared_object)
     _smash_.steps=steps
     _smash_.supervisor_step=supervisor_step
+    _smash_.worker_results = worker_results
     _smash_.worker_wrap(i, funct, fname)
 
 ### HERE IS THE START OF THE EXECUTABLE SCRIPT

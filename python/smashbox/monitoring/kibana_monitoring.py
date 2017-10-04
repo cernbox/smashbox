@@ -1,0 +1,81 @@
+from smashbox.utilities import ocsync_version
+import socket
+import requests
+import json
+import platform
+
+class StateMonitor:
+
+    def __init__(self,manager, args, config):
+        """
+        Initialize the test state with initial information
+        """
+        testname = (str(args.test_target).split("test_"))[-1].split(".")[0]
+        self.worker_results = manager.Queue()
+        self.test_results = dict()
+        self.runid = config.runid
+
+        # extract test parameters
+        parameters = []
+        param = {}
+        for c in config.__dict__:
+            if c.startswith(testname + "_"):
+                param[str((c.replace(testname + "_", "")))] = config[c]
+                parameters.append(param)
+                print c, config[c]
+
+        # initialize json to be sent for monitoring
+        self.test_results = {"activity": "smashbox-regression", 'test_name': testname, 'hostname': socket.gethostname(),
+                             'oc_client_version': str(str(ocsync_version())[1:-1].replace(",",".")),'eos_version': "beryl_aquamarine",'platform': platform.system() + platform.release(),
+                             'parameters':parameters,'parameters_text':str(parameters),'errors': [],'errors_text': "",'success': [],
+                             'total_errors':0,'total_success':0, 'qos_metrics': [],'passed': 0,'failed': 0 }
+
+
+    def join_worker_results(self):
+        """
+        Join partial worker tests results information. The partial results are stored in queue (FIFO order)
+        """
+        partial_results = self.worker_results.get()
+        if(partial_results[0]): self.test_results['errors'].append(partial_results[0])
+
+        self.test_results['total_errors']+=len(self.test_results['errors'])
+
+
+    def test_finish(self):
+        """"
+        Check if the test has passed and publish results
+        """
+        if(self.test_results['total_errors']>=1): # A subtest is considered failed with one or more errors
+            self.test_results['passed'] = 0
+            self.test_results['failed'] = 1
+        else:
+            self.test_results['failed'] = 0
+            self.test_results['passed'] = 1
+
+        json_results = self.get_json_results()
+
+        self.send_and_check(json_results)
+
+
+    def get_json_results(self):
+        """
+        Saved results in a dictionary to be able to convert them in a json format
+        """
+        if (self.test_results['errors']): self.test_results['errors_text'] = str(self.test_results['errors'])
+        json_result = [{'producer':"cernbox", 'type':"ops", 'hostname': socket.gethostname(), 'timestamp':int(round(self.runid* 1000)), "data":self.test_results}]
+        return json_result
+
+    # --------------------------------------------------------------------------------
+    # Send metrics to kibana-monit central service
+    #   Report tests results and statistics to the kibana monitoring dashboard
+    # --------------------------------------------------------------------------------
+
+    def send(self,document):
+        return requests.post('http://monit-metrics:10012/', data=json.dumps(document),
+                             headers={"Content-Type": "application/json; charset=UTF-8"})
+
+    def send_and_check(self,document, should_fail=False):
+        response = self.send(document)
+        assert (
+        (response.status_code in [200]) != should_fail), 'With document: {0}. Status code: {1}. Message: {2}'.format(
+            document, response.status_code, response.text)
