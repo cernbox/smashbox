@@ -372,8 +372,12 @@ def expect_webdav_exist(path, user_num=None):
 
 def webdav_delete(path, silent=True, user_num=None):
 
-    # work around buggy pycurl.so on MacOSX...
-    if platform.system() == "Darwin":
+    if platform.system() == "Windows":
+        import smashbox.curl
+        c = smashbox.curl.Client(verbose=not silent) # FIXME: handle config.get('curl_opts','')
+        url = oc_webdav_url(remote_folder=path, user_num=user_num)
+        return c.DELETE(url)
+    else:     # work around buggy pycurl.so on MacOSX. buggy pycurl also on linux: https://bugzilla.redhat.com/show_bug.cgi?id=1317691
         import logging
         if config._loglevel <= logging.DEBUG:
             verbose = "--verbose"
@@ -382,16 +386,15 @@ def webdav_delete(path, silent=True, user_num=None):
             verbose = ""
             echo=False
         runcmd('curl %s -k %s -X DELETE %s '%(verbose,config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)),echo=echo)
-    else:
-        import smashbox.curl
-        c = smashbox.curl.Client(verbose=not silent) # FIXME: handle config.get('curl_opts','')
-        url = oc_webdav_url(remote_folder=path, user_num=user_num)
-        return c.DELETE(url)
-    
+
 def webdav_mkcol(path, silent=True, user_num=None):
 
-    # work around buggy pycurl.so on MacOSX...
-    if platform.system() == "Darwin":
+    if platform.system() == "Windows":
+        import smashbox.curl
+        c = smashbox.curl.Client(verbose=not silent)
+        url = oc_webdav_url(remote_folder=path, user_num=user_num)
+        return c.MKCOL(url)
+    else:     # work around buggy pycurl.so on MacOSX. buggy pycurl also on linux: https://bugzilla.redhat.com/show_bug.cgi?id=1317691
         out=""
         import logging
         if silent or config._loglevel > logging.DEBUG: # a workaround for super-verbose errors in case directory on the server already exists
@@ -400,11 +403,7 @@ def webdav_mkcol(path, silent=True, user_num=None):
         else:
             echo=True
         runcmd('curl --verbose -k %s -X MKCOL %s %s'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num),out),echo=echo)
-    else:
-        import smashbox.curl
-        c = smashbox.curl.Client(verbose=not silent) 
-        url = oc_webdav_url(remote_folder=path, user_num=user_num)
-        return c.MKCOL(url)
+
 
 ###############
 
