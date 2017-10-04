@@ -289,10 +289,10 @@ def ocsync_version():
     """
 
     # strip possible options from config.oc_sync_cmd
-    cmd = config.oc_sync_cmd.split()[0] + " --version"
+    cmd = config.oc_sync_cmd[0] + " --version"
     rc,stdout,stderr = runcmd(cmd, ignore_exitcode=True,log_warning=False) # do not warn about non-zero exit code (which is unfortunately normal)
 
-    sver = stdout.strip().split()[-1] # the version is the last word on the first line
+    sver = stdout.strip().split()[2] # the version is the last word on the first line
     
     return tuple([int(x) for x in sver.split(".")])
 
