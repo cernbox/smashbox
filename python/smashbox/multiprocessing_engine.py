@@ -174,7 +174,7 @@ class _smash_:
             step(_smash_.N_STEPS-1,None) # don't print any message
 
             import smashbox.utilities
-            _smash_.worker_results.put([smashbox.utilities.reported_errors])
+            if _smash_.worker_results: _smash_.worker_results.put([smashbox.utilities.reported_errors])
 
             if smashbox.utilities.reported_errors:
                logger.error('%s error(s) reported',len(smashbox.utilities.reported_errors))
@@ -221,7 +221,7 @@ class _smash_:
 
         for p in _smash_.all_procs:
             p.join()
-            _smash_.monitor.join_worker_results() # Get process results from the queue
+            if _smash_.worker_results : _smash_.monitor.join_worker_results() # Get process results from the queue
 
         smashbox.utilities.finalize_test()
         _smash_.monitor.test_finish()

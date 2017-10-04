@@ -10,6 +10,13 @@ class StateMonitor:
         """
         Initialize the test state with initial information
         """
+        self.kibana_monitoring_host = config.get('kibana_monitoring_host', None)
+        self.kibana_monitoring_port = config.get('kibana_monitoring_port', 10012)
+
+        if not self.kibana_monitoring_host:
+            self.worker_results = None
+            return
+
         testname = (str(args.test_target).split("test_"))[-1].split(".")[0]
         self.worker_results = manager.Queue()
         self.test_results = dict()
@@ -45,6 +52,9 @@ class StateMonitor:
         """"
         Check if the test has passed and publish results
         """
+        if not self.kibana_monitoring_host:
+            return
+
         if(self.test_results['total_errors']>=1): # A subtest is considered failed with one or more errors
             self.test_results['passed'] = 0
             self.test_results['failed'] = 1
@@ -71,7 +81,7 @@ class StateMonitor:
     # --------------------------------------------------------------------------------
 
     def send(self,document):
-        return requests.post('http://monit-metrics:10012/', data=json.dumps(document),
+        return requests.post(self.kibana_monitoring_host + ":" + self.kibana_monitoring_port + "/", data=json.dumps(document),
                              headers={"Content-Type": "application/json; charset=UTF-8"})
 
     def send_and_check(self,document, should_fail=False):
