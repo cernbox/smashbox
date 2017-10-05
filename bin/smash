@@ -32,6 +32,7 @@ def main():
    import datetime
    import smashbox.script
    import smashbox.no_engine
+   import time
 
    parser=smashbox.script.arg_parser(description='Run the tests and smash the box')
 
@@ -106,6 +107,8 @@ def main():
 
    if not config.runid:
       config.runid = datetime.datetime.now().strftime("%y%m%d-%H%M%S")
+
+   config._run_timestamp = time.time()
 
    config.smashdir = os.path.expanduser(config.smashdir)
 
