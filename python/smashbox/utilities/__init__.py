@@ -289,10 +289,10 @@ def ocsync_version():
     """
 
     # strip possible options from config.oc_sync_cmd
-    cmd = config.oc_sync_cmd.split()[0] + " --version"
-    rc,stdout,stderr = runcmd(cmd, ignore_exitcode=True,log_warning=False) # do not warn about non-zero exit code (which is unfortunately normal)
+    cmd = [config.oc_sync_cmd[0]] + ["--version"]
+    rc,stdout,stderr = runcmd(cmd, shell=False, ignore_exitcode=True,log_warning=False) # do not warn about non-zero exit code (which is unfortunately normal)
 
-    sver = stdout.strip().split()[-1] # the version is the last word on the first line
+    sver = stdout.strip().split()[2] # the version is the third argument
     
     return tuple([int(x) for x in sver.split(".")])
 
@@ -372,8 +372,8 @@ def expect_webdav_exist(path, user_num=None):
 
 def webdav_delete(path, silent=True, user_num=None):
 
-    # work around buggy pycurl.so on MacOSX...
-    if platform.system() == "Darwin":
+    # work around buggy pycurl.so on MacOSX... buggy pycurl also on linux: https://bugzilla.redhat.com/show_bug.cgi?id=1317691
+    if platform.system() != "Windows":
         import logging
         if config._loglevel <= logging.DEBUG:
             verbose = "--verbose"
@@ -390,8 +390,8 @@ def webdav_delete(path, silent=True, user_num=None):
     
 def webdav_mkcol(path, silent=True, user_num=None):
 
-    # work around buggy pycurl.so on MacOSX...
-    if platform.system() == "Darwin":
+    # work around buggy pycurl.so on MacOSX... buggy pycurl also on linux: https://bugzilla.redhat.com/show_bug.cgi?id=1317691
+    if platform.system() != "Windows":
         out=""
         import logging
         if silent or config._loglevel > logging.DEBUG: # a workaround for super-verbose errors in case directory on the server already exists
