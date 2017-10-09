@@ -32,7 +32,7 @@ class StateMonitor:
                 print c, config[c]
 
         # initialize json to be sent for monitoring
-        self.test_results = {"activity": "smashbox-regression", 'test_name': testname, 'hostname': socket.gethostname(),
+        self.test_results = {"activity": config.kibana_activity, 'test_name': testname, 'hostname': socket.gethostname(),
                              'oc_client_version': str(str(ocsync_version())[1:-1].replace(",",".")),'oc_server': config.oc_server.split("/")[0],'platform': platform.system() + platform.release(),
                              'parameters':parameters,'parameters_text':str(parameters),'errors': [],'errors_text': "",'success': [],
                              'total_errors':0,'total_success':0, 'qos_metrics': [],'passed': 0,'failed': 0 }
