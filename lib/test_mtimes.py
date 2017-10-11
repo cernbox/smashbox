@@ -57,7 +57,7 @@ def worker0(step):
     shared['source_stat'] = stat_after
 
     log_times(stat_before=stat_before,stat_after=stat_after)
-    assert(stat_before == stat_after) # paranoia check, sync client should not modify local source file
+    assert(stat_before.st_mtime == stat_after.st_mtime) # paranoia check, sync client should not modify local source file
 
     step(4,'Add a new version (new local inode)')
 
