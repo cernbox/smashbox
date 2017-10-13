@@ -78,3 +78,6 @@
 | 6.4        | Short              | upload / download            |  Upload files via OC and download via OC | | | |
 | 6.5        | Short              | upload / download            |  Repeat test 6.1/2/3/4 with 1GB per file | Add -o fs_nplusone_filesize=1000000000| | |
 | 6.6        | Short              | upload / download            |  URepeat test 6.1/2/3/4 with 1000 files | Add -o fs_nplusone_nfiles=1000| | |
+| 7.1        | Short              | WOPI Open            | Open an office file in WOPI  |  File is opened in WOPI in read mode| | |
+| 7.2        | Short              | WOPI Edit            | Open an office file in WOPI  |  File is edit mode in WOPI | | |
+| 7.3        | Short              | WOPI Back | Clicking on back to <folder> closes the editor | WOPI is closed | | |
