@@ -32,7 +32,7 @@ class StateMonitor:
                 print c, config[c]
 
         if platform.system() == 'Linux':
-            #distribution = platform.dist()
+            distribution = platform.dist()
             #client_platform = str(platform.system()) + "-" + str(distribution[0])+str(distribution[1])
             distr = tuple([str(x) for x in distribution[1].split(".")])
             client_platform = str(distribution[0])+distr[0]
