@@ -64,7 +64,7 @@ testsets = []
 # create cartesian product of all test configurations
 for s in [1, 5000, 15000, 50000]:
   for t in [True, False]:
-      for p in [ "", "abc", "abc/abc", "abc/def/ghi" ]:
+      for p in [ "", "abc", "abc\\abc", "abc\def\ghi" ]:
           testsets.append( { 'basicSync_filesizeKB':s,
                              'basicSync_rmLocalStateDB':t,
                              'basicSync_subdirPath':p } )
