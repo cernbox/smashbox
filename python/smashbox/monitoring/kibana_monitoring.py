@@ -32,8 +32,13 @@ class StateMonitor:
                 print c, config[c]
 
         if platform.system() == 'Linux':
-            distribution = platform.dist()
-            client_platform = str(platform.system()) + "-" + str(distribution[0])+str(distribution[1])
+            #distribution = platform.dist()
+            #client_platform = str(platform.system()) + "-" + str(distribution[0])+str(distribution[1])
+            distr = tuple([str(x) for x in distribution[1].split(".")])
+            client_platform = str(distribution[0])+distr[0]
+        elif platform.system() == 'Darwin':
+            ver = platform.mac_ver()
+            client_platform = "OSX" + str(ver[0])
         else:
             client_platform = platform.system() + platform.release()
 
