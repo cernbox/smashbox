@@ -44,6 +44,8 @@ Test basic file sharing between users in a group.
 |  11       |                 | Syncs and        | Syncs and        |              |
 |           |                 | validates file   | validates file   |              |
 |           |                 | not present      | not present      |              |
+|           |                 |                  | (<9.0) or is     |              |
+|           |                 |                  | present (9.0+)   |              |
 +-----------+-----------------+------------------+------------------+--------------+
 |  12       | Sharer deletes  |                  |                  |              |
 |           | a file          |                  |                  |              |
@@ -242,14 +244,21 @@ def reshareeUser(step):
     logger.info ('Checking that %s is present in local directory for Sharee One', sharedFile)
     expect_exists(sharedFile)
 
-    step (11, 'Re-Sharee User validates file does not exist after unsharing')
+    if compare_oc_version('9.0', '<'):
+        step(11, 'Re-Sharee User validates file does not exist after unsharing')
+    else:
+        step(11, 'Re-Sharee User validates file does still exist after unsharing')
 
     run_ocsync(d,user_num=3)
     list_files(d)
 
     sharedFile = os.path.join(d,'TEST_FILE_GROUP_RESHARE.dat')
-    logger.info ('Checking that %s is not present in sharee local directory', sharedFile)
-    expect_does_not_exist(sharedFile)
+    if compare_oc_version('9.0', '<'):
+        logger.info('Checking that %s is not present in sharee local file', sharedFile)
+        expect_does_not_exist(sharedFile)
+    else:
+        logger.info('Checking that %s is still present in sharee local file', sharedFile)
+        expect_exists(sharedFile)
 
     step (13, 'Re-Sharee User syncs and validates file does not exist')
 

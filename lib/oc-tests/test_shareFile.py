@@ -36,8 +36,8 @@ Test basic file sharing between users.
 |           | file                 |                  |                            |
 +-----------+----------------------+------------------+----------------------------+
 |  11       |                      | Syncs and        | Syncs and validates        |
-|           |                      | validates file   | file not present           | 
-|           |                      | not present      |                            |
+|           |                      | validates file   | file not present (prior    |
+|           |                      | not present      | 9.0) or is present (9.0+)  |
 +-----------+----------------------+------------------+----------------------------+
 |  12       | Sharer deletes a     |                  |                            |
 |           | file                 |                  |                            |
@@ -228,14 +228,24 @@ def shareeTwo(step):
       logger.info ('Checking that %s is present in local directory for Sharee Two', sharedFile)
       error_check(os.path.exists(sharedFile), "File %s should exist" %sharedFile)
 
-    step (11, 'Sharee two validates file does not exist after unsharing')
+    if compare_oc_version('9.0', '<') or not sharePermissions & OCS_PERMISSION_SHARE:
+        step(11, 'Sharee two validates file does not exist after unsharing')
+        run_ocsync(d, user_num=3)
+        list_files(d)
 
-    run_ocsync(d,user_num=3)
-    list_files(d)
+        shared_file = os.path.join(d,'TEST_FILE_USER_RESHARE.dat')
+        logger.info('Checking that %s is not present in sharee local directory', shared_file)
+        expect_does_not_exist(sharedFile)
 
-    sharedFile = os.path.join(d,'TEST_FILE_USER_RESHARE.dat')
-    logger.info ('Checking that %s is not present in sharee local directory', sharedFile)
-    error_check(not os.path.exists(sharedFile), "File %s should not exist" %sharedFile)
+    else:
+        step(11, 'Sharee two validates file still exist after unsharing for sharee one')
+
+        run_ocsync(d, user_num=3)
+        list_files(d)
+
+        shared_file = os.path.join(d,'TEST_FILE_USER_RESHARE.dat')
+        logger.info('Checking that %s is not present in sharee local directory', shared_file)
+        expect_exists(sharedFile)
 
     step (14, 'Sharee Two final step')
 
