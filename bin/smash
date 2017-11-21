@@ -33,6 +33,7 @@ def main():
    import smashbox.script
    import smashbox.no_engine
    import time
+   import shutil
 
    parser=smashbox.script.arg_parser(description='Run the tests and smash the box')
 
@@ -44,6 +45,7 @@ def main():
    parser.add_argument('--all-testsets', '-a', dest="all_testsets", action="store_true", help='run all testsets defined within each test script file')
    parser.add_argument('--testset', '-t', dest="testset", action="store", default=None, type=int, help='run just one testset specified by index, starting from 0')
    parser.add_argument('--loop', '-l', dest="loop", action="store", default=1, type=int, help='number of times a test command should be executed')
+   parser.add_argument('--drop-passed', '-d', dest="drop_passed", action="store_true", default=False, help='drop passed tests log files and keep only failed ones logs')
 
    args = parser.parse_args()
 
@@ -209,7 +211,16 @@ def main():
           else:
              logger.fatal('Aborting run -- non-zero exit code (%d)'%p.returncode)
              sys.exit(p.returncode)
-          
+       else:
+          if args.drop_passed:
+             print "TO DELETE PASSED TEST WORKSPACE DIRECTORY: " + config.rundir
+             shutil.rmtree(config.rundir)
+
+             logName = "log-" + barename(config.rundir) + ".log"
+             logFile = os.path.join(config.smashdir, logName)
+             print "TO DELETE PASSED TEST LOG FILE: " + logFile
+             os.remove(logFile)
+
 
    from smashbox.utilities import  oc_webdav_url
 
