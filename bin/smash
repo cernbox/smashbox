@@ -204,6 +204,7 @@ def main():
 
        reporter.testcase_stop(p.returncode)
 
+       print "RETURN CODE: " + str(p.returncode)
        if p.returncode != 0:
           if args.keep_going:
              logger.error('Non-zero exit code (%s)'%p.returncode)
@@ -213,12 +214,10 @@ def main():
              sys.exit(p.returncode)
        else:
           if args.drop_passed:
-             print "TO DELETE PASSED TEST WORKSPACE DIRECTORY: " + config.rundir
              shutil.rmtree(config.rundir)
 
              logName = "log-" + barename(config.rundir) + ".log"
              logFile = os.path.join(config.smashdir, logName)
-             print "TO DELETE PASSED TEST LOG FILE: " + logFile
              os.remove(logFile)
 
 
