@@ -204,7 +204,6 @@ def main():
 
        reporter.testcase_stop(p.returncode)
 
-       print "RETURN CODE: " + str(p.returncode)
        if p.returncode != 0:
           if args.keep_going:
              logger.error('Non-zero exit code (%s)'%p.returncode)
