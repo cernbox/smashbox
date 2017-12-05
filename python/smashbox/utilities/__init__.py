@@ -897,3 +897,34 @@ def expect_does_not_exist(fn):
     """
     error_check(not os.path.exists(fn), "File %s exists but should not" % fn)
 
+
+############ Smashbox Exceptions ############
+
+
+class Error(Exception):
+    """Base class for exceptions in this module."""
+    pass
+
+class SkipTestExecutionException(Error):
+    """Exception raised for unexpected errors/bugs in the execution engine of smashbox while executing a test.
+
+    Attributes:
+        message -- explanation of the error
+    """
+
+    def __init__(self, message):
+        self.message = message
+
+
+def restrict_execution(current_platform="",client_version="",endpoint="",disable=False):
+
+    if disable:
+        raise SkipTestExecutionException("Skipped Test: this test is not fully automated")
+    else:
+        text_message = "Skipped Test: specific test designed for: "
+        if platform.system() != current_platform:
+            raise SkipTestExecutionException(text_message + platform.system())
+        elif client_version!="" and str(str(ocsync_version())[1:-1].replace(", ","."))!=client_version:
+            raise SkipTestExecutionException(text_message + client_version)
+        elif endpoint!="" and config.oc_server != endpoint:
+            raise SkipTestExecutionException(text_message + endpoint)
