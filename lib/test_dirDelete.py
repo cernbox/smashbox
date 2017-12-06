@@ -7,6 +7,8 @@ __doc__ = """ This test creates a deeply nested directory structure and then rem
 
 import os.path
 
+config.expected_result = {"KnownBug":{"Platform":["MacOsx"],"Client":["2.2.4"],"Info":"TO BE INVESTIGATED ..."}}
+
 NESTING_LEVELS = config.get('dirDel_nestingLevels', 50)
 
 nfiles = int(config.get('dirDel_nfiles', 100))

@@ -9,6 +9,8 @@ from smashbox.utilities import *
 from smashbox.utilities.hash_files import *
 from smashbox.utilities.monitoring import push_to_monitoring
 
+config.expected_result = "FixedBug"
+
 forbidden_charsets = {
 		'backslash' : '\\',
                  'colon' : ':',

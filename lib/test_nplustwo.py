@@ -8,6 +8,8 @@ __doc__ = """ Add nfiles to a directory (two clients) and check consistency afte
 from smashbox.utilities import *
 from smashbox.utilities.hash_files import *
 
+config.expected_result = "FixedBug"
+
 nfiles = int(config.get('nplustwo_nfiles',10))
 
 def adder(step):

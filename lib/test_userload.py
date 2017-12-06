@@ -6,6 +6,7 @@ import tempfile
 __doc__ = """ One uploader, n downloaders. Uploader creates nfiles and syncs them at the same time to the same account. The checker verifies integrity of files and completness of sync. 
 """
 
+config.expected_result = {"KnownBug":{"Platform":["Linux","MacOsx"],"Client":["2.1.1","2.2.4"],"Info":"TO BE INVESTIGATED ..."}}
 
 # Files created by the uploader
 nfiles = int(config.get('userload_nfiles',5))

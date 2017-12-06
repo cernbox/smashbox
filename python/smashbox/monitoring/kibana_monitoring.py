@@ -22,14 +22,28 @@ class StateMonitor:
         self.test_results = dict()
         self.runtimestamp = config._run_timestamp
 
-        # extract test parameters
+        # extract test parameters and labelling
         parameters = []
         param = {}
+        label_expected_result = ""
+        info_expected_result = ""
         for c in config.__dict__:
             if c.startswith(testname + "_"):
                 param[str((c.replace(testname + "_", "")))] = config[c]
                 parameters.append(param)
                 print c, config[c]
+
+        oc_client_version = str(str(ocsync_version())[1:-1].replace(", ", "."))
+
+
+        if config['expected_result'] == "FixedBug":
+            label_expected_result = config['expected_result']
+        else:
+            if platform.system() in config['expected_result']['KnownBug']['Platform'] and (oc_client_version in config['expected_result']['KnownBug']['Client'] or config['expected_result']['KnownBug']['Client']=="all"):
+                label_expected_result = "KnownBug"
+                info_expected_result = config['expected_result']["KnownBug"]["Info"]
+            else:
+                label_expected_result = "FixedBug"
 
         if platform.system() == 'Linux':
             distribution = platform.dist()
@@ -44,9 +58,9 @@ class StateMonitor:
 
         # initialize json to be sent for monitoring
         self.test_results = {"activity": config.kibana_activity, 'test_name': testname, 'hostname': socket.gethostname(),
-                             'oc_client_version': str(str(ocsync_version())[1:-1].replace(", ",".")),'oc_server': config.oc_server.split("/")[0],'platform': client_platform,
+                             'oc_client_version': oc_client_version ,'oc_server': config.oc_server.split("/")[0],'platform': client_platform,
                              'parameters':parameters,'parameters_text':str(parameters),'errors': [],'errors_text': "",'success': [],
-                             'total_errors':0,'total_success':0, 'qos_metrics': [],'passed': 0,'failed': 0 }
+                             'total_errors':0,'total_success':0, 'qos_metrics': [],'passed': 0,'failed': 0, 'label_expected_result': label_expected_result, 'info_expected_result':info_expected_result }
 
 
     def join_worker_results(self):

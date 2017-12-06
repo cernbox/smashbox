@@ -10,6 +10,8 @@ from smashbox.utilities import *
 from smashbox.utilities.hash_files import *
 from smashbox.utilities.monitoring import push_to_monitoring
 
+config.expected_result = "FixedBug"
+
 nfiles = int(config.get('nplusone_nfiles',10))
 filesize = config.get('nplusone_filesize',1000)
 

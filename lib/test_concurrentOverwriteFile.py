@@ -33,6 +33,8 @@ import glob
 from smashbox.utilities import * 
 from smashbox.utilities import reflection
 
+config.expected_result = "FixedBug"
+
 @add_worker
 def worker0(step):
     shared = reflection.getSharedObject()

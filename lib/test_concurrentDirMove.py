@@ -6,7 +6,7 @@ all added files are kept on the server and are found in the final directory.
 
 """
 
-
+config.expected_result = {"KnownBug":{"Platform":["MacOsx"],"Client":"all","Info":"TO BE INVESTIGATED..."}}
 
 nfiles = int(config.get('concurrentMoveDir_nfiles',100))
 filesize = int(config.get('concurrentMoveDir_filesize',10))
