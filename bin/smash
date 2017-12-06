@@ -285,7 +285,14 @@ def main():
       # object (no_engine)
       
       smashbox.no_engine.testsets=[]
-      execfile(os.path.abspath(t),smashbox.no_engine.__dict__)
+
+      from smashbox.utilities import SkipTestExecutionException
+
+      try:
+         execfile(os.path.abspath(t), smashbox.no_engine.__dict__)
+      except SkipTestExecutionException as test_skipped:
+         print(test_skipped.message)
+         continue
 
       # basic verification
       if args.testset and args.testset>=len(smashbox.no_engine.testsets):
