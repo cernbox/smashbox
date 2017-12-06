@@ -18,6 +18,8 @@ owncloudcmd will delay syncing of the file if the file is modified every 2 secon
 from smashbox.utilities import *
 from smashbox.utilities.hash_files import *
 
+config.expected_result = {"KnownBug":{"Platform":"all","Client":"all","Info":"TO BE INVESTIGATED ..."}}
+
 MB = 1024*1000
 
 filesizeKB = int(config.get('slowwrite_filesizeKB',10000))

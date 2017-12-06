@@ -13,7 +13,9 @@ Notes:
 
 """
 
-filesizeKB = int(config.get('filenames_filesizeKB',1))
+expected_result = {"KnownBug":{"Platform":["Linux","MacOsx"],"Client":"all","Info":"TO BE INVESTIGATED ..."}}
+
+config.expected_result = int(config.get('filenames_filesizeKB',1))
 
 # see: mirall/csync/src/csync_exclude.c
 charsets_excluded_from_sync = {

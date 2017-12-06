@@ -21,6 +21,8 @@ from smashbox.utilities import *
 
 import glob
 
+config.expected_result = {"KnownBug":{"Platform":["Windows"],"Client":"all","Info":"Some tests cases are failing due to hardcode unix path / "}}
+
 filesizeKB = int(config.get('basicSync_filesizeKB',10000))
 
 # True => remove local sync db on the loser 

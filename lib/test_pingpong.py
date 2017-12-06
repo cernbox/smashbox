@@ -38,6 +38,8 @@ Logfile: test_pingpong/pong-ocsync.step02.cnt000.log
 
 """
 
+config.expected_result = {"KnownBug":{"Platform":"all","Client":["2.2.4","2.3.3"],"Info":"TO BE INVESTIGATED ..."}}
+
 filesizeKB = int(config.get('pingpong_filesizeKB',5000))
 pongdelay = float(config.get('pingpong_pongdelay',0))
 

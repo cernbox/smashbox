@@ -11,6 +11,7 @@ This follows from discussion in: https://github.com/owncloud/client/issues/3324
 TODO: a similar test for server side move.
 
 """
+config.expected_result = {"KnownBug":{"Platform":["MacOsx"],"Client":["2.3.3"],"Info":"TO BE INVESTIGATED ..."}}
 
 testsets = [ {'localDirRenameRecreate_DIRA':'DIRA', 
               'localDirRenameRecreate_DIRB':'DIRB',

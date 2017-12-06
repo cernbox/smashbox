@@ -23,6 +23,8 @@ void OCC::SyncEngine::slotItemCompleted(const OCC::SyncFileItem&, const OCC::Pro
 from smashbox.utilities import *
 from smashbox.utilities.hash_files import *
 
+config.expected_result = "FixedBug"
+
 tinker_wait = int(config.get('fileTinkerDownload_tinker_wait',2))
 filesize = config.get('fileTinkerDownload_filesize',300000000)
 

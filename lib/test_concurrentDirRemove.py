@@ -10,6 +10,7 @@ Cernbox/EOS: Hence the expected outcome is that part of the files that was alrea
 OwnCloud7? : For PUT which creates the missing directories the expected outcome is that all added files are kept on the server.
 
 """
+config.expected_result = {"KnownBug":{"Platform":["MacOsx"],"Client":"all","Info":"TO BE INVESTIGATED..."}}
 
 nfiles = int(config.get('concurrentRemoveDir_nfiles',10))
 filesizeKB = int(config.get('concurrentRemoveDir_filesizeKB',9000))

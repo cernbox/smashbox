@@ -13,6 +13,8 @@ from smashbox.utilities import *
 from smashbox.utilities.hash_files import *
 from smashbox.utilities import reflection
 
+config.expected_result = {"KnownBug":{"Platform":"all","Client":["2.3.3","2.2.4"],"Info":"TO BE INVESTIGATED ..."}}
+
 sleep = int(config.get('mtimes_sleep',0)) 
 
 import random

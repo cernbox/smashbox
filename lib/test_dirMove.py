@@ -20,6 +20,8 @@ testsets = [ {'dirMove_DIRA':'DIRA',
 
 import os.path
 
+config.expected_result = "FixedBug"
+
 DIRA = os.path.normpath(config.get('dirMove_DIRA','DIRA'))
 DIRB = os.path.normpath(config.get('dirMove_DIRB','DIRB'))
 
