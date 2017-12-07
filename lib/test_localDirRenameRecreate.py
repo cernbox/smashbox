@@ -12,6 +12,11 @@ TODO: a similar test for server side move.
 
 """
 
+oc_client_version = str(str(ocsync_version())[1:-1].replace(", ", "."))
+
+if platform.system() == "darwin" and oc_client_version=="2.3.3":
+    config.expected_result = label_test_as_unknown_bug()
+
 testsets = [ {'localDirRenameRecreate_DIRA':'DIRA', 
               'localDirRenameRecreate_DIRB':'DIRB',
               'localDirRenameRecreate_moveFilesBack':False},

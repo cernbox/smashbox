@@ -9,6 +9,11 @@ __doc__ = """ Each of nuploaders creates nfiles and syncs them at the same time 
 from smashbox.utilities import *
 from smashbox.utilities.hash_files import *
 
+oc_client_version = str(str(ocsync_version())[1:-1].replace(", ", "."))
+
+if oc_client_version>="2.2.4":
+   config.expected_result = label_test_as_unknown_bug()
+
 # Files created by each uploader
 nfiles = int(config.get('storm_nfiles',10))
 

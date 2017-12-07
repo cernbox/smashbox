@@ -7,6 +7,11 @@ __doc__ = """ This test creates a deeply nested directory structure and then rem
 
 import os.path
 
+oc_client_version = str(str(ocsync_version())[1:-1].replace(", ", "."))
+
+if platform.system() == "darwin" and oc_client_version=="2.2.4":
+    config.expected_result = label_test_as_unknown_bug()
+
 NESTING_LEVELS = config.get('dirDel_nestingLevels', 50)
 
 nfiles = int(config.get('dirDel_nfiles', 100))

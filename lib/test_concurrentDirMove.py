@@ -5,14 +5,15 @@ files are added to it ('adder' worker) . The expected outcome is that
 all added files are kept on the server and are found in the final directory.
 
 """
+from smashbox.utilities import *
 
-
+if platform.system() == "darwin":
+    config.expected_result = label_test_as_unknown_bug()
 
 nfiles = int(config.get('concurrentMoveDir_nfiles',100))
 filesize = int(config.get('concurrentMoveDir_filesize',10))
 delaySeconds = int(config.get('concurrentMoveDir_delaySeconds',3)) # if delaySeconds > 0 then remover waits; else the adder waits;
 
-from smashbox.utilities import *
 
 testsets = [ 
     {'concurrentMoveDir_nfiles':100,
