@@ -898,6 +898,16 @@ def expect_does_not_exist(fn):
     error_check(not os.path.exists(fn), "File %s exists but should not" % fn)
 
 
+############ Helper functions to report/document the behaviour of the tests ############
+
+def label_test_as_known_bug(Info=""):
+    label =  {'Value':"KnownBug","Info":Info}
+    return label
+
+def label_test_as_unknown_bug(Info="TO BE INVESTIGATED..."):
+    label = {'Value':"UnknownBug","Info":Info}
+    return label
+
 ############ Smashbox Exceptions ############
 
 

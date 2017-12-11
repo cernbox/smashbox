@@ -10,6 +10,14 @@ Cernbox/EOS: Hence the expected outcome is that part of the files that was alrea
 OwnCloud7? : For PUT which creates the missing directories the expected outcome is that all added files are kept on the server.
 
 """
+import time
+import tempfile
+
+from smashbox.utilities import *
+from smashbox.utilities.hash_files import *
+
+if platform.system() == "darwin":
+    config.expected_result = label_test_as_unknown_bug()
 
 nfiles = int(config.get('concurrentRemoveDir_nfiles',10))
 filesizeKB = int(config.get('concurrentRemoveDir_filesizeKB',9000))
@@ -30,11 +38,6 @@ testsets = [
 
     ]
 
-import time
-import tempfile
-
-from smashbox.utilities import *
-from smashbox.utilities.hash_files import *
 
 @add_worker
 def creator(step):
