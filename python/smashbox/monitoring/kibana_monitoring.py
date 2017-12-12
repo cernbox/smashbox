@@ -42,6 +42,9 @@ class StateMonitor:
         else:
             client_platform = platform.system() + platform.release()
 
+        if not hasattr(config,'expected_result'):
+            config.expected_result=None
+            
         # initialize json to be sent for monitoring
         self.test_results = {"activity": config.kibana_activity, 'test_name': testname, 'hostname': socket.gethostname(),
                              'oc_client_version': str(str(ocsync_version())[1:-1].replace(", ",".")),'oc_server': config.oc_server.split("/")[0],'platform': client_platform,
