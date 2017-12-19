@@ -13,6 +13,9 @@ Notes:
 
 """
 
+if platform.system() == "darwin" or platform.system() == "linux":
+    config.expected_result = label_test_as_unknown_bug()
+
 filesizeKB = int(config.get('filenames_filesizeKB',1))
 
 # see: mirall/csync/src/csync_exclude.c

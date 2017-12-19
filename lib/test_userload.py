@@ -5,6 +5,12 @@ import tempfile
 
 __doc__ = """ One uploader, n downloaders. Uploader creates nfiles and syncs them at the same time to the same account. The checker verifies integrity of files and completness of sync. 
 """
+from smashbox.utilities import *
+
+oc_client_version = str(str(ocsync_version())[1:-1].replace(", ", "."))
+
+if (platform.system()=="darwin" or platform.system()=="linux") and oc_client_version == "2.2.4" and oc_client_version == "2.1.1":
+    config.expected_result = label_test_as_unknown_bug()
 
 
 # Files created by the uploader
@@ -16,7 +22,6 @@ verbose = bool(config.get('userload_verbose',False))
 
 hash_filemask = 'hash_{md5}'
 
-from smashbox.utilities import *
 from smashbox.utilities.hash_files import *
 
 @add_worker

@@ -5,8 +5,49 @@ import datetime
 import subprocess
 import time
 import urllib
+import platform
+import shutil
 
 # Utilities to be used in the test-cases.
+from smashbox.utilities.version import version_compare
+
+
+def compare_oc_version(compare_to, operator):
+    """
+
+    :param compare_to: E.g. '9.0'
+    :param operator: One of '<', '=', '>', '<=', '>='
+    :return:
+    """
+    oc_api = get_oc_api()
+    url = oc_api.url + 'status.php'
+    rtn_code, std_out, std_err = runcmd('curl %s' % url, log_warning=False)
+
+    import json
+    version = (json.loads(std_out))['version']
+
+    return version_compare(version, operator, compare_to)
+
+
+def compare_client_version(compare_to, operator):
+    """
+
+    :param compare_to: E.g. '2.1'
+    :param operator: One of '<', '=', '>', '<=', '>='
+    :return:
+    """
+
+    cmd = config.oc_sync_cmd
+    cmd = cmd[:cmd.find(' --')]
+    cmd += ' --version'
+    rtn_code, std_out, std_err = runcmd(cmd)
+
+    version = std_out[std_out.find(' version ') + 9:]
+    if version[-4:-1] == 'git':
+        version = version[:-4]
+
+    return version_compare(version, operator, compare_to)
+
 
 def OWNCLOUD_CHUNK_SIZE(factor=1):
     """Calculate file size as a fraction of owncloud client's default chunk size.
@@ -259,13 +300,13 @@ def oc_webdav_url(protocol='http',remote_folder="",user_num=None,webdav_endpoint
     if config.oc_ssl_enabled:
         protocol += 's'
 
-    # strip-off any leading / characters to prevent 1) abspath result from the join below, 2) double // and alike...
-    remote_folder = remote_folder.lstrip('/')
-
     if webdav_endpoint is None:
         webdav_endpoint = config.oc_webdav_endpoint
 
-    remote_path = os.path.join(webdav_endpoint, config.oc_server_folder, remote_folder)
+    # strip off any leading/trailing slashes so that remote path does not start or end with / nor it contains double //
+    remote_path = "/".join([p.strip('/') for p in [webdav_endpoint, config.oc_server_folder, remote_folder]])
+
+    remote_path = remote_path.strip('/')
 
     if user_num is None:
         username = "%s" % config.oc_account_name
@@ -287,10 +328,10 @@ def ocsync_version():
     """
 
     # strip possible options from config.oc_sync_cmd
-    cmd = config.oc_sync_cmd.split()[0] + " --version"
-    rc,stdout,stderr = runcmd(cmd, ignore_exitcode=True,log_warning=False) # do not warn about non-zero exit code (which is unfortunately normal)
+    cmd = [config.oc_sync_cmd[0]] + ["--version"]
+    rc,stdout,stderr = runcmd(cmd, shell=False, ignore_exitcode=True,log_warning=False) # do not warn about non-zero exit code (which is unfortunately normal)
 
-    sver = stdout.strip().split()[-1] # the version is the last word on the first line
+    sver = stdout.strip().split()[2] # the version is the third argument
     
     return tuple([int(x) for x in sver.split(".")])
 
@@ -312,13 +353,23 @@ def run_ocsync(local_folder, remote_folder="", n=None, user_num=None):
 
     ocsync_cnt.setdefault(current_step,0)
 
-    local_folder += '/' # FIXME: HACK - is a trailing slash really needed by 1.6 owncloudcmd client?
+    if platform.system() != "Windows":
+        local_folder += os.sep # FIXME: HACK - is a trailing slash really needed by 1.6 owncloudcmd client?
 
     for i in range(n):
         t0 = datetime.datetime.now()
-        cmd = config.oc_sync_cmd+' '+local_folder+' '+oc_webdav_url('owncloud',remote_folder,user_num) + " >> "+config.rundir+"/%s-ocsync.step%02d.cnt%03d.log 2>&1"%(reflection.getProcessName(),current_step,ocsync_cnt[current_step])
-        runcmd(cmd, ignore_exitcode=True)  # exitcode of ocsync is not reliable
-        logger.info('sync cmd is: %s',cmd)
+        cmd = config.oc_sync_cmd+[local_folder,oc_webdav_url('owncloud',remote_folder,user_num)]
+        logf = file(os.path.join(config.rundir,"%s-ocsync.step%02d.cnt%03d.log"%(reflection.getProcessName(),current_step,ocsync_cnt[current_step])),"wb")
+
+        logger.info('sync cmd is: %s',repr(cmd))
+
+        process = subprocess.Popen(cmd, shell=False, stdout=logf, stderr=subprocess.STDOUT)
+        process.communicate()
+
+        if process.returncode != 0:
+            msg = "Non-zero exit code %d from command %s" % (process.returncode, repr(cmd))
+            logger.warning(msg)
+
         logger.info('sync finished: %s',datetime.datetime.now()-t0)
         ocsync_cnt[current_step]+=1
 
@@ -352,36 +403,48 @@ def expect_webdav_exist(path, user_num=None):
     error_check(200 <= r.rc and r.rc < 300,"Remote path does not exist: %s" % path) # class 2xx response is OK
 
 
-def webdav_delete(path, user_num=None):
-    runcmd('curl --verbose -k %s -X DELETE %s '%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)))
-    
-def webdav_mkcol(path, silent=False, user_num=None):
-    out=""
-    if silent: # a workaround for super-verbose errors in case directory on the server already exists
-        out = "> /dev/null 2>&1"
-    runcmd('curl --verbose -k %s -X MKCOL %s %s'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num),out))
-
-
-# The two *_NEW functions below currently fail with:
+# The two functions implementations below with pycurl currently fail with:
 # * warning: ignoring value of ssl.verifyhost
 # * NSS error -8023
 # * Closing connection #0
 # * SSL connect error
 
-def webdav_delete_NEW(path, user_num=None):
-    import smashbox.curl
-    c = smashbox.curl.Client(verbose=True)
-    url = oc_webdav_url(remote_folder=path, user_num=user_num)
-    return c.DELETE(url)
+def webdav_delete(path, silent=True, user_num=None):
 
+    # work around buggy pycurl.so on MacOSX... buggy pycurl also on linux: https://bugzilla.redhat.com/show_bug.cgi?id=1317691
+    if platform.system() != "Windows":
+        import logging
+        if config._loglevel <= logging.DEBUG:
+            verbose = "--verbose"
+            echo=True
+        else:
+            verbose = ""
+            echo=False
+        runcmd('curl %s -k %s -X DELETE %s '%(verbose,config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)),echo=echo)
+    else:
+        import smashbox.curl
+        c = smashbox.curl.Client(verbose=not silent) # FIXME: handle config.get('curl_opts','')
+        url = oc_webdav_url(remote_folder=path, user_num=user_num)
+        return c.DELETE(url)
+    
+def webdav_mkcol(path, silent=True, user_num=None):
 
-def webdav_mkcol_NEW(path, silent=False, user_num=None):
+    # work around buggy pycurl.so on MacOSX... buggy pycurl also on linux: https://bugzilla.redhat.com/show_bug.cgi?id=1317691
+    if platform.system() != "Windows":
+        out=""
+        import logging
+        if silent or config._loglevel > logging.DEBUG: # a workaround for super-verbose errors in case directory on the server already exists
+            out = "> /dev/null 2>&1"
+            echo=False
+        else:
+            echo=True
+        runcmd('curl --verbose -k %s -X MKCOL %s %s'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num),out),echo=echo)
+    else:
+        import smashbox.curl
+        c = smashbox.curl.Client(verbose=not silent) 
+        url = oc_webdav_url(remote_folder=path, user_num=user_num)
+        return c.MKCOL(url)
 
-    # silent is a workaround for super-verbose errors in case directory on the server already exists
-    import smashbox.curl
-    c = smashbox.curl.Client(verbose=not silent) 
-    url = oc_webdav_url(remote_folder=path, user_num=user_num)
-    return c.MKCOL(url)
 ###############
 
 # #### SHELL COMMANDS AND TIME FUNCTIONS
@@ -402,7 +465,7 @@ def runcmd(cmd,ignore_exitcode=False,echo=True,allow_stderr=True,shell=True,log_
                 logger.error("stderr: %s",stderr)
 
     if process.returncode != 0:
-        msg = "Non-zero exit code %d from command %s" % (ignore_exitcode,repr(cmd))
+        msg = "Non-zero exit code %d from command %s" % (process.returncode,repr(cmd))
         if log_warning:
             logger.warning(msg)
         if not ignore_exitcode:
@@ -419,12 +482,15 @@ def sleep(n):
 ######## BASIC FILE AND DIRECTORY OPERATIONS
 
 def mkdir(d):
-    runcmd('mkdir -p '+d)
+    logger.info('mkdir %s',d)
+    if not os.path.exists(d):
+        os.makedirs(d)
     return d
 
 
 def remove_tree(path):
-    runcmd('rm -rf '+path)
+    logger.info('remove directory tree %s',path)
+    shutil.rmtree(path)
 
 
 def remove_file(path):
@@ -440,10 +506,16 @@ def remove_file(path):
             raise
 
 def mv(a,b):
-    runcmd('mv %s %s'%(a,b))
+    logger.info("move %s %s",a,b)
+    shutil.move(a, b)
 
 
 def list_files(path,recursive=False):
+
+    if platform.system() == 'Windows':
+        runcmd('dir /s /b ' + path)
+        return
+ 
     if platform.system() == 'Darwin':
         opts = ""
     else:
@@ -521,32 +593,21 @@ def delete_file(fn):
 def createfile_zero(fn,count,bs):
     createfile(fn,'\0',count,bs)
 
-
-import platform
-
-if platform.system() == 'Darwin':
-
-    def md5sum(fn):
-        process = subprocess.Popen('md5 %s'%fn,shell=True,stdout=subprocess.PIPE)
-        out = process.communicate()[0]
-        try:
-            return out.split()[-1]
-        except IndexError:
-            return "NO_CHECKSUM_ERROR"
-
-else:  # linux
-
-    def md5sum(fn):
-        process=subprocess.Popen('md5sum %s'%fn,shell=True,stdout=subprocess.PIPE)
-        out = process.communicate()[0]
-        try:
-            return out.split()[0]
-        except IndexError:
-            return "NO_CHECKSUM_ERROR"
-
+# some tests depend on md5sum in this module
+# use portable implementation of md5sum
+def md5sum(fn):
+    from hash_files import md5sum as _md5sum
+    return _md5sum(fn)
 
 def hexdump(fn):
-    runcmd('hexdump %s'%fn)
+    if platform.system() == "Windows":
+        # FIXME: this implementation is missing some formatting features of hexdump:
+        # byte offset column and spacing between bytes
+        with open(fn, 'rb') as f:
+            for chunk in iter(lambda: f.read(32), b''):
+                chunk.encode('hex')
+    else:
+        runcmd('hexdump %s'%fn)
 
 
 def list_versions_on_server(fn):
@@ -716,8 +777,8 @@ def share_file_with_user(filename, sharer, sharee, **kwargs):
         logger.info('share id for file share is %s', str(share_info.share_id))
         return share_info.share_id
     except ResponseError as err:
-        logger.info('Share failed with %s', str(err))
-        if "not allowed to share" in str(err.get_resource_body()):
+        logger.info('Share failed with %s - %s', str(err), str(err.get_resource_body()))
+        if err.status_code == 403 or err.status_code == 404:
             return -1
         else:
             return -2
@@ -836,3 +897,44 @@ def expect_does_not_exist(fn):
     """
     error_check(not os.path.exists(fn), "File %s exists but should not" % fn)
 
+
+############ Helper functions to report/document the behaviour of the tests ############
+
+def label_test_as_known_bug(Info=""):
+    label =  {'Value':"KnownBug","Info":Info}
+    return label
+
+def label_test_as_unknown_bug(Info="TO BE INVESTIGATED..."):
+    label = {'Value':"UnknownBug","Info":Info}
+    return label
+
+############ Smashbox Exceptions ############
+
+
+class Error(Exception):
+    """Base class for exceptions in this module."""
+    pass
+
+class SkipTestExecutionException(Error):
+    """Exception raised for unexpected errors/bugs in the execution engine of smashbox while executing a test.
+
+    Attributes:
+        message -- explanation of the error
+    """
+
+    def __init__(self, message):
+        self.message = message
+
+
+def restrict_execution(current_platform="",client_version="",endpoint="",disable=False):
+
+    if disable:
+        raise SkipTestExecutionException("Skipped Test: this test is not fully automated")
+    else:
+        text_message = "Skipped Test: specific test designed for: "
+        if platform.system() != current_platform:
+            raise SkipTestExecutionException(text_message + platform.system())
+        elif client_version!="" and str(str(ocsync_version())[1:-1].replace(", ","."))!=client_version:
+            raise SkipTestExecutionException(text_message + client_version)
+        elif endpoint!="" and config.oc_server != endpoint:
+            raise SkipTestExecutionException(text_message + endpoint)

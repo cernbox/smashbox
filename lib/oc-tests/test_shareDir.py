@@ -63,9 +63,12 @@ Test basic directory and file sharing between users.
 |           |                 | validates        |                  |              |
 |           |                 | directory gone   |                  |              |
 +-----------+-----------------+------------------+------------------+--------------+
-|  18       |                 |                  |  Syncs and       |              |
-|           |                 |                  |  validates       |              |
-|           |                 |                  |  directory gone  |              |
+|  18       |                 |                  | Syncs and        |              |
+|           |                 |                  | validates        |              |
+|           |                 |                  | directory is     |              |
+|           |                 |                  | gone (<9.0) or   |              |
+|           |                 |                  | still there      |              |
+|           |                 |                  | (9.0+)           |              |
 +-----------+-----------------+------------------+------------------+--------------+
 |  19       | Final step      | Final step       |  Final Step      |              |
 +-----------+-----------------+------------------+------------------+--------------+
@@ -248,7 +251,10 @@ def shareeTwo(step):
     logger.info ('Checking that shared dir does contain the shared file %s for Sharee Two', sharedDirFile)
     expect_exists(sharedDirFile)
 
-    step (18, 'Sharee two syncs and validates directory does not exist')
+    if compare_oc_version('9.0', '<'):
+        step(18, 'Sharee two syncs and validates directory does not exist')
+    else:
+        step(18, 'Sharee two syncs and validates directory does still exist')
 
     run_ocsync(d,user_num=3)
     list_files(d)
@@ -258,7 +264,11 @@ def shareeTwo(step):
     expect_exists(localDir)
 
     sharedDir = os.path.join(d, 'localShareDir (2)')
-    logger.info ('Checking that %s is not present in sharee local directory', sharedDir)
-    expect_does_not_exist(sharedDir)
+    if compare_oc_version('9.0', '<'):
+        logger.info('Checking that %s is not present in sharee local directory', sharedDir)
+        expect_does_not_exist(sharedDir)
+    else:
+        logger.info('Checking that %s is still present in sharee local directory', sharedDir)
+        expect_exists(sharedDir)
 
     step (19, 'Sharee Two final step')

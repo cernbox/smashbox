@@ -13,6 +13,11 @@ from smashbox.utilities import *
 from smashbox.utilities.hash_files import *
 from smashbox.utilities import reflection
 
+oc_client_version = str(str(ocsync_version())[1:-1].replace(", ", "."))
+
+if oc_client_version=="2.2.4" or oc_client_version=="2.3.3":
+   config.expected_result = label_test_as_unknown_bug()
+
 sleep = int(config.get('mtimes_sleep',0)) 
 
 import random
@@ -57,7 +62,7 @@ def worker0(step):
     shared['source_stat'] = stat_after
 
     log_times(stat_before=stat_before,stat_after=stat_after)
-    assert(stat_before == stat_after) # paranoia check, sync client should not modify local source file
+    assert(stat_before.st_mtime == stat_after.st_mtime) # paranoia check, sync client should not modify local source file
 
     step(4,'Add a new version (new local inode)')
 

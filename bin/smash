@@ -32,6 +32,8 @@ def main():
    import datetime
    import smashbox.script
    import smashbox.no_engine
+   import time
+   import shutil
 
    parser=smashbox.script.arg_parser(description='Run the tests and smash the box')
 
@@ -43,6 +45,7 @@ def main():
    parser.add_argument('--all-testsets', '-a', dest="all_testsets", action="store_true", help='run all testsets defined within each test script file')
    parser.add_argument('--testset', '-t', dest="testset", action="store", default=None, type=int, help='run just one testset specified by index, starting from 0')
    parser.add_argument('--loop', '-l', dest="loop", action="store", default=1, type=int, help='number of times a test command should be executed')
+   parser.add_argument('--drop-passed', '-d', dest="drop_passed", action="store_true", default=False, help='drop passed tests log files and keep only failed ones logs')
 
    args = parser.parse_args()
 
@@ -107,6 +110,8 @@ def main():
    if not config.runid:
       config.runid = datetime.datetime.now().strftime("%y%m%d-%H%M%S")
 
+   config._run_timestamp = time.time()
+
    config.smashdir = os.path.expanduser(config.smashdir)
 
    # note: specifying "localhost" may give you SSL problems
@@ -129,14 +134,17 @@ def main():
       logger.critical("config error: undefined oc_sync_cmd")
       sys.exit(1)
 
-   oc_sync_cmd_exe = config.oc_sync_cmd.split(' ')[0]
-   oc_sync_cmd_args = config.oc_sync_cmd.split(' ')[1:]
+   if isinstance(config.oc_sync_cmd, basestring):
+      config.oc_sync_cmd = config.oc_sync_cmd.split(' ')
 
-   if oc_sync_cmd_exe.startswith('./') or oc_sync_cmd_exe.startswith('/'):
+   oc_sync_cmd_exe = config.oc_sync_cmd[0]
+   oc_sync_cmd_args = config.oc_sync_cmd[1:]
+
+   if oc_sync_cmd_exe.startswith('./') or os.path.isabs(oc_sync_cmd_exe):
       oc_sync_cmd_exe = os.path.normpath(os.path.join(top_smash,oc_sync_cmd_exe))
    else:
 
-      if '/' in oc_sync_cmd_exe:
+      if os.sep in oc_sync_cmd_exe:
          logger.error("config error: %s: relative path to oc_sync_cmd must start with ./", config.oc_sync_cmd)
          sys.exit(1)
 
@@ -154,7 +162,7 @@ def main():
 
    # executable is found, now append the arguments if any
       
-   config.oc_sync_cmd = " ".join([oc_sync_cmd_exe] + oc_sync_cmd_args)
+   #config.oc_sync_cmd = " ".join([oc_sync_cmd_exe] + oc_sync_cmd_args)
 
    import string
 
@@ -186,7 +194,7 @@ def main():
        global global_exitcode_error
        import subprocess, pickle
        t0=datetime.datetime.now()
-       cmd = ['python2',os.path.join(os.path.dirname(os.path.dirname(__file__)),'python/smashbox/multiprocessing_engine.py'), t, pickle.dumps(config)]
+       cmd = [sys.executable,os.path.join(os.path.dirname(os.path.dirname(__file__)),'python/smashbox/multiprocessing_engine.py'), t, pickle.dumps(config)]
        p = subprocess.Popen(cmd)
        p.communicate()
        t1=datetime.datetime.now()
@@ -203,7 +211,14 @@ def main():
           else:
              logger.fatal('Aborting run -- non-zero exit code (%d)'%p.returncode)
              sys.exit(p.returncode)
-          
+       else:
+          if args.drop_passed:
+             shutil.rmtree(config.rundir)
+
+             logName = "log-" + barename(config.rundir) + ".log"
+             logFile = os.path.join(config.smashdir, logName)
+             os.remove(logFile)
+
 
    from smashbox.utilities import  oc_webdav_url
 
@@ -268,7 +283,14 @@ def main():
       # object (no_engine)
       
       smashbox.no_engine.testsets=[]
-      execfile(os.path.abspath(t),smashbox.no_engine.__dict__)
+
+      from smashbox.utilities import SkipTestExecutionException
+
+      try:
+         execfile(os.path.abspath(t), smashbox.no_engine.__dict__)
+      except SkipTestExecutionException as test_skipped:
+         print(test_skipped.message)
+         continue
 
       # basic verification
       if args.testset and args.testset>=len(smashbox.no_engine.testsets):
