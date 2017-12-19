@@ -282,7 +282,7 @@ def ls_prop_desktop20(url,depth=0):
         fatal_check(props200['{DAV:}resourcetype'] in [None,'{DAV:}collection'])
 
         is_collection = props200['{DAV:}resourcetype'] and props200['{DAV:}resourcetype'] == '{DAV:}collection'
-        fatal_check(implies(is_collection,props404['{DAV:}getcontentlength'] is None))
+        fatal_check(implies(is_collection,props404.get('{DAV:}getcontentlength',None) is None))
 
         fatal_check(set(props200['{http://owncloud.org/ns}permissions']) <= set('SRMWCKDNV'))
 
