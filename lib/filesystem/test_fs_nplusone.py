@@ -69,7 +69,6 @@ def worker0(step):
         d = make_workdir()
         run_ocsync(d)
     
-    sleep(2)
 
     k0 = count_files(d)
 
