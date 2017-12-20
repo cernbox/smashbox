@@ -18,28 +18,6 @@ fspath1 = config.get('fs_nplusone_fspath1',"")
 if type(filesize) is type(''):
     filesize = eval(filesize)
 
-#testsets = [
-#        { 'fs_nplusone_filesize': 1000, 
-#          'fs_nplusone_nfiles':100
-#        },
-#
-#        { 'fs_nplusone_filesize': OWNCLOUD_CHUNK_SIZE(0.3), 
-#          'fs_nplusone_nfiles':10
-#        },
-#
-#        { 'fs_nplusone_filesize': OWNCLOUD_CHUNK_SIZE(1.3), 
-#          'fs_nplusone_nfiles':2
-#        },
-#
-#        { 'fs_nplusone_filesize': OWNCLOUD_CHUNK_SIZE(3.5), 
-#          'fs_nplusone_nfiles':1
-#        },
-#
-#        { 'fs_nplusone_filesize': (3.5,1.37), # standard file distribution: 10^(3.5) Bytes
-#          'fs_nplusone_nfiles':10
-#        },
-#
-#]
 
 testsets = []
 
