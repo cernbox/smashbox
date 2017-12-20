@@ -21,8 +21,6 @@ from smashbox.utilities import *
 
 import glob
 
-if platform.system() == "Windows":
-  config.expected_result = label_test_as_known_bug("Some tests cases are failing due to hardcode unix path / ")
 
 filesizeKB = int(config.get('basicSync_filesizeKB',10000))
 
@@ -67,7 +65,7 @@ testsets = []
 # create cartesian product of all test configurations
 for s in [1, 5000, 15000, 50000]:
   for t in [True, False]:
-      for p in [ "", "abc", "abc/abc", "abc/def/ghi" ]:
+      for p in [ "", os.path.normpath("abc"), os.path.normpath("abc/abc"), os.path.normpath("abc/def/ghi") ]:
           testsets.append( { 'basicSync_filesizeKB':s,
                              'basicSync_rmLocalStateDB':t,
                              'basicSync_subdirPath':p } )
