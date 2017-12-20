@@ -64,6 +64,7 @@ def worker0(step):
     step(1,'Preparation')
     
     if fspath0:
+        os.path.normpath(fspath0)
         d = os.path.join(fspath0,config['oc_server_folder'])
     else:
         d = make_workdir()
@@ -98,6 +99,7 @@ def worker1(step):
     step(1,'Preparation')
 
     if fspath1:
+        os.path.normpath(fspath1)
         d = os.path.join(fspath1,config['oc_server_folder'])
     else:
         d = make_workdir()
