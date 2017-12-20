@@ -82,6 +82,7 @@ def worker0(step):
     if not fspath0:
         run_ocsync(d)
 
+    #delay between the 2 mount points. when one worker add files via mount point the other have to wait few seconds to see them
     sleep(3)
         
     ncorrupt = analyse_hashfiles(d)[2]
