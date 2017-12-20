@@ -13,6 +13,8 @@ class StateMonitor:
         self.kibana_monitoring_host = config.get('kibana_monitoring_host', None)
         self.kibana_monitoring_port = config.get('kibana_monitoring_port', 10012)
 
+        expected_result = config.get('expected_result', {'Value':"UnknownBug","Info":""})
+
         if not self.kibana_monitoring_host:
             self.worker_results = None
             return
@@ -46,7 +48,7 @@ class StateMonitor:
         self.test_results = {"activity": config.kibana_activity, 'test_name': testname, 'hostname': socket.gethostname(),
                              'oc_client_version': str(str(ocsync_version())[1:-1].replace(", ",".")),'oc_server': config.oc_server.split("/")[0],'platform': client_platform,
                              'parameters':parameters,'parameters_text':str(parameters),'errors': [],'errors_text': "",'success': [],
-                             'total_errors':0,'total_success':0, 'qos_metrics': [],'passed': 0,'failed': 0, 'expected_result':config.expected_result }
+                             'total_errors':0,'total_success':0, 'qos_metrics': [],'passed': 0,'failed': 0, 'expected_result':expected_result }
 
 
     def join_worker_results(self):
