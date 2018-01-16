@@ -14,31 +14,21 @@ filesize = config.get('fs_nplusone_filesize',1000)
 fspath0 = config.get('fs_nplusone_fspath0',"")
 fspath1 = config.get('fs_nplusone_fspath1',"")
 
+
 if type(filesize) is type(''):
     filesize = eval(filesize)
 
-testsets = [
-        { 'fs_nplusone_filesize': 1000, 
-          'fs_nplusone_nfiles':100
-        },
 
-        { 'fs_nplusone_filesize': OWNCLOUD_CHUNK_SIZE(0.3), 
-          'fs_nplusone_nfiles':10
-        },
+testsets = []
 
-        { 'fs_nplusone_filesize': OWNCLOUD_CHUNK_SIZE(1.3), 
-          'fs_nplusone_nfiles':2
-        },
-
-        { 'fs_nplusone_filesize': OWNCLOUD_CHUNK_SIZE(3.5), 
-          'fs_nplusone_nfiles':1
-        },
-
-        { 'fs_nplusone_filesize': (3.5,1.37), # standard file distribution: 10^(3.5) Bytes
-          'fs_nplusone_nfiles':10
-        },
-
-]
+# create cartesian product of all test configurations
+for s in [[1000, 100], [OWNCLOUD_CHUNK_SIZE(0.3), 10], [OWNCLOUD_CHUNK_SIZE(1.3), 2], [OWNCLOUD_CHUNK_SIZE(3.5), 1], [(3.5,1.37), 10]]:
+  for t in [None, config.get('fs_nplusone_path0',"")]:
+      for p in [None, config.get('fs_nplusone_path1',"")]:
+          testsets.append( { 'fs_nplusone_filesize':s[0],
+                             'fs_nplusone_nfiles':s[1],
+                             'fs_nplusone_fspath0':t, 
+                             'fs_nplusone_fspath1':p } )
 
 @add_worker
 def worker0(step):    
@@ -52,11 +42,13 @@ def worker0(step):
     step(1,'Preparation')
     
     if fspath0:
+        os.path.normpath(fspath0)
         d = os.path.join(fspath0,config['oc_server_folder'])
     else:
         d = make_workdir()
         run_ocsync(d)
     
+
     k0 = count_files(d)
 
     step(2,'Add %s files and check if we still have k1+nfiles after resync'%nfiles)
@@ -67,6 +59,9 @@ def worker0(step):
         
     if not fspath0:
         run_ocsync(d)
+
+    #delay between the 2 mount points. when one worker add files via mount point the other have to wait few seconds to see them
+    sleep(3)
         
     ncorrupt = analyse_hashfiles(d)[2]
     
@@ -83,6 +78,7 @@ def worker1(step):
     step(1,'Preparation')
 
     if fspath1:
+        os.path.normpath(fspath1)
         d = os.path.join(fspath1,config['oc_server_folder'])
     else:
         d = make_workdir()
