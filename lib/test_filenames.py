@@ -14,7 +14,7 @@ Notes:
 """
 
 if platform.system() == "darwin" or platform.system() == "linux":
-    config.expected_result = label_test_as_unknown_bug()
+    config.expected_result = do_not_report_as_failure()
 
 filesizeKB = int(config.get('filenames_filesizeKB',1))
 

@@ -900,12 +900,8 @@ def expect_does_not_exist(fn):
 
 ############ Helper functions to report/document the behaviour of the tests ############
 
-def label_test_as_known_bug(Info=""):
-    label =  {'Value':"KnownBug","Info":Info}
-    return label
-
-def label_test_as_unknown_bug(Info="TO BE INVESTIGATED..."):
-    label = {'Value':"UnknownBug","Info":Info}
+def do_not_report_as_failure(Issue=""):
+    label =  {'Value':"BugNotFixed","Issue":Issue}
     return label
 
 ############ Smashbox Exceptions ############

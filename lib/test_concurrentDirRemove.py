@@ -17,7 +17,7 @@ from smashbox.utilities import *
 from smashbox.utilities.hash_files import *
 
 if platform.system() == "darwin":
-    config.expected_result = label_test_as_unknown_bug()
+    config.expected_result = do_not_report_as_failure()
 
 nfiles = int(config.get('concurrentRemoveDir_nfiles',10))
 filesizeKB = int(config.get('concurrentRemoveDir_filesizeKB',9000))

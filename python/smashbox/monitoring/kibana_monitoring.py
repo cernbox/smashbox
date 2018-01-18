@@ -13,7 +13,7 @@ class StateMonitor:
         self.kibana_monitoring_host = config.get('kibana_monitoring_host', None)
         self.kibana_monitoring_port = config.get('kibana_monitoring_port', 10012)
 
-        expected_result = config.get('expected_result', {'Value':"UnknownBug","Info":""})
+        expected_result = config.get('expected_result', {'Value':"BugFixed","Issue":""})
 
         if not self.kibana_monitoring_host:
             self.worker_results = None
