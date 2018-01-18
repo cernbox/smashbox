@@ -1,3 +1,9 @@
+import os,sys,inspect
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+
+sys.path.insert(0,os.path.join(parentdir,"protocol"))
+
 from smashbox.utilities import *
 from smashbox.utilities.hash_files import *
 from protocol import file_upload
