@@ -286,6 +286,8 @@ def main():
 
       from smashbox.utilities import SkipTestExecutionException
 
+      smashbox.utilities.logger = logger
+
       try:
          execfile(os.path.abspath(t), smashbox.no_engine.__dict__)
       except SkipTestExecutionException as test_skipped:

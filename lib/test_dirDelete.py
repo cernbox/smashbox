@@ -10,7 +10,7 @@ import os.path
 oc_client_version = str(str(ocsync_version())[1:-1].replace(", ", "."))
 
 if platform.system() == "darwin" and oc_client_version=="2.2.4":
-    config.expected_result = label_test_as_unknown_bug()
+    config.expected_result = do_not_report_as_failure()
 
 NESTING_LEVELS = config.get('dirDel_nestingLevels', 50)
 

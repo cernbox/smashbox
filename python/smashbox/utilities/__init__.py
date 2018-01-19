@@ -900,12 +900,8 @@ def expect_does_not_exist(fn):
 
 ############ Helper functions to report/document the behaviour of the tests ############
 
-def label_test_as_known_bug(Info=""):
-    label =  {'Value':"KnownBug","Info":Info}
-    return label
-
-def label_test_as_unknown_bug(Info="TO BE INVESTIGATED..."):
-    label = {'Value':"UnknownBug","Info":Info}
+def do_not_report_as_failure(Issue=""):
+    label =  {'Value':"BugNotFixed","Issue":Issue}
     return label
 
 ############ Smashbox Exceptions ############
@@ -933,7 +929,7 @@ def restrict_execution(current_platform="",client_version="",endpoint="",disable
     else:
         text_message = "Skipped Test: specific test designed for: "
         if platform.system() != current_platform:
-            raise SkipTestExecutionException(text_message + platform.system())
+            raise SkipTestExecutionException(text_message + current_platform)
         elif client_version!="" and str(str(ocsync_version())[1:-1].replace(", ","."))!=client_version:
             raise SkipTestExecutionException(text_message + client_version)
         elif endpoint!="" and config.oc_server != endpoint:
