@@ -270,6 +270,9 @@ if True:
     # this is OK: config and logger will be visible symbols in the user's test code
     config = smashbox.script.configure_from_blob(_smash_.args.config_blob)
 
+    # reset to the default config state where applicable                                                                                            
+    config.expected_result=None
+
     import smashbox.utilities.reflection
     smashbox.utilities.reflection._smash_ = _smash_
 
