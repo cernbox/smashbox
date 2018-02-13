@@ -901,7 +901,7 @@ def expect_does_not_exist(fn):
 ############ Helper functions to report/document the behaviour of the tests ############
 
 def do_not_report_as_failure(Issue=""):
-   config.test_ignored = Issue 
+   config._test_ignored = Issue 
 
 ############ Smashbox Exceptions ############
 

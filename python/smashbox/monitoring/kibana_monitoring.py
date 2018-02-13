@@ -13,7 +13,7 @@ class StateMonitor:
         self.kibana_monitoring_host = config.get('kibana_monitoring_host', None)
         self.kibana_monitoring_port = config.get('kibana_monitoring_port', 10012)
 
-        self.test_ignored = config.get('test_ignored', None)
+        self._test_ignored = config.get('_test_ignored', None)
 
         if not self.kibana_monitoring_host:
             self.worker_results = None
@@ -49,7 +49,7 @@ class StateMonitor:
         self.test_results = {"activity": config.kibana_activity, 'test_name': testname, 'hostname': socket.gethostname(),
                              'oc_client_version': str(str(ocsync_version())[1:-1].replace(", ",".")),'oc_server': config.oc_server.split("/")[0],'platform': client_platform,
                              'parameters':parameters,'parameters_text':str(parameters),'errors': [],'errors_text': "",'success': [],
-                             'total_errors':0,'total_success':0, 'qos_metrics': [],'ignoredFailures':0,'passed': 0,'failed': 0, 'test_ignored': self.test_ignored }
+                             'total_errors':0,'total_success':0, 'qos_metrics': [],'ignoredFailures':0,'passed': 0,'failed': 0, 'test_ignored': self._test_ignored }
 
 
     def join_worker_results(self):
@@ -72,7 +72,7 @@ class StateMonitor:
         if not self.kibana_monitoring_host:
             return
 
-        if self.test_ignored is None: # we just want to track tests that we considered fixed
+        if self._test_ignored is None: # we just want to track tests that we considered fixed
             if(self.test_results['total_errors']>=1): # A subtest is considered failed with one or more errors
                 self.test_results['passed'] = 0
                 self.test_results['failed'] = 1
