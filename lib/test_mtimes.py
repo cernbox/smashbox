@@ -16,7 +16,7 @@ from smashbox.utilities import reflection
 oc_client_version = str(str(ocsync_version())[1:-1].replace(", ", "."))
 
 if oc_client_version=="2.2.4" or oc_client_version=="2.3.3":
-   config.expected_result = do_not_report_as_failure()
+   do_not_report_as_failure()
 
 sleep = int(config.get('mtimes_sleep',0)) 
 

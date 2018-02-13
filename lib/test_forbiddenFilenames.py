@@ -22,6 +22,10 @@ forbidden_charsets = {
 
 nfiles = len(forbidden_charsets)
 
+
+do_not_report_as_failure()
+
+
 @add_worker
 def worker0(step):
 

@@ -41,7 +41,7 @@ Logfile: test_pingpong/pong-ocsync.step02.cnt000.log
 oc_client_version = str(str(ocsync_version())[1:-1].replace(", ", "."))
 
 if oc_client_version=="2.2.4" or oc_client_version=="2.3.3":
-   config.expected_result = do_not_report_as_failure()
+   do_not_report_as_failure()
 
 filesizeKB = int(config.get('pingpong_filesizeKB',5000))
 pongdelay = float(config.get('pingpong_pongdelay',0))
