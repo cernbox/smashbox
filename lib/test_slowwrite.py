@@ -18,7 +18,7 @@ owncloudcmd will delay syncing of the file if the file is modified every 2 secon
 from smashbox.utilities import *
 from smashbox.utilities.hash_files import *
 
-config.expected_result = do_not_report_as_failure()
+do_not_report_as_failure()
 
 MB = 1024*1000
 
