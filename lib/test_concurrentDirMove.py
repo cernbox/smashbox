@@ -7,7 +7,7 @@ all added files are kept on the server and are found in the final directory.
 """
 from smashbox.utilities import *
 
-if platform.system() == "darwin":
+if platform.system().lower() == "darwin":
     do_not_report_as_failure()
 
 nfiles = int(config.get('concurrentMoveDir_nfiles',100))

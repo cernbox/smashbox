@@ -13,7 +13,7 @@ Notes:
 
 """
 
-if platform.system() == "darwin" or platform.system() == "linux":
+if platform.system().lower() == "darwin" or platform.system().lower() == "linux":
     do_not_report_as_failure()
 
 filesizeKB = int(config.get('filenames_filesizeKB',1))

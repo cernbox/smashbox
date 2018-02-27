@@ -14,7 +14,7 @@ TODO: a similar test for server side move.
 
 oc_client_version = str(str(ocsync_version())[1:-1].replace(", ", "."))
 
-if platform.system() == "darwin" and oc_client_version=="2.3.3":
+if platform.system().lower() == "darwin" and oc_client_version=="2.3.3":
     do_not_report_as_failure()
 
 testsets = [ {'localDirRenameRecreate_DIRA':'DIRA', 
