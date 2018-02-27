@@ -16,7 +16,7 @@ import tempfile
 from smashbox.utilities import *
 from smashbox.utilities.hash_files import *
 
-if platform.system() == "darwin":
+if platform.system().lower() == "darwin":
     do_not_report_as_failure()
 
 nfiles = int(config.get('concurrentRemoveDir_nfiles',10))
