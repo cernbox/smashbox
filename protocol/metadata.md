@@ -12,7 +12,7 @@ Sync client propagates the executable permission bit of local files to the serve
 
 For new files:
  * PUT request header: OC-METADATA: mod:x
- * PUT request header: OC-METADATA: OSX.label:<value>
+ * PUT request header: OC-METADATA: `OSX.label:<value>`
 
 For existing files in reaction to local chmod:
  * PROPPATCH
@@ -29,7 +29,7 @@ Enabled by capabilities.
  
 Metadata conflict resolution
 
-Client-side: we attach in the same place as mtime handling.
+Client-side: we attach in the same place as mtime handling. Must be stored in the journal.
 
 Server-side needs plugabble metadata service
  
