@@ -159,6 +159,9 @@ class _smash_:
             fname = f.__name__
         _smash_.process_name=fname
         _smash_.process_number = wi
+
+        import smashbox.utilities
+
         def step(i,message=""):
             _smash_._step(i,wi,message)
         try:
@@ -167,13 +170,15 @@ class _smash_:
             except Exception,x:
                 import traceback
                 logger.fatal("Exception occured: %s \n %s", x,traceback.format_exc())
+
+                smashbox.utilities.reported_errors.append(str(x))
+
                 import sys
                 sys.exit(1)
         finally:
             # worker finish
             step(_smash_.N_STEPS-1,None) # don't print any message
 
-            import smashbox.utilities
             if _smash_.worker_results: _smash_.worker_results.put([smashbox.utilities.reported_errors])
 
             if smashbox.utilities.reported_errors:
