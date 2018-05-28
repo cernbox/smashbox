@@ -167,6 +167,8 @@ def winner(step):
     remove_file(os.path.join(subdir,'TEST_FILE_DELETED_WINNER.dat'))
     remove_file(os.path.join(subdir,'TEST_FILE_DELETED_BOTH.dat'))
 
+    sleep(1.1) # csync: mtime diff < 1s => conflict not detected
+
     createfile(os.path.join(subdir,'TEST_FILE_MODIFIED_WINNER.dat'),'1',count=1000,bs=filesizeKB)
     createfile(os.path.join(subdir,'TEST_FILE_MODIFIED_BOTH.dat'),'1',count=1000,bs=filesizeKB)
 
@@ -211,6 +213,8 @@ def loser(step):
 
     remove_file(os.path.join(subdir,'TEST_FILE_DELETED_LOSER.dat'))
     remove_file(os.path.join(subdir,'TEST_FILE_DELETED_BOTH.dat'))
+
+    sleep(1.1) # csync: mtime diff < 1s => conflict not detected
 
     createfile(os.path.join(subdir,'TEST_FILE_MODIFIED_LOSER.dat'),'2',count=1000,bs=filesizeKB)
     createfile(os.path.join(subdir,'TEST_FILE_MODIFIED_BOTH.dat'),'2',count=1000,bs=filesizeKB)
