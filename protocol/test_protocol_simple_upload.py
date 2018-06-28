@@ -13,11 +13,14 @@ def main(step):
     filename=create_hashfile(d,size=OWNCLOUD_CHUNK_SIZE(0.3))
 
     r=file_upload(filename,URL)
+    os.remove(filename)
     file_download(os.path.basename(filename),URL,d)
     analyse_hashfiles(d)
 
     # upload again matching the existing etag
     r=file_upload(filename,URL,header_if_match=r.headers['ETag'])
+    os.remove(filename)
+    file_download(os.path.basename(filename),URL,d)
     analyse_hashfiles(d)
 
     # upload again with a non-matching etag
