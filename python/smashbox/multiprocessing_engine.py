@@ -161,9 +161,13 @@ class _smash_:
         _smash_.process_number = wi
 
         import smashbox.utilities
+        import time
 
         def step(i,message=""):
             _smash_._step(i,wi,message)
+
+            sleep_time = int(config.get('sleep_time',0))
+            time.sleep(sleep_time)
         try:
             try:
                 f(step)
