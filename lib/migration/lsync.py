@@ -3,7 +3,9 @@
 # IMG_20171005_105517.jpg : NOT CHANGED
 # IMG_20171005_110734.jpg : NOT CHANGED
 # NEW.txt		  : NEW FILE
+# NEW_BIG.txt                 : NEW BIG FILE
 # test.txt		  : MODIFY EXISTING FILE
+# BigFile		  : MODIFY BIG EXISTING FILE
 # torename.txt		  : RENAME FILE TO EXISTING FILE -> existing.txt
 
 # Photos/IMG_20180615_224839.jpg : MOVED -> FOLDERX
@@ -78,18 +80,22 @@ def winner(step):
 
     remove_file(os.path.join(subdir,'IMG_20171005_105458.jpg')) 	# IMG_20171005_105458.jpg : REMOVED
     createfile(os.path.join(subdir,'NEW.txt'),'1',count=1000,bs=filesizeKB)	# NEW.txt : NEW FILE
+    createfile(os.path.join(subdir,'NEW_BIG.txt'),'1',count=20000,bs=filesizeKB)     # NEW_BIG.txt : NEW BIG FILE
     shutil.move(os.path.join(subdir, 'IMG_20171005_105509.jpg'), os.path.join(subdir, 'IMG_20171005_105509-RENAMED.jpg')) 	# IMG_20171005_105509.jpg : RENAMED -> IMG_20171005_105509-RENAMED.jpg
     createfile(os.path.join(subdir,'test.txt'),'1',count=1000,bs=filesizeKB)	# test.txt : MODIFY EXISTING FILE
     shutil.move(os.path.join(subdir, 'torename.txt'), os.path.join(subdir, 'existing.txt'))
     shutil.move(os.path.join(subdir, 'Photos/IMG_20180615_224839.jpg'), os.path.join(subdir, 'FOLDERX/IMG_20180615_224839.jpg'))	# Photos/IMG_20180615_224839.jpg : MOVED -> FOLDERX
     mv(os.path.join(subdir, 'FOLDER_MOVED'), os.path.join(subdir, 'FOLDERX/FOLDER_MOVED'))	# FOLDER_MOVED : MOVED -> FOLDERX
-
+    createfile(os.path.join(subdir,'BigFile'),'1',count=15000,bs=filesizeKB)	# BigFile: MODIFY BIG EXISTING FILE
 
 
     shared = reflection.getSharedObject()
 
     shared['md5_NEW'] = md5sum(os.path.join(subdir,'NEW.txt'))
     logger.info('md5_NEW: %s',shared['md5_NEW'])
+
+    shared['md5_NEW_BIG'] = md5sum(os.path.join(subdir,'NEW_BIG.txt'))
+    logger.info('md5_NEW_BIG: %s',shared['md5_NEW_BIG'])
 
     shared['md5_IMG_20171005_105509-RENAMED.jpg'] = md5sum(os.path.join(subdir,'IMG_20171005_105509-RENAMED.jpg'))
     logger.info('md5_IMG_20171005_105509-RENAMED.jpg: %s',shared['md5_IMG_20171005_105509-RENAMED.jpg'])
@@ -102,6 +108,9 @@ def winner(step):
 
     shared['md5_existing'] = md5sum(os.path.join(subdir,'existing.txt'))
     logger.info('md5_existing: %s',shared['md5_existing'])
+
+    shared['md5_BigFile'] = md5sum(os.path.join(subdir,'BigFile'))
+    logger.info('md5_BigFile: %s',shared['md5_BigFile'])
 
 
     run_ocsync(d)
@@ -143,10 +152,12 @@ def final_check(d,shared):
 
     list_files(d)
     expect_content(os.path.join(d,'NEW.txt'), shared['md5_NEW'])
+    expect_content(os.path.join(d,'NEW_BIG.txt'), shared['md5_NEW_BIG'])
     expect_content(os.path.join(d,'IMG_20171005_105509-RENAMED.jpg'), shared['md5_IMG_20171005_105509-RENAMED.jpg'])
     expect_content(os.path.join(d,'test.txt'), shared['md5_test'])
     expect_content(os.path.join(d,'existing.txt'), shared['md5_existing'])
     expect_content(os.path.join(d,'FOLDERX/IMG_20180615_224839.jpg'), shared['md5_IMG_20180615_224839.jpg'])
+    expect_content(os.path.join(d,'BigFile'), shared['md5_BigFile'])
 
     d1 = os.path.join(d,'FOLDER_MOVED')
     d2 = os.path.join(d, 'FOLDERX/FOLDER_MOVED')
