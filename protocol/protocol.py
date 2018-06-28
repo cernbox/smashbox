@@ -318,7 +318,7 @@ def move(url,x,y):
     client = smashbox.curl.Client()
 
     src_url = os.path.join(url,os.path.basename(x))
-    dest = get_url_path(os.path.join(url,y,os.path.basename(x)))
+    dest = get_url_path(os.path.join(url,os.path.basename(y)))
 
     r = client.MOVE(src_url,dest)
     fatal_check(r.rc in [200,201,204])
