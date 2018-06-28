@@ -20,8 +20,12 @@ def check_propfind_response(URL,filename,mtime,total_size):
 
         assert(int(r['{DAV:}getcontentlength']) == total_size)
 
-        d1=int(dateutil.parser.parse(r['{DAV:}getlastmodified']).strftime("%s"))
+        # convert GMT mtime reported by PROPFIND to EPOCH
+        d1=dateutil.parser.parse(r['{DAV:}getlastmodified'])-datetime.datetime(1970,1,1,tzinfo=dateutil.tz.tzutc())
+        d1=d1.days*86400+d1.seconds
+
         d2=int(mtime)
+
         if d1 != d2:
             print resp
             print filename
@@ -41,19 +45,17 @@ def main(step):
 
     filename=create_hashfile(d,size=OWNCLOUD_CHUNK_SIZE(0.3))
     time.sleep(2)
-    r=file_upload(filename,URL)
-
     mtime = int(os.path.getmtime(filename))
     total_size = os.path.getsize(filename)
+    r=file_upload(filename,URL)
 
     check_propfind_response(URL,filename,mtime,total_size)
 
     filename=create_hashfile(d,size=OWNCLOUD_CHUNK_SIZE(3.3))
     time.sleep(2)
-    r=chunk_file_upload(filename,URL)
-
     mtime = int(os.path.getmtime(filename))
     total_size = os.path.getsize(filename)
+    r=chunk_file_upload(filename,URL)
 
     check_propfind_response(URL,filename,mtime,total_size)
 
