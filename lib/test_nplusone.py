@@ -12,6 +12,7 @@ from smashbox.utilities.monitoring import push_to_monitoring
 
 nfiles = int(config.get('nplusone_nfiles',10))
 filesize = config.get('nplusone_filesize',1000)
+subdirPath = config.get('nplusone_subdirPath',"")
 
 # optional fs check before files are uploaded by worker0
 fscheck = config.get('nplusone_fscheck',False)
@@ -53,8 +54,11 @@ def worker0(step):
 
     step(1,'Preparation')
     d = make_workdir()
+    subdir = os.path.join(d,subdirPath)
+    mkdir(subdir)
+
     run_ocsync(d)
-    k0 = count_files(d)
+    k0 = count_files(subdir)
 
     step(2,'Add %s files and check if we still have k1+nfiles after resync'%nfiles)
 
@@ -73,20 +77,20 @@ def worker0(step):
 
     # create the test files
     for size in sizes:
-        create_hashfile(d,size=size)
+        create_hashfile(subdir,size=size)
 
     if fscheck:
         # drop the caches (must be running as root on Linux)
         runcmd('echo 3 > /proc/sys/vm/drop_caches')
         
-        ncorrupt = analyse_hashfiles(d)[2]
+        ncorrupt = analyse_hashfiles(subdir)[2]
         fatal_check(ncorrupt==0, 'Corrupted files ON THE FILESYSTEM (%s) found'%ncorrupt)
 
     run_ocsync(d)
 
-    ncorrupt = analyse_hashfiles(d)[2]
+    ncorrupt = analyse_hashfiles(subdir)[2]
     
-    k1 = count_files(d)
+    k1 = count_files(subdir)
 
     error_check(k1-k0==nfiles,'Expecting to have %d files more: see k1=%d k0=%d'%(nfiles,k1,k0))
 
@@ -109,15 +113,18 @@ def worker0(step):
 def worker1(step):
     step(1,'Preparation')
     d = make_workdir()
+    subdir = os.path.join(d,subdirPath)
+    mkdir(subdir)
+
     run_ocsync(d)
-    k0 = count_files(d)
+    k0 = count_files(subdir)
 
     step(3,'Resync and check files added by worker0')
 
     run_ocsync(d)
 
-    ncorrupt = analyse_hashfiles(d)[2]
-    k1 = count_files(d)
+    ncorrupt = analyse_hashfiles(subdir)[2]
+    k1 = count_files(subdir)
 
     push_to_monitoring("cernbox.cboxsls.nplusone.worker1.synced_files",k1-k0)
     push_to_monitoring("cernbox.cboxsls.nplusone.worker1.cor",ncorrupt)
