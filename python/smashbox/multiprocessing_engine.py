@@ -166,8 +166,8 @@ class _smash_:
         def step(i,message=""):
             _smash_._step(i,wi,message)
 
-            sleep_time = int(config.get('sleep_time',0))
-            time.sleep(sleep_time)
+            sleep_time_at_step = int(config.get('sleep_time_at_step',0))
+            time.sleep(sleep_time_at_step)
         try:
             try:
                 f(step)
