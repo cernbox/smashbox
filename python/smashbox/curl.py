@@ -12,6 +12,8 @@ import pycurl, cStringIO
 
 class Client:
     
+    extra_headers = {}
+    
     def __init__(self,verbose=None):
         c = pycurl.Curl()
 
@@ -45,7 +47,7 @@ class Client:
         c = self.c
 
         c.setopt(c.CUSTOMREQUEST, "PROPFIND")
-        c.setopt(pycurl.HTTPHEADER, ["Depth:%s"%depth,'Expect:'])
+        headers['Depth']=depth
         c.setopt(c.UPLOAD,1) 
 
         import StringIO
@@ -161,11 +163,12 @@ class Client:
         c = self.c
         
         c.setopt(c.CUSTOMREQUEST, "MOVE")
-        c.setopt(pycurl.HTTPHEADER, ["Destination:%s"%destination])
+        headers={}
+        headers['Destination']=destination
         if overwrite:
-            c.setopt(pycurl.HTTPHEADER, ['Overwrite:%s'%overwrite])
+            headers['Overwrite']=overwrite
 
-        r = self._perform_request(url,{})
+        r = self._perform_request(url,headers)
 
         return r
 
@@ -173,8 +176,10 @@ class Client:
     def _perform_request(self,url,headers,response_obj=None):
         c = self.c
 
+        _headers = self.extra_headers.copy()
+        _headers.update(headers)
         c.setopt(c.URL, url)
-        c.setopt(pycurl.HTTPHEADER,[str(x)+':'+str(y) for x,y in zip(headers.keys(),headers.values())])
+        c.setopt(pycurl.HTTPHEADER,[str(x)+':'+str(y) for x,y in zip(_headers.keys(),_headers.values())])
 
         ret_headers=[]
         c.setopt(pycurl.HEADERFUNCTION, ret_headers.append)
