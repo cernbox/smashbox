@@ -127,8 +127,9 @@ def reset_owncloud_account(reset_procedure=None, num_test_users=None):
         webdav_delete('/') # delete the complete webdav endpoint associated with the remote account
         webdav_delete('/') # FIXME: workaround current bug in EOS (https://savannah.cern.ch/bugs/index.php?104661) 
 
-    # if create if does not exist (for keep or webdav_delete options)
-    webdav_mkcol('/')
+    if reset_procedure != "ignore":
+        # create if does not exist (for keep or webdav_delete options)
+        webdav_mkcol('/')
 
 
 def reset_rundir(reset_procedure=None):
