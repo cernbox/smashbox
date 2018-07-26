@@ -14,6 +14,9 @@ NOTE: I need to handle ETAG quotes in my script (set_tmp_etags.sh)!
 
 """
 
+FILTER_OUT_ATTRS=True
+EOS_BUG_2732 = True
+
 @add_worker
 def main(step):
 
@@ -39,7 +42,6 @@ def main(step):
     NSDAV="{DAV:}"
     NSOC="{http://owncloud.org/ns}"
 
-    FILTER_OUT_ATTRS=False
     
     ids_files=[]
     ids_directories=[]
@@ -53,7 +55,13 @@ def main(step):
 
         # the parent dir (.) reported by Depth1 must be identical as the parent dir reported by Depth0
         r10=[x for x in r1 if x[0] == r0[0][0]]
-        assert r0 == r10
+        
+        if r0 != r10 and not EOS_BUG_2732:
+            print "ERROR: r0 != r10"
+            print "URL",URL
+            print "r0",r0
+            print "r10",r10
+            sys.exit(-1)
         
         path=r0[0][0]
         attrs=r0[0][1]['HTTP/1.1 200 OK']
@@ -82,6 +90,9 @@ def main(step):
                 ids_files.append(attrs[NSOC+'id'])
                 if FILTER_OUT_ATTRS:
                     attrs[NSOC+'id'] = 'FFF' # this attribute does not matter for comparison of files
+                    if EOS_BUG_2732:
+                        attrs[NSDAV+'getlastmodified'] = 'FFF' # buggy mtime should not be compared
+
                 print >> fout, repr(path),repr(attrs)
 
     scan_dir(URL)
