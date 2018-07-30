@@ -16,6 +16,7 @@ NOTE: I need to handle ETAG quotes in my script (set_tmp_etags.sh)!
 
 FILTER_OUT_ATTRS=True
 EOS_BUG_2732 = True
+IGNORE_FOLDER_SIZE=True
 
 @add_worker
 def main(step):
@@ -73,6 +74,8 @@ def main(step):
             attrs[NSOC+'id'] = 'DDD' # this attribute does not matter for comparison of directories
             attrs[NSDAV+'getlastmodified'] = 'DDD' # this attribute does not matter for comparison of directories
             attrs[NSDAV+'getetag'] = 'DDD' # this attribute does not matter for comparison of directories
+            if IGNORE_FOLDER_SIZE:
+                attrs[NSOC+'size'] = 'DDD'
 
         print >> fout, repr(path),repr(attrs)
 
