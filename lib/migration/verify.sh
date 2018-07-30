@@ -20,8 +20,13 @@ mkdir -p /tmp/report
 
 cd /tmp/report
 
-/root/smashbox/bin/smash  -q /root/smashbox/lib/migration/scan_propfind.py -c /root/smashbox/lib/migration/scan.conf -o oc_account_name=$ACCOUNT -o oc_server=eoshome
-/root/smashbox/bin/smash  -q /root/smashbox/lib/migration/scan_propfind.py -c /root/smashbox/lib/migration/scan.conf -o oc_account_name=$ACCOUNT -o oc_server=eosuser
+/root/smashbox/bin/smash  -q /root/smashbox/lib/migration/scan_propfind.py -c /root/smashbox/lib/migration/scan.conf -o oc_account_name=$ACCOUNT -o oc_server=eoshome & PID_SMASH_1=$!
+/root/smashbox/bin/smash  -q /root/smashbox/lib/migration/scan_propfind.py -c /root/smashbox/lib/migration/scan.conf -o oc_account_name=$ACCOUNT -o oc_server=eosuser & PID_SMASH_2=$!
+
+# wait for both subprocess to finish but bail out if any of the returned an error
+
+wait $PID_SMASH_1 || exit -2
+wait $PID_SMASH_2 || exit -2
 
 # CHECK THE METADATA -- ALL SHOULD BE PROPERLY ALIGN (PLACEHODLER VALUES ARE EXCEPTION)
 
