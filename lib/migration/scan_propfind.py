@@ -24,16 +24,18 @@ def main(step):
     user=config.oc_account_name
     user_letter=user[0]
     server=config.oc_server
+    extra_path=''
 
     assert(user!='.')
     assert(config.oc_server in ['eoshome','eosuser'])
 
     if config.oc_server == 'eoshome':
        server = 'eoshome-'+user_letter
+       extra_path='/.ongoing'
 
     URL = 'http://'+server+':8000/cernbox/desktop/remote.php/webdav/home/'
 
-    smashbox.curl.Client.extra_headers={'Remote-user':user, 'CBOX-CLIENT-MAPPING':'cernbox/desktop/remote.php/webdav/home', 'CBOX-SERVER-MAPPING':'eos/user/%s/%s'%(user_letter,user),'X-Real-IP':'127.0.0.1'}
+    smashbox.curl.Client.extra_headers={'Remote-user':user, 'CBOX-CLIENT-MAPPING':'cernbox/desktop/remote.php/webdav/home', 'CBOX-SERVER-MAPPING':'eos/user%s/%s/%s'%(extra_path,user_letter,user),'X-Real-IP':'127.0.0.1'}
 
     propfind = ls_prop_desktop20
     #propfind = all_prop_android
