@@ -24,7 +24,7 @@
 | 2.19           | Short          | Upload            | Create a folder whose name is Shared | Not possible, an alert message is shown | | |
 | 2.20           | Short          | Upload           | Having reached the maximum storage capacity, upload a file | An alert message is shown | Create a new account with a small capacity| |
 | 2.21           | Short          | Upload            | Upload a file whose size is larger than the maximum available size | An alert message is shown | Create a new account with a small capacity| |
-| 2.22           | Short           | Upload          |  Set maximum upload to 1 Gb | upload a file of 1 Gb| Create a new account| |
+| 2.22           | Short           | Upload          |  Check maximum file upload size MAX_UPLOAD_GB (https://cern.service-now.com/service-portal/article.do?n=KB0002979) | upload a file of MAX_UPLOAD_GB | Create a new account| |
 | 2.23           | Short           | Upload        | Lots of documents | Upload 100 documents, 1 G | | |
 | 2.24           | Short           | Upload        | Create a folder whose name is the same as one document |Create a file whose name is "a", Create a folder whose is "a", The folder is created | | |
 | 3.1        | Short              | Preview         | Preview png | The file is not displayed  | maybe in the future| |
