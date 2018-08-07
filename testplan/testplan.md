@@ -1,6 +1,11 @@
 Notes:
 
-Integrity verification must be done for all *Upload* and *Anonymous uploads* tests as well as the tests marked with (*): **verify integrity of the uploaded files by downloading them again and comparing the md5 checksum**
+Integrity verification must be done for all test cases:
+  * Upload
+  * Anonymous upload
+  * all tests marked with (*)
+  
+**verify integrity of files by downloading them and comparing the md5 checksum**
 
 
 | Test#         | Short/Long    |  Action               |  Test            |  Expected Result               | Comment | Test result |
