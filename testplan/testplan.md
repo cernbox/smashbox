@@ -5,7 +5,7 @@ Integrity verification must be done for all test cases:
   * Anonymous upload
   * all tests marked with (*)
   
-**verify integrity of files by downloading them and comparing the md5 checksum**
+**Verify integrity of files by downloading them and comparing the md5 checksum.**
 
 
 | Test#         | Short/Long    |  Action               |  Test            |  Expected Result               | Comment | Test result |
