@@ -50,7 +50,9 @@ def main(step):
     ids_directories=[]
     etags_directories=[]
 
-    fout = file('report.propfind.%s.%s.txt'%(user,config.oc_server),'w')
+    fout = file('report.propfind.%s.%s.txt'%(user,config.oc_server),'w',0)
+
+    propfind_list=[]
     
     def scan_dir(URL):
         r0=propfind(URL,depth=0).propfind_response
@@ -98,19 +100,23 @@ def main(step):
                     if EOS_BUG_2732:
                         attrs[NSDAV+'getlastmodified'] = 'FFF' # buggy mtime should not be compared
 
+                propfind_list.append((repr(path),repr(attrs)))
+
                 print >> fout, repr(path),repr(attrs)
 
     scan_dir(URL)
 
-    fout1 = file('report.f-ids.%s.%s.txt'%(user,config.oc_server),'w')
+    fout.close()
+
+    fout1 = file('report.f-ids.%s.%s.txt'%(user,config.oc_server),'w',0)
     for x in sorted(ids_files):
         print >> fout1, x
 
-    fout2 = file('report.d-ids.%s.%s.txt'%(user,config.oc_server),'w')
+    fout2 = file('report.d-ids.%s.%s.txt'%(user,config.oc_server),'w',0)
     for x in sorted(ids_directories):
         print >> fout2, x
 
-    fout3 = file('report.d-etags.%s.%s.txt'%(user,config.oc_server),'w')
+    fout3 = file('report.d-etags.%s.%s.txt'%(user,config.oc_server),'w',0)
     for x in sorted(etags_directories):
         print >> fout3, x
 
