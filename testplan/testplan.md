@@ -1,11 +1,21 @@
+Notes:
+
+Integrity verification must be done for all test cases:
+  * Upload
+  * Anonymous upload
+  * all tests marked with (*)
+  
+**Verify integrity of files by downloading them and comparing the md5 checksum.**
+
+
 | Test#         | Short/Long    |  Action               |  Test            |  Expected Result               | Comment | Test result |
 | ------------- |:-------------:| -----------------:|:-----------------|:-------------------------------|:----------------|:----------|
 | 1.1             | Short         | Login             | Case sensitive   | It is possible to login        | [login.feature](https://github.com/owncloud/acceptance-testing/blob/master/features/login.feature) | |
 | 1.2             | Short         | Login             | Wrong credentials| An alert message is displayed  | | |
 | 1.3             | Short         | Login             | Change password|   | Maybe in the future| |
-| 2.1             | Short         | Upload            | Upload a file     | File gets uploaded to OC        | | |
-| 2.2             | Short         | Upload            | Drag and drop     | File gets uploaded to OC        | | |
-| 2.3             | Short         | Upload            | Drag and drop     | Folders gets uploaded to OC        | | |
+| 2.1             | Short         | Upload        | Upload a file      | File gets uploaded to OC        | | |
+| 2.2             | Short         | Upload           | Drag and drop     | File gets uploaded to OC        | | |
+| 2.3             | Short         | Upload           | Drag and drop     | Folders gets uploaded to OC        | | |
 | 2.4             | Short         | Upload            | Upload more than 1 | Files get uploaded to OC       | | |
 | 2.5             | Short         | Upload            | Upload a file that already exists | An alert message is displayed | | |
 | 2.6              | Short         | Upload            | Upload a file that already exists, select both options 'new file' and 'already existing file' |The file gets upload with a new name | Can be improved| |
@@ -24,7 +34,7 @@
 | 2.19           | Short          | Upload            | Create a folder whose name is Shared | Not possible, an alert message is shown | | |
 | 2.20           | Short          | Upload           | Having reached the maximum storage capacity, upload a file | An alert message is shown | Create a new account with a small capacity| |
 | 2.21           | Short          | Upload            | Upload a file whose size is larger than the maximum available size | An alert message is shown | Create a new account with a small capacity| |
-| 2.22           | Short           | Upload          |  Set maximum upload to 1 Gb | upload a file of 1 Gb| Create a new account| |
+| 2.22           | Short           | Upload          |  Check maximum file upload size MAX_UPLOAD_GB (https://cern.service-now.com/service-portal/article.do?n=KB0002979, http://cernbox.web.cern.ch/cernbox/en/space_quota) | upload a file of MAX_UPLOAD_GB | Create a new account| |
 | 2.23           | Short           | Upload        | Lots of documents | Upload 100 documents, 1 G | | |
 | 2.24           | Short           | Upload        | Create a folder whose name is the same as one document |Create a file whose name is "a", Create a folder whose is "a", The folder is created | | |
 | 3.1        | Short              | Preview         | Preview png | The file is not displayed  | maybe in the future| |
@@ -32,8 +42,8 @@
 | 3.3        | Short              | Preview         | Preview pdf | The file is not displayed  | maybe in the future| |
 | 3.4        | Short              | Preview         | Preview txt | The file is displayed   | | |
 | 3.5        | Short              | Preview         | Preview html | The file is displayed   | | |
-| 4.1        | Short              | Share           |Share a file with a colleague(s)  |  Colleague(s) has access to the file  | | |
-| 4.2        | Short              | Share           |Share a folder with a colleague(s)  |  Colleague(s) has access to the folder including any subfolder and files  | | |
+| 4.1        | Short              | Share  (*)         |Share a file with a colleague(s)  |  Colleague(s) has access to the file  | | |
+| 4.2        | Short              | Share  (*)        |Share a folder with a colleague(s)  |  Colleague(s) has access to the folder including any subfolder and files  | | |
 | 4.3        | Short              | Share           | Having a shared folder we include a new file on it | Colleague can access to it   | | |
 | 4.4        | Short              | Share           | Having a shared folder we delete it | The folder is deleted too   | | |
 | 4.5        | Short              | Share           | Having a shared file, we delete it  |  The file is deleted | | |
@@ -41,8 +51,8 @@
 | 4.7        | Short              | Share            |  Shared a folder whose name includes special characters | The folder is shared   | | |
 | 4.8        | Short              | Share            | Shared a folder and set it as not "shared"  | Resharing is not possible    | | |
 | 4.9        | Short              | Share            | Shared a folder without edit privileges. Try to modify a txt stored on it  | Not possible, to include changes   | | |
-| 4.10        | Short              | Share            | Shared a large file, 1Gb  | It´s shared   | | |
-| 4.11        | Short              | Share            |  Having shared file, with privileges, we modified from user | Changes are reflected in all users   | | |
+| 4.10        | Short              | Share (*)           | Shared a large file, 1Gb  | It´s shared   | | |
+| 4.11        | Short              | Share (*)            |  Having shared file, with privileges, we modified from user | Changes are reflected in all users   | | |
 | 4.12        | Short              | Share            |  Having shared file, with privileges, we modified from other user but the owner | Changes are reflected   | | |
 | 4.13        | Short              | Share            | Having a shared file, we modified it from two clients at the same time   | In one of them it is not possible to save changes   | | |
 | 4.14        | Short              | Share            |  We select to share a folder with a link, after receiving the mail link, we access to OC and select to download the folder    |The folder gets downloaded | | |
