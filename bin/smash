@@ -26,6 +26,7 @@ del standardSetup
 
 global_exitcode_error = False
 
+
 def main():
    import os, os.path, sys
    import glob
@@ -181,7 +182,29 @@ def main():
 
    #
    ###########
-   
+
+   class Stats:
+      def __init__(self):
+         self.failed = self.passed = self.ignored = self.total = 0
+
+      def add(self, returncode, ignored):
+         if ignored:
+            self.ignored += 1
+         elif returncode != 0:
+            self.failed += 1
+         else:
+            self.passed += 1
+
+         self.total += 1
+
+      def print_stats(self):
+         #logger.error("IN PRINT")
+         log_quiet("PASSED: %d" % self.passed)
+         log_quiet("FAILED: %d" % self.failed)
+         log_quiet("IGNORED: %d" % self.ignored)
+
+   stats = Stats()
+
    if args.dry_run:
       log_quiet('*** DRY RUN ***')
       smashbox.script.config_log(logging.INFO,hide_password=not args.debug)
@@ -204,6 +227,15 @@ def main():
 
        reporter.testcase_stop(p.returncode)
 
+       if config.get('_test_ignored', None):
+          test_ignored = 1
+          #logger.error('Not NONE: (%s)'%config.get('_test_ignored', None))   
+       else:
+          test_ignored = 0
+          #logger.error('IS NONE')
+
+       stats.add(p.returncode, test_ignored)
+
        if p.returncode != 0:
           if args.keep_going:
              logger.error('Non-zero exit code (%s)'%p.returncode)
@@ -218,6 +250,8 @@ def main():
              logName = "log-" + barename(config.rundir) + ".log"
              logFile = os.path.join(config.smashdir, logName)
              os.remove(logFile)
+
+       config._test_ignored = None
 
 
    from smashbox.utilities import  oc_webdav_url
@@ -317,10 +351,13 @@ def main():
    if args.dry_run:
       log_quiet('*** DRY RUN ***')
 
+   stats.print_stats()
+
    if global_exitcode_error:
       sys.exit(global_exitcode_error)
 
    # FIXME: add finally clause with reporter.smashbox_stop()
+
 
 if __name__ == '__main__':
    main()

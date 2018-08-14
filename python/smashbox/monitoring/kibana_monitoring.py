@@ -72,15 +72,15 @@ class StateMonitor:
         if not self.kibana_monitoring_host:
             return
 
-        if self._test_ignored is None: # we just want to track tests that we considered fixed
+        if self._test_ignored: # we just want to track tests that we considered fixed
+            self.test_results['ignoredFailures'] = 1 # if the test is ignored we put it in a separate counter
+        else:
             if(self.test_results['total_errors']>=1): # A subtest is considered failed with one or more errors
                 self.test_results['passed'] = 0
                 self.test_results['failed'] = 1
             else:
                 self.test_results['failed'] = 0
                 self.test_results['passed'] = 1
-        else:
-            self.test_results['ignoredFailures'] = 1 # if the test is ignored we put it in a separate counter
 
         json_results = self.get_json_results()
 
