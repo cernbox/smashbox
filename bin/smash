@@ -351,7 +351,11 @@ def main():
    if args.dry_run:
       log_quiet('*** DRY RUN ***')
 
+   import smashbox.alarming
    stats.print_stats()
+
+   if stats.failed > stats.failed/20.0 :
+      smashbox.alarming.send_alarm("smashbox failure","high rate of failed tests (>20%)",logger)
 
    if global_exitcode_error:
       sys.exit(global_exitcode_error)
