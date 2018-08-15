@@ -12,8 +12,8 @@ def send_alarm(what,msg,logger):
 
     msg += ""
 
-    #ALARM_EMAIL = "cernbox-admins@cern.ch"
-    ALARM_EMAIL = "georgios.alexandropoulos@cern.ch"
+    ALARM_EMAIL = "cernbox-admins@cern.ch"
+    #ALARM_EMAIL = "georgios.alexandropoulos@cern.ch"
 
     try:
         logger.warning("ALARM: sending alarm to %s: %s %s",ALARM_EMAIL,what,msg)
