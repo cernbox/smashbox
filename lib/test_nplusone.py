@@ -100,7 +100,6 @@ def worker0(step):
     push_to_monitoring("cernbox.cboxsls.nplusone.nfiles",nfiles)
     push_to_monitoring("cernbox.cboxsls.nplusone.total_size",total_size)
     push_to_monitoring("cernbox.cboxsls.nplusone.elapsed",time1-time0)
-    push_to_monitoring("cernbox.cboxsls.nplusone.total_size",total_size)
     push_to_monitoring("cernbox.cboxsls.nplusone.transfer_rate",total_size/(time1-time0))
     push_to_monitoring("cernbox.cboxsls.nplusone.worker0.synced_files",k1-k0)
 
