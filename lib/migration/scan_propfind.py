@@ -16,7 +16,7 @@ NOTE: I need to handle ETAG quotes in my script (set_tmp_etags.sh)!
 
 FILTER_OUT_ATTRS=True
 EOS_BUG_2732 = True
-IGNORE_FOLDER_SIZE=True
+IGNORE_FOLDER_SIZE=False
 
 @add_worker
 def main(step):
@@ -55,8 +55,13 @@ def main(step):
     propfind_list=[]
     
     def scan_dir(URL):
-        r0=propfind(URL,depth=0).propfind_response
-        r1=propfind(URL,depth=1).propfind_response
+        try:
+            r0=propfind(URL,depth=0).propfind_response
+            r1=propfind(URL,depth=1).propfind_response
+        except Exception,x:
+            print >> sys.stderr, "ERROR: Failed to propfind",URL
+            raise
+
 
         # the parent dir (.) reported by Depth1 must be identical as the parent dir reported by Depth0
         r10=[x for x in r1 if x[0] == r0[0][0]]
