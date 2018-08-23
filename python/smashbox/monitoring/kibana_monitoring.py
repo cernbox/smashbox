@@ -1,7 +1,7 @@
 from smashbox.utilities import ocsync_version
 import socket
-import requests
-import json
+#import requests
+#import json
 import platform
 
 class StateMonitor:
@@ -101,6 +101,7 @@ class StateMonitor:
     # --------------------------------------------------------------------------------
 
     def send(self,document):
+        import requests, json
         return requests.post(self.kibana_monitoring_host + ":" + self.kibana_monitoring_port + "/", data=json.dumps(document),
                              headers={"Content-Type": "application/json; charset=UTF-8"})
 
