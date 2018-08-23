@@ -29,7 +29,7 @@ import fnmatch
 
 
 def get_files(wdir, filemask=None):
-    fl = os.listdir(wdir)
+    fl = [f for f in os.listdir(wdir) if os.path.isfile(os.path.join(wdir,f))]
     # if filemask defined then filter names out accordingly
     if filemask:
         fl = fnmatch.filter(fl, filemask.replace('{md5}', '*'))
