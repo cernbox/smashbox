@@ -45,6 +45,10 @@ def worker0(step):
     ldir1 = os.symlink(subd,os.path.join(d,'link.dir.abs'))
     ldir2 = os.symlink('subdir',os.path.join(d,'link.dir.rel'))
 
+    # FIXME: sync and wait for fuse to flush changes to the server
+    os.system('sync')
+    time.sleep(10)
+
     step(2,'First sync')
 
     # Synchronize the content locally
@@ -53,9 +57,9 @@ def worker0(step):
     run_ocsync(syncd)
 
     def check_subdir_count(N):
-        error_check(count_files(os.path.join(syncd,'subdir'))==N,'Expecting to have exactly %d entries'%N)
-        error_check(count_files(os.path.join(syncd,'link.dir.abs'))==N,'Expecting to have exactly %d entries'%N)
-        error_check(count_files(os.path.join(syncd,'link.dir.rel'))==N,'Expecting to have exactly %d entries'%N)
+        fatal_check(count_files(os.path.join(syncd,'subdir'))==N,'Expecting to have exactly %d entries'%N)
+        fatal_check(count_files(os.path.join(syncd,'link.dir.abs'))==N,'Expecting to have exactly %d entries'%N)
+        fatal_check(count_files(os.path.join(syncd,'link.dir.rel'))==N,'Expecting to have exactly %d entries'%N)
 
     def check_all_corrupt():
         def c(path):
@@ -72,11 +76,16 @@ def worker0(step):
     check_subdir_count(4)
     check_all_corrupt()
 
+    #raise Exception()
+ 
     ### File created directly on the server
 
     step(3,'Create new server file')
 
     f3=create_hashfile(subd,size=50)
+
+    os.system('sync')
+    time.sleep(10)
 
     run_ocsync(syncd,n=2) # need to run twice to properly reflect the changes via symlinks
 
@@ -85,13 +94,14 @@ def worker0(step):
     check_subdir_count(5)
     check_all_corrupt()
 
-    ### File removed directly on the server
+    ### File removed locally
 
     step(4,'Remove local file')
 
     # The delete should also be propagated accordingly
-    os.remove(f3)
-    run_ocsync(syncd)
+    os.remove(os.path.join(syncd,"subdir",os.path.basename(f3)))
+
+    run_ocsync(syncd,n=3)
 
     check_subdir_count(4)
     check_all_corrupt()
@@ -116,6 +126,10 @@ def worker0(step):
 
     # The delete should also be propagated accordingly
     os.remove(f4)
+
+    os.system('sync')
+    time.sleep(10)
+
     run_ocsync(syncd,n=2) # need to run twice to properly reflect the changes via symlinks
 
     check_subdir_count(4)
