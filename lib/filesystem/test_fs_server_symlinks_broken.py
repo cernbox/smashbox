@@ -32,6 +32,10 @@ def worker0(step):
     link_path = os.path.join(d,'link.file.rel.%s'%f1)
     link = os.symlink(f1,link_path)
 
+    # FIXME: sync and wait for fuse to flush changes to the server
+    os.system('sync')
+    time.sleep(10)
+
     step(2,'First sync')
 
     # Synchronize the content locally
@@ -51,6 +55,10 @@ def worker0(step):
     os.remove(link_path)
     link = os.symlink('nirvana/does/not/exist',link_path)
 
+    # FIXME: sync and wait for fuse to flush changes to the server
+    os.system('sync')
+    time.sleep(10)
+
     syncd = make_workdir()
     run_ocsync(syncd)
     
@@ -60,6 +68,10 @@ def worker0(step):
 
     f3=create_hashfile(d,size=30)
     f3=os.path.basename(f3)
+
+    # FIXME: sync and wait for fuse to flush changes to the server
+    os.system('sync')
+    time.sleep(10)
 
     run_ocsync(syncd)
     
