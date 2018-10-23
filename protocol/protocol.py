@@ -259,6 +259,11 @@ def ls_prop_desktop20(url,depth=0):
 
     r=client.PROPFIND(url,query,depth=depth)
 
+    try:
+        r.propfind_reponse
+    except AttributeError:
+        return r
+
     fatal_check(os.path.commonprefix([x[0] for x in r.propfind_response])) # all hrefs should share a common prefix 
 
     for x in r.propfind_response:
