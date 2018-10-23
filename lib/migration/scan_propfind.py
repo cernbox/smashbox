@@ -16,7 +16,10 @@ NOTE: I need to handle ETAG quotes in my script (set_tmp_etags.sh)!
 
 FILTER_OUT_ATTRS=True
 EOS_BUG_2732 = True
-IGNORE_FOLDER_SIZE=False
+IGNORE_FOLDER_SIZE=True
+
+class PropfindError(Exception):
+    pass
 
 @add_worker
 def main(step):
@@ -32,6 +35,9 @@ def main(step):
     if config.oc_server == 'eoshome':
        server = 'eoshome-'+user_letter
        extra_path='/.ongoing'
+
+    if config.oc_server == 'eosuser':
+        server='eosuser-internal'
 
     URL = 'http://'+server+':8000/cernbox/desktop/remote.php/webdav/home/'
 
@@ -56,11 +62,22 @@ def main(step):
     
     def scan_dir(URL):
         try:
-            r0=propfind(URL,depth=0).propfind_response
-            r1=propfind(URL,depth=1).propfind_response
+            r=propfind(URL,depth=0)
+            r0=r.propfind_response
         except Exception,x:
-            print >> sys.stderr, "ERROR: Failed to propfind",URL
-            raise
+            msg="Failed to PROPFIND. Error code: %s URL: %s DETAILS: %s" % (r.rc,URL,x)
+            error_check(False,msg)
+            return
+            #raise PropfindError()
+
+        try:
+            r=propfind(URL,depth=1)
+            r1=r.propfind_response
+        except Exception,x:
+            msg="Failed to PROPFIND. Error code: %s URL: %s DETAILS: %s" % (r.rc,URL,x)
+            error_check(False,msg)
+            return 
+            #raise PropfindError()
 
 
         # the parent dir (.) reported by Depth1 must be identical as the parent dir reported by Depth0
@@ -109,7 +126,11 @@ def main(step):
 
                 print >> fout, repr(path),repr(attrs)
 
-    scan_dir(URL)
+    try:
+        scan_dir(URL)
+    except PropfindError:
+        pass # don't print traceback for propfind errors
+
 
     fout.close()
 
