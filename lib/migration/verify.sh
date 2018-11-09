@@ -16,9 +16,9 @@ exit -2
 
 fi
 
-mkdir -p /tmp/report
+mkdir -p /var/tmp/report
 
-cd /tmp/report
+cd /var/tmp/report
 
 /root/smashbox/bin/smash  -q /root/smashbox/lib/migration/scan_propfind.py -c /root/smashbox/lib/migration/scan.conf -o oc_account_name=$ACCOUNT -o oc_server=eoshome & PID_SMASH_1=$!
 /root/smashbox/bin/smash  -q /root/smashbox/lib/migration/scan_propfind.py -c /root/smashbox/lib/migration/scan.conf -o oc_account_name=$ACCOUNT -o oc_server=eosuser & PID_SMASH_2=$!
