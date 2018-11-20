@@ -61,20 +61,28 @@ def main(step):
     propfind_list=[]
     
     def scan_dir(URL):
+        r=None
+        rc=None
         try:
             r=propfind(URL,depth=0)
             r0=r.propfind_response
         except Exception,x:
-            msg="Failed to PROPFIND. Error code: %s URL: %s DETAILS: %s" % (r.rc,URL,x)
+            if r is not None:
+                rc=r.rc
+            msg="Failed to PROPFIND. Error code: %s URL: %s DETAILS: %s" % (rc,URL,x)
             error_check(False,msg)
             return
             #raise PropfindError()
 
+        rc=None
+        r=None
         try:
             r=propfind(URL,depth=1)
             r1=r.propfind_response
         except Exception,x:
-            msg="Failed to PROPFIND. Error code: %s URL: %s DETAILS: %s" % (r.rc,URL,x)
+            if r is not None:
+                rc=r.rc
+            msg="Failed to PROPFIND. Error code: %s URL: %s DETAILS: %s" % (rc,URL,x)
             error_check(False,msg)
             return 
             #raise PropfindError()
