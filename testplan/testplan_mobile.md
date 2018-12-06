@@ -1,4 +1,4 @@
-# Testplan for mobile app
+# Testplan for updating the mobile app
 
 1. Make sure you have the current production version of the mobile app installed, you are logged in and it works. 
 2. Exercise basic functions with production version
