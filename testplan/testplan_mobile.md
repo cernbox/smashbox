@@ -7,6 +7,8 @@ _If you have already installed the test version some of the steps may not be app
    1. Download/pin some files for download (locally cached)
    2. ...
 3. Update to the test version.
+   1. Does the update appear automatically (after your account has been added to the tester group)?
+   2. To force update, uninstall the production version and install the app again.
 5. Check if the previous state is kept
    1. Make sure that you are still logged in after update.
    2. Make sure that cached files in the offline mode are accessible.
