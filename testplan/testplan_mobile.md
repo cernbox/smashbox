@@ -1,5 +1,7 @@
 # Testplan for updating the mobile app
 
+_If you have already installed the test version some of the steps may not be applicable_
+
 1. Make sure you have the current production version of the mobile app installed, you are logged in and it works. 
 2. Exercise basic functions with production version
    1. Download/pin some files for download (locally cached)
