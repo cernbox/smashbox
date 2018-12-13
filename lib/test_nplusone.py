@@ -1,7 +1,7 @@
 import os
 import time
 import tempfile
-
+from ConfigParser import NoOptionError, NoSectionError
 
 __doc__ = """ Add nfiles to a directory and check consistency.
 """
@@ -12,6 +12,17 @@ from smashbox.utilities.monitoring import push_to_monitoring
 
 nfiles = int(config.get('nplusone_nfiles',10))
 filesize = config.get('nplusone_filesize',1000)
+
+try:
+    instance_name = config['instance_name']
+except AttributeError:
+    instance_name = None
+
+if instance_name is None:
+	source = 'cernbox.cboxsls.nplusone'
+else:
+	source = 'cernbox.cboxsls.%s.nplusone' % instance_name
+
 
 # optional fs check before files are uploaded by worker0
 fscheck = config.get('nplusone_fscheck',False)
@@ -97,11 +108,15 @@ def worker0(step):
     step(4,"Final report")
 
     time1 = time.time()
-    push_to_monitoring("cernbox.cboxsls.nplusone.nfiles",nfiles)
-    push_to_monitoring("cernbox.cboxsls.nplusone.total_size",total_size)
-    push_to_monitoring("cernbox.cboxsls.nplusone.elapsed",time1-time0)
-    push_to_monitoring("cernbox.cboxsls.nplusone.transfer_rate",total_size/(time1-time0))
-    push_to_monitoring("cernbox.cboxsls.nplusone.worker0.synced_files",k1-k0)
+
+    push_to_monitoring("%s.nfiles" % source,nfiles)
+    push_to_monitoring("%s.total_size" % source,total_size)
+    push_to_monitoring("%s.elapsed" % source,time1-time0)
+    push_to_monitoring("%s.total_size" % source,total_size)
+    push_to_monitoring("%s.transfer_rate" % source,total_size/(time1-time0))
+    push_to_monitoring("%s.worker0.synced_files" % source,k1-k0)
+    push_to_monitoring("%s.norm_synced_files" % source,float((k1-k0)/nfiles))
+
 
         
 @add_worker
@@ -118,8 +133,8 @@ def worker1(step):
     ncorrupt = analyse_hashfiles(d)[2]
     k1 = count_files(d)
 
-    push_to_monitoring("cernbox.cboxsls.nplusone.worker1.synced_files",k1-k0)
-    push_to_monitoring("cernbox.cboxsls.nplusone.worker1.cor",ncorrupt)
+    push_to_monitoring("%s.worker1.synced_files" % source,k1-k0)
+    push_to_monitoring("%s.worker1.cor" % source,ncorrupt)
                        
     error_check(k1-k0==nfiles,'Expecting to have %d files more: see k1=%d k0=%d'%(nfiles,k1,k0))
 

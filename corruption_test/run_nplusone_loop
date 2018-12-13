@@ -25,14 +25,22 @@ try:
 except Exception,x:
  print """ERROR: missing or invalid argument (%s)
 
-syntax: %s N
+syntax: %s N [INSTANCE_NAME]
   
-N is number of test repetitions, you may specify -1 for indefinite loop
+N is number of test repetitions, you may specify -1 for indefinite loop.
+[INSTANCE_NAME] (optional, default is eosuser) is the name of the instance for which to run the test.
 """% (repr(x),sys.argv[0])
 
  sys.exit(-1)
 
 i = 1
+
+# Get the instance name from system arguments
+try:
+ instance_name = sys.argv[2]
+except Exception,x:
+ instance_name = None
+
 
 dirs['options']="-o nplusone_nfiles=20 -o nplusone_filesize='(5.0,1.37)'" # --keep-state"
 #dirs['options']="-o nplusone_nfiles=20 -o nplusone_filesize=30000000"
@@ -40,7 +48,14 @@ dirs['options']="-o nplusone_nfiles=20 -o nplusone_filesize='(5.0,1.37)'" # --ke
 # infinite loop and ignore any casual errors (stop on fatal errors only)
 dirs['options'] += " --loop=0 --keep-going "
 
-cmd = '%(smashdir)s/bin/smash -c %(conf_file)s %(options)s %(smashdir)s/lib/test_nplusone.py' % dirs
+if instance_name == None:
+ cmd = '%(smashdir)s/bin/smash -c %(conf_file)s %(options)s %(smashdir)s/lib/test_nplusone.py' % dirs
+else:
+ os.environ['SMASHBOX_NOW'] = instance_name + "-" + now
+ instance_conf_file = os.environ.get('SMASHBOX_CONF',os.path.join(thisdir,"smashbox-%s.conf" % instance_name))
+ dirs['instance_conf_file'] = instance_conf_file
+ cmd = '%(smashdir)s/bin/smash -c %(conf_file)s -c %(instance_conf_file)s %(options)s %(smashdir)s/lib/test_nplusone.py' % dirs
+
 
 #print cmd
 
