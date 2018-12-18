@@ -6,10 +6,9 @@ Type=simple
 User=root
 Group=root
 WorkingDirectory=/var/log/sls
-ExecStart=/usr/bin/nohup /root/smashbox/corruption_test/run_nplusone_loop -1 %i > /var/log/sls/cboxsls-%i.log 2>&1 &
+ExecStart=/usr/bin/sh -c 'exec /usr/bin/nohup /root/smashbox/corruption_test/run_nplusone_loop -1 %i &>> /var/log/sls/cboxsls-%i.log'
 Restart=always
 RestartSec=10
-
 
 [Install]
 WantedBy=TestNPlusOneLoop.target
