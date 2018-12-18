@@ -1,5 +1,6 @@
 import os
 import time
+import socket
 import tempfile
 from ConfigParser import NoOptionError, NoSectionError
 
@@ -13,15 +14,18 @@ from smashbox.utilities.monitoring import push_to_monitoring
 nfiles = int(config.get('nplusone_nfiles',10))
 filesize = config.get('nplusone_filesize',1000)
 
+hostname = socket.gethostname()
+hostname = str.split(hostname, '.cern.ch')[0]
+
 try:
     instance_name = config['instance_name']
 except AttributeError:
     instance_name = None
 
 if instance_name is None:
-	source = 'cernbox.cboxsls.nplusone'
+	source = 'cernbox.%s.nplusone' % hostname
 else:
-	source = 'cernbox.cboxsls.%s.nplusone' % instance_name
+	source = 'cernbox.%s.%s.nplusone' % (hostname,instance_name)
 
 
 # optional fs check before files are uploaded by worker0

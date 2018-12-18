@@ -1,0 +1,16 @@
+[Unit]
+Description=smashbox nplusone test to test cernbox sync client on instance %i
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/var/log/sls
+ExecStart=/usr/bin/nohup /root/smashbox/corruption_test/run_nplusone_loop -1 %i > /var/log/sls/cboxsls-%i.log 2>&1 &
+Restart=always
+RestartSec=10
+
+
+[Install]
+WantedBy=TestNPlusOneLoop.target
+
