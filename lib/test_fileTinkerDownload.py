@@ -90,7 +90,7 @@ def tinkerer(step):
 
     step(4) # worker1 ended syncing
 
-    conflict_files = glob.glob(os.path.join(d,'TINKER_conflict-*-*.DAT'))
+    conflict_files = glob.glob(os.path.join(d,'TINKER*conflict*.DAT'))
 
     fatal_check(len(conflict_files)==1, "expected exactly one conflict file, got %d (%s)"%(len(conflict_files),conflict_files))
 
