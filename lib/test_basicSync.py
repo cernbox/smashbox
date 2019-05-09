@@ -88,7 +88,7 @@ def expect_deleted_files(d,expected_deleted_files):
  
 
 def expect_conflict_files(d,expected_conflict_files):
-    actual_conflict_files = glob.glob(os.path.join(d,'*_conflict-*-*'))
+    actual_conflict_files = glob.glob(os.path.join(d,'*conflict*.dat'))
 
     logger.debug('conflict files in %s: %s',d,actual_conflict_files)
 
