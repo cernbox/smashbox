@@ -333,8 +333,10 @@ def ocsync_version():
     rc,stdout,stderr = runcmd(cmd, shell=False, ignore_exitcode=True,log_warning=False) # do not warn about non-zero exit code (which is unfortunately normal)
 
     sver = stdout.strip().split()[2] # the version is the third argument
-    
-    return tuple([int(x) for x in sver.split(".")])
+   
+    version = str.split(sver, "daily")[0]
+ 
+    return tuple([int(x) for x in version.split(".")])
 
 # this is a local variable for each worker that keeps track of the repeat count for the current step
 ocsync_cnt = {}
