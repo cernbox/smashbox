@@ -1,0 +1,73 @@
+#!/usr/bin/env python2
+
+import os,sys
+import subprocess
+
+thisdir = os.path.abspath(os.path.normpath(os.path.dirname(sys.argv[0])))
+smashdir=os.path.join(thisdir,'..')
+
+conf_file = os.environ.get('SMASHBOX_CONF',os.path.join(thisdir,"smashbox.conf"))
+
+dirs = {'thisdir':thisdir,'smashdir':smashdir, 'conf_file':conf_file}
+
+os.environ['OWNCLOUD_MAX_PARALLEL'] = '3'
+
+# this disables the checksumming!
+#os.environ['OWNCLOUD_USE_LEGACY_JOBS'] = '1'
+
+import datetime
+now = datetime.datetime.now().strftime('%Y-%m-%d-%H%M%S')
+
+os.environ['SMASHBOX_NOW'] = now
+
+try:
+ N = int(sys.argv[1])
+except Exception,x:
+ print """ERROR: missing or invalid argument (%s)
+
+syntax: %s N [INSTANCE_NAME]
+  
+N is number of test repetitions, you may specify -1 for indefinite loop.
+[INSTANCE_NAME] (optional, default is eosuser) is the name of the instance for which to run the test.
+"""% (repr(x),sys.argv[0])
+
+ sys.exit(-1)
+
+i = 1
+
+# Get the instance name from system arguments
+try:
+ instance_name = sys.argv[2]
+except Exception,x:
+ instance_name = None
+
+
+dirs['options']="-o nplusone_nfiles=20 -o nplusone_filesize='(5.0,1.37)'" # --keep-state"
+#dirs['options']="-o nplusone_nfiles=20 -o nplusone_filesize=30000000"
+
+# infinite loop and ignore any casual errors (stop on fatal errors only)
+dirs['options'] += " --loop=1 --keep-going "
+
+if instance_name == None or instance_name == "eosuser":
+ cmd = '%(smashdir)s/bin/smash -c %(conf_file)s %(options)s %(smashdir)s/lib/test_nplusone.py' % dirs
+else:
+ os.environ['SMASHBOX_NOW'] = instance_name + "-" + now
+ instance_conf_file = os.environ.get('SMASHBOX_CONF',os.path.join(thisdir,"smashbox-%s.conf" % instance_name))
+ dirs['instance_conf_file'] = instance_conf_file
+ cmd = '%(smashdir)s/bin/smash -c %(conf_file)s -c %(instance_conf_file)s %(options)s %(smashdir)s/lib/test_nplusone.py' % dirs
+
+
+#print cmd
+
+while N:
+
+ #print "test number",i
+ 
+ rc = subprocess.call(cmd,shell=True)
+ 
+ if rc != 0:
+   break
+
+ i+=1
+ N-=1
+
