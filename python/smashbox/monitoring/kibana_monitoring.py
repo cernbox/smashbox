@@ -46,7 +46,7 @@ class StateMonitor:
 
 
         # initialize json to be sent for monitoring
-        self.test_results = {"activity": config.kibana_activity, 'test_name': testname, 'hostname': socket.gethostname(),
+        self.test_results = {"activity": config.kibana_activity, 'test_name': testname, 'hostname': socket.gethostname(),'backend': config.instance_name,
                              'oc_client_version': str(str(ocsync_version())[1:-1].replace(", ",".")),'oc_server': config.oc_server.split("/")[0],'platform': client_platform,
                              'parameters':parameters,'parameters_text':str(parameters),'errors': [],'errors_text': "",'success': [],
                              'total_errors':0,'total_success':0, 'qos_metrics': [],'ignoredFailures':0,'passed': 0,'failed': 0, 'test_ignored': self._test_ignored }

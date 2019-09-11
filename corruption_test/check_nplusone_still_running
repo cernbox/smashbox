@@ -1,0 +1,1 @@
+ps aux | grep -c 'run_nplusone_loo[p]' | grep -q $1  || echo "ERROR: run_nplusone_loop process died"

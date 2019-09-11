@@ -22,7 +22,7 @@ sleep = int(config.get('mtimes_sleep',0))
 
 import random
 
-testsets = [ { 'mtimes_sleep' : 0 }, { 'mtimes_sleep' : 1 }, { 'mtimes_sleep' : 5 }, { 'mtimes_sleep' : random.random()*10 } ]
+testsets = [ { 'mtimes_sleep' : 5 }, { 'mtimes_sleep' : 5 + random.random()*10 } ]
 
 def log_times(**kwds):
     for k in sorted(kwds.keys()):

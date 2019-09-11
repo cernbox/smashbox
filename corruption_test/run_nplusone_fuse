@@ -46,7 +46,7 @@ dirs['options']="-o nplusone_nfiles=20 -o nplusone_filesize='(5.0,1.37)'" # --ke
 #dirs['options']="-o nplusone_nfiles=20 -o nplusone_filesize=30000000"
 
 # infinite loop and ignore any casual errors (stop on fatal errors only)
-dirs['options'] += " --loop=0 --keep-going "
+dirs['options'] += " --loop=1 --keep-going "
 
 if instance_name == None or instance_name == "eosuser":
  cmd = '%(smashdir)s/bin/smash -c %(conf_file)s %(options)s %(smashdir)s/lib/test_nplusone.py' % dirs

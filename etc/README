@@ -1,0 +1,2 @@
+sync-exclude.lst -- the exclude list shipped with owncloud client (copied for version 1.7 from /opt/etc/ownCloud/ownCloud/sync-exclude.lst on redhat).
+
