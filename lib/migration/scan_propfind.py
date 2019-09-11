@@ -18,8 +18,11 @@ FILTER_OUT_ATTRS=True
 EOS_BUG_2732 = True
 IGNORE_FOLDER_SIZE=True
 
+IGNORE_403=True
+
 class PropfindError(Exception):
     pass
+
 
 @add_worker
 def main(step):
@@ -59,6 +62,8 @@ def main(step):
     fout = file('report.propfind.%s.%s.txt'%(user,config.oc_server),'w',0)
 
     propfind_list=[]
+
+    seen_dirs = set()
     
     def scan_dir(URL):
         r=None
@@ -82,10 +87,17 @@ def main(step):
         except Exception,x:
             if r is not None:
                 rc=r.rc
-            msg="Failed to PROPFIND. Error code: %s URL: %s DETAILS: %s" % (rc,URL,x)
-            error_check(False,msg)
-            return 
-            #raise PropfindError()
+            else:
+                rc=-1 # really bad...
+
+            if IGNORE_403 and rc == 403: 
+                print "WARN: Forbidden 403 ",URL
+                return
+            else:        
+                msg="Failed to PROPFIND. Error code: %s URL: %s DETAILS: %s" % (rc,URL,x)
+                error_check(False,msg)
+                return 
+                #raise PropfindError()
 
 
         # the parent dir (.) reported by Depth1 must be identical as the parent dir reported by Depth0
@@ -101,7 +113,14 @@ def main(step):
         path=r0[0][0]
         attrs=r0[0][1]['HTTP/1.1 200 OK']
 
-        ids_directories.append(attrs[NSOC+'id'])
+        dir_id=attrs[NSOC+'id']
+
+        if dir_id in seen_dirs:
+	    print >> fout, "is recursion", dir_id, seen_dirs
+            return
+
+        seen_dirs.add(dir_id)
+        ids_directories.append(dir_id)
         etags_directories.append(attrs[NSDAV+'getetag'])
 
         if FILTER_OUT_ATTRS:
