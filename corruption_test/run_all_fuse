@@ -1,21 +1,27 @@
 #!/bin/bash
 
 kinit cboxtu@CERN.CH -k -t /etc/cboxtest.keytab
+/usr/bin/eosfusebind
 /usr/bin/sh -c 'exec /usr/bin/nohup /root/smashbox/corruption_test/run_nplusone_fuse 1 eosuser &>> /var/log/sls/cboxsls-eosuser-fuse.log'
 
 kinit dcboxtest@CERN.CH -k -t /etc/cboxtest.keytab
+/usr/bin/eosfusebind
 /usr/bin/sh -c 'exec /usr/bin/nohup /root/smashbox/corruption_test/run_nplusone_fuse 1 eoshome-00 &>> /var/log/sls/cboxsls-eoshome-00-fuse.log'
 
 kinit acboxtest@CERN.CH -k -t /etc/cboxtest.keytab
+/usr/bin/eosfusebind
 /usr/bin/sh -c 'exec /usr/bin/nohup /root/smashbox/corruption_test/run_nplusone_fuse 1 eoshome-01 &>> /var/log/sls/cboxsls-eoshome-01-fuse.log'
 
 kinit hcboxtest@CERN.CH -k -t /etc/cboxtest.keytab
+/usr/bin/eosfusebind
 /usr/bin/sh -c 'exec /usr/bin/nohup /root/smashbox/corruption_test/run_nplusone_fuse 1 eoshome-02 &>> /var/log/sls/cboxsls-eoshome-02-fuse.log'
 
 kinit bcboxtest@CERN.CH -k -t /etc/cboxtest.keytab
+/usr/bin/eosfusebind
 /usr/bin/sh -c 'exec /usr/bin/nohup /root/smashbox/corruption_test/run_nplusone_fuse 1 eoshome-03 &>> /var/log/sls/cboxsls-eoshome-03-fuse.log'
 
 kinit ccboxtest@CERN.CH -k -t /etc/cboxtest.keytab
+/usr/bin/eosfusebind
 /usr/bin/sh -c 'exec /usr/bin/nohup /root/smashbox/corruption_test/run_nplusone_fuse 1 eoshome-04 &>> /var/log/sls/cboxsls-eoshome-04-fuse.log'
 
 kdestroy
