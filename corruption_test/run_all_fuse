@@ -1,9 +1,5 @@
 #!/bin/bash
 
-kinit cboxtu@CERN.CH -k -t /etc/cboxtest.keytab
-/usr/bin/eosfusebind
-/usr/bin/sh -c 'exec /usr/bin/nohup /root/smashbox/corruption_test/run_nplusone_fuse 1 eosuser &>> /var/log/sls/cboxsls-eosuser-fuse.log'
-
 kinit dcboxtest@CERN.CH -k -t /etc/cboxtest.keytab
 /usr/bin/eosfusebind
 /usr/bin/sh -c 'exec /usr/bin/nohup /root/smashbox/corruption_test/run_nplusone_fuse 1 eoshome-00 &>> /var/log/sls/cboxsls-eoshome-00-fuse.log'
