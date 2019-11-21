@@ -20,4 +20,4 @@ kinit ccboxtest@CERN.CH -k -t /etc/cboxtest.keytab
 /usr/bin/eosfusebind
 /root/smashbox/corruption_test/run_nplusone_fuse 1 eoshome-04 &>> /var/log/sls/cboxsls-eoshome-04-fuse.log
 
-kdestroy
+kdestroy &> /dev/null
