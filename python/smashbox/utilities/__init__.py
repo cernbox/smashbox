@@ -372,9 +372,11 @@ def run_ocsync(local_folder, remote_folder="", n=None, user_num=None):
         if process.returncode != 0:
             msg = "Non-zero exit code %d from command %s" % (process.returncode, repr(cmd))
             logger.warning(msg)
+            sleep(15)
 
         logger.info('sync finished: %s',datetime.datetime.now()-t0)
         ocsync_cnt[current_step]+=1
+        sleep(2+ocsync_cnt[current_step])
 
 def _prop_check(path,user_num=None,depth="0"):
     """ Private function to implement other utilities.
