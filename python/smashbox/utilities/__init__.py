@@ -489,13 +489,28 @@ def sleep(n):
 def mkdir(d):
     logger.info('mkdir %s',d)
     if not os.path.exists(d):
-        os.makedirs(d)
+        try:
+            os.makedirs(d)
+        except OSError,x:
+            import errno
+            if x.errno == errno.EEXIST:
+                logger.warning(x)
+            else:
+                raise
+
     return d
 
 
 def remove_tree(path):
     logger.info('remove directory tree %s',path)
-    shutil.rmtree(path)
+    try:
+        shutil.rmtree(path)
+    except OSError,x:
+        import errno
+        if x.errno == errno.ENOENT:
+            logger.warning(x)
+        else:
+            raise
 
 
 def remove_file(path):
@@ -504,7 +519,6 @@ def remove_file(path):
         os.remove(path)
     except OSError,x:
         import errno
-
         if x.errno == errno.ENOENT:
             logger.warning(x)
         else:
