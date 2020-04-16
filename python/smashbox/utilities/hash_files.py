@@ -33,7 +33,7 @@ def get_files(wdir, filemask=None):
     # if filemask defined then filter names out accordingly
     if filemask:
         fl = fnmatch.filter(fl, filemask.replace('{md5}', '*'))
-    sync_journal_file = fnmatch.filter(fl, '._sync_*.db')
+    sync_journal_file = fnmatch.filter(fl, '.*sync_*.db')
     fl = set(fl) - set(config.ignored_files) - set(sync_journal_file)
     return fl
 
