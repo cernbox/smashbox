@@ -335,6 +335,8 @@ def ocsync_version():
     sver = stdout.strip().split()[2] # the version is the third argument
    
     version = str.split(sver, "daily")[0]
+
+    version = str.split(version, "v")[0]
  
     return tuple([int(x) for x in version.split(".")])
 
