@@ -347,7 +347,7 @@ def ocsync_version():
 ocsync_cnt = {}
 
 
-def run_ocsync(local_folder, remote_folder="", n=None, user_num=None):
+def run_ocsync(local_folder, remote_folder="", n=None, user_num=None, timeout_min=5):
     """ Run the ocsync for local_folder against remote_folder (or the main folder on the owncloud account if remote_folder is None).
     Repeat the sync n times. If n given then n -> config.oc_sync_repeat (default 1).
     """
@@ -372,16 +372,28 @@ def run_ocsync(local_folder, remote_folder="", n=None, user_num=None):
         logger.info('sync cmd is: %s',repr(cmd))
 
         process = subprocess.Popen(cmd, shell=False, stdout=logf, stderr=subprocess.STDOUT)
-        process.communicate()
 
-        if process.returncode != 0:
-            msg = "Non-zero exit code %d from command %s" % (process.returncode, repr(cmd))
-            logger.warning(msg)
-            sleep(15)
+        timeout = timeout_min * 60
 
-        logger.info('sync finished: %s',datetime.datetime.now()-t0)
-        ocsync_cnt[current_step]+=1
-        sleep(2+ocsync_cnt[current_step])
+        while process.poll() is None and timeout > 0:
+            time.sleep(1)
+            timeout -= 1
+
+        if process.poll() is None:
+            msg = "Command %s timed-out after %d minutes" % (repr(cmd), timeout_min)
+            logger.error(msg)
+            process.terminate()
+        else:
+            process.communicate()
+
+            if process.returncode != 0:
+                msg = "Non-zero exit code %d from command %s" % (process.returncode, repr(cmd))
+                logger.warning(msg)
+                sleep(15)
+
+            logger.info('sync finished: %s',datetime.datetime.now()-t0)
+            ocsync_cnt[current_step]+=1
+            sleep(2+ocsync_cnt[current_step])
 
 def _prop_check(path,user_num=None,depth="0"):
     """ Private function to implement other utilities.
@@ -648,7 +660,7 @@ def get_md5_versions_on_server(fn):
     cmd = "%(oc_server_shell_cmd)s md5sum %(oc_server_datadirectory)s/%(oc_account_name)s/files_versions/%(filename)s.v*" % config._dict(filename=os.path.join(config.oc_server_folder, os.path.basename(fn)))
 
     logger.info('running %s',repr(cmd))
-    process=subprocess.Popen(cmd,stdout=subprocess.PIPE,shell=True)
+    process = subprocess.Popen(cmd,stdout=subprocess.PIPE,shell=True)
 
     stdout=process.communicate()[0]
 
