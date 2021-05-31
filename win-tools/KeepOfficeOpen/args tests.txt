@@ -1,0 +1,45 @@
+~~ Read mode word, delay 10 seconds
+
+	r delay1 10 file "\\cernbox-smb.cern.ch\eos\user\a\asmyrnak\KeepOfficeOpen\testWord_1.docx"
+
+~~ Read mode, delay 10 seconds, SILENT
+
+	r delay1 10 s file "\\cernbox-smb.cern.ch\eos\user\a\asmyrnak\KeepOfficeOpen\testWord_1.docx"
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+~~ Read mode word, delay 5 seconds, 2nd delay 10 seconds (software skips delay2)
+
+	r delay1 5 delay2 10 file "\\cernbox-smb.cern.ch\eos\user\a\asmyrnak\KeepOfficeOpen\testWord_1.docx"
+
+~~ Read mode word, delay 5 seconds, 2nd delay 10 seconds (software skips delay2), SILENT
+
+	r delay1 5 delay2 10 s file "\\cernbox-smb.cern.ch\eos\user\a\asmyrnak\KeepOfficeOpen\testWord_1.docx"
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+~~ Write mode word, delay 5 seconds
+
+	w delay1 5 file "\\cernbox-smb.cern.ch\eos\user\a\asmyrnak\KeepOfficeOpen\testWord_1.docx"
+
+~~ Write mode word, delay 5 seconds, 2nd delay 10 seconds
+
+	w delay1 5 delay2 10 file "\\cernbox-smb.cern.ch\eos\user\a\asmyrnak\KeepOfficeOpen\testWord_1.docx"
+
+~~ Write mode word, delay 5 seconds, 2nd delay 3 seconds, SILENT
+
+	w delay1 5 delay2 3 s file "\\cernbox-smb.cern.ch\eos\user\a\asmyrnak\KeepOfficeOpen\testWord_1.docx"
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+~~ Write mode excel, delay 5 seconds
+
+	w delay1 5 file "\\cernbox-smb.cern.ch\eos\user\a\asmyrnak\KeepOfficeOpen\testExcel_1.xlsx"
+
+~~ Write mode excel, delay 2 seconds, 2nd delay 5 seconds
+
+	w delay1 2 delay2 5 file "\\cernbox-smb.cern.ch\eos\user\a\asmyrnak\KeepOfficeOpen\testExcel_1.xlsx"
+
+~~ Write mode excel, delay 5 seconds, 2nd delay 3 seconds, SILENT
+
+	w delay1 5 delay2 3 s file "\\cernbox-smb.cern.ch\eos\user\a\asmyrnak\KeepOfficeOpen\testExcel_1.xlsx"
