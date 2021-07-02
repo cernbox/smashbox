@@ -1,0 +1,87 @@
+#!/usr/bin/env python
+
+import sys, os.path
+# insert the path to cernafs based on the relative position of this scrip inside the service directory tree
+exeDir = os.path.abspath(os.path.normpath(os.path.dirname(sys.argv[0])))
+pythonDir = os.path.join(os.path.dirname(exeDir), 'python' )
+sys.path.insert(0, pythonDir)
+etcDir = os.path.join(os.path.dirname(exeDir), 'etc')
+defaultTemplateFile = os.path.join(etcDir, 'smashbox.conf.template-owncloud')
+defaultOutputFile = os.path.join(etcDir, 'smashbox.conf')
+
+import smashbox.configgen.generator as generator
+import smashbox.configgen.processors as processors
+from smashbox.configgen.processors_hooks import LoggingHook
+import logging
+import argparse
+import json
+
+parser = argparse.ArgumentParser(description='Config generator for smashbox')
+parser.add_argument('-i', default=defaultTemplateFile, help='template file to be used', dest='input_file')
+parser.add_argument('-o', default=defaultOutputFile, help='output file', dest='output_file')
+group = parser.add_mutually_exclusive_group()
+group.add_argument('--no-ask', default=None, action='store_false', help='don\'t ask for required keys', dest='ask_keys')
+group.add_argument('--ask', default=None, action='store_true', help='ask for required keys', dest='ask_keys')
+parser.add_argument('-k', default=[], action='append', required=False, help='key=value pairs', dest='keys')
+parser.add_argument('-kt', default=[], action='append', required=False, help='key=type pairs', dest='key_types')
+parser.add_argument('--key-value-file', help='json file containing key-value pairs. The file format should something like {keyname: {value: value, type: type}, oc_server: {value: server.com, type: string}, oc_ssl_enable: {value: True, type: bool}}')
+parser.add_argument('--logfile', help='write logs in this file')
+args = parser.parse_args()
+
+global_vars = {}
+local_vars = {}
+with open(args.input_file) as ifile:
+    code = compile(ifile.read(), args.input_file, 'exec')
+    exec(code, global_vars, local_vars)
+
+overwrite_dict = {}
+
+if args.key_value_file:
+    with open(args.key_value_file, 'r') as f:
+        data = json.load(f)
+        if type(data) is dict:
+            for data_element in data:
+                key = data_element
+                value = str(data[data_element]['value'])
+                if 'type' in data[data_element]:
+                    value = processors.convert_string_to_type(value, data[data_element]['type'])
+                overwrite_dict[key] = value
+
+# convert the keys argument to a dictionary
+key_list = [item.split('=', 1) for item in args.keys]
+key_dict = dict(key_list)
+
+# convert the key_types to [[key, type],[key, type]] and change the type of the values
+key_type_list = [item.split('=', 1) for item in args.key_types]
+for keytype in key_type_list:
+    if keytype[0] in key_dict:
+        key_dict[keytype[0]] = processors.convert_string_to_type(key_dict[keytype[0]], keytype[1])
+overwrite_dict.update(key_dict)
+
+config_generator = generator.Generator()
+config_generator.set_processors_from_data(local_vars['_configgen'])
+
+if args.ask_keys is not None:
+    processor = config_generator.get_processor_by_name('RequiredKeysProcessor')
+    if processor is not None:
+        processor.set_ask(args.ask_keys)
+
+if overwrite_dict:
+    # we need to overwrite keys
+    processor2 = config_generator.get_processor_by_name('OverwritterProcessor')
+    if processor2 is not None:
+        processor2.set_dict_to_merge(overwrite_dict)
+
+# setup logging for each processor
+if args.logfile:
+    logging.basicConfig(level=logging.NOTSET, format='%(asctime)-15s %(levelname)s %(name)s : %(message)s', filename=args.logfile)
+    for p in config_generator.get_processor_list():
+        processor_name = p.get_name()
+        logger = logging.getLogger('%s.%s' % (__name__, processor_name))
+        p.register_observer('logger', LoggingHook(logger, logging.INFO))
+
+    logging.getLogger(__name__).info('ready to start the generation')
+
+# generate the config file
+config_generator.process_data_to_file(local_vars, args.output_file)
+

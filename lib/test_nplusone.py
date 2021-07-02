@@ -34,6 +34,10 @@ fscheck = config.get('nplusone_fscheck',False)
 if type(filesize) is type(''):
     filesize = eval(filesize)
 
+# True => use new webdav endpoint (dav/files)
+# False => use old webdav endpoint (webdav)
+use_new_dav_endpoint = bool(config.get('use_new_dav_endpoint',True))
+
 testsets = [
         { 'nplusone_filesize': 1000, 
           'nplusone_nfiles':100
@@ -57,8 +61,18 @@ testsets = [
 
 ]
 
+def finish_if_not_capable():
+    # Finish the test if some of the prerequisites for this test are not satisfied
+    if compare_oc_version('10.0', '<') and use_new_dav_endpoint == True:
+        #Dont test for <= 9.1 with new endpoint, since it is not supported
+        logger.warn("Skipping test since webdav endpoint is not capable for this server version")
+        return True
+    return False
+
 @add_worker
-def worker0(step):    
+def worker0(step):
+    if finish_if_not_capable():
+        return
 
     # do not cleanup server files from previous run
     reset_owncloud_account()
@@ -68,7 +82,7 @@ def worker0(step):
 
     step(1,'Preparation')
     d = make_workdir()
-    run_ocsync(d)
+    run_ocsync(d, use_new_dav_endpoint=use_new_dav_endpoint)
     k0 = count_files(d)
 
     step(2,'Add %s files and check if we still have k1+nfiles after resync'%nfiles)
@@ -97,7 +111,7 @@ def worker0(step):
         ncorrupt = analyse_hashfiles(d)[2]
         fatal_check(ncorrupt==0, 'Corrupted files ON THE FILESYSTEM (%s) found'%ncorrupt)
 
-    run_ocsync(d)
+    run_ocsync(d, use_new_dav_endpoint=use_new_dav_endpoint)
 
     ncorrupt = analyse_hashfiles(d)[2]
     
@@ -125,14 +139,19 @@ def worker0(step):
         
 @add_worker
 def worker1(step):
+    if finish_if_not_capable():
+        return
+
     step(1,'Preparation')
     d = make_workdir()
-    run_ocsync(d)
+    run_ocsync(d, use_new_dav_endpoint=use_new_dav_endpoint)
     k0 = count_files(d)
 
     step(3,'Resync and check files added by worker0')
 
-    run_ocsync(d)
+    time0=time.time()
+    run_ocsync(d, use_new_dav_endpoint=use_new_dav_endpoint)
+    time1=time.time()
 
     ncorrupt = analyse_hashfiles(d)[2]
     k1 = count_files(d)
@@ -144,7 +163,8 @@ def worker1(step):
 
     fatal_check(ncorrupt==0, 'Corrupted files (%d) found'%ncorrupt) #Massimo 12-APR
 
-
+    step(4,"Final report")
+    push_to_monitoring("%s.elapsed" % source,time1-time0)
 
 
 

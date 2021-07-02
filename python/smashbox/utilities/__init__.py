@@ -8,9 +8,12 @@ import urllib
 import platform
 import shutil
 import re
+import requests
+import glob
 
 # Utilities to be used in the test-cases.
 from smashbox.utilities.version import version_compare
+from smashbox.utilities.monitoring import push_to_monitoring
 
 
 def compare_oc_version(compare_to, operator):
@@ -72,9 +75,10 @@ def setup_test():
     reset_owncloud_account(num_test_users=config.oc_number_test_users)
     reset_rundir()
     reset_server_log_file()
+    reset_diagnostics()
 
 
-def finalize_test():
+def finalize_test(returncode, total_duration):
     """ Finalize hooks run after last worker terminated.
     This is run under the name of the "supervisor" worker.
 
@@ -86,8 +90,12 @@ def finalize_test():
     """
     d = make_workdir()
     scrape_log_file(d)
+    push_to_monitoring(returncode, total_duration)
 
 ######### HELPERS
+
+def log_info(message):
+    logger.info(message)
 
 def reset_owncloud_account(reset_procedure=None, num_test_users=None):
     """
@@ -292,6 +300,12 @@ def create_owncloud_group(group_name):
     oc_api.login(config.oc_admin_user, config.oc_admin_password)
     oc_api.create_group(group_name)
 
+def get_conflict_files(d):
+    conflict_files = []
+    conflict_files.extend(glob.glob(os.path.join(d,'*_conflict-*-*'))) # earlier versions use _conflic
+    conflict_files.extend(glob.glob(os.path.join(d,'*conflicted copy*'))) # since 2.4 conflic files are marked differently
+
+    return conflict_files
 
 ######### WEBDAV AND SYNC UTILITIES #####################
 
@@ -301,6 +315,9 @@ def oc_webdav_url(protocol='http',remote_folder="",user_num=None,webdav_endpoint
 
     if config.oc_ssl_enabled:
         protocol += 's'
+
+    # strip-off any leading / characters to prevent 1) abspath result from the join below, 2) double // and alike...
+    remote_folder = remote_folder.lstrip('/')
 
     if webdav_endpoint is None:
         webdav_endpoint = config.oc_webdav_endpoint
@@ -325,7 +342,6 @@ def oc_webdav_url(protocol='http',remote_folder="",user_num=None,webdav_endpoint
 
 def ocsync_version():
     """ Return the version reported by oc_sync_cmd.
-
     Returns a tuple (major,minor,bugfix). For example: (1,7,2) or (2,1,1)
     """
 
@@ -343,11 +359,35 @@ def ocsync_version():
 
     return tuple([int(x) for x in version.split(".")])
 
+
+def oc_public_webdav_url(protocol='http',remote_folder="",token='',password=''):
+    """ Get public Webdav URL
+    """
+
+    if config.oc_ssl_enabled:
+        protocol += 's'
+
+    # strip-off any leading / characters to prevent 1) abspath result from the join below, 2) double // and alike...
+    remote_folder = remote_folder.lstrip('/')
+
+    remote_path = os.path.join(config.oc_root, 'public.php/webdav', remote_folder)
+
+    creds = ''
+    if token:
+        creds = token
+        if password:
+            creds += ':' + password
+
+    if creds:
+        creds += '@'
+
+    return protocol + '://' + creds + config.oc_server + '/' + remote_path
+
 # this is a local variable for each worker that keeps track of the repeat count for the current step
 ocsync_cnt = {}
 
 
-def run_ocsync(local_folder, remote_folder="", n=None, user_num=None, timeout_min=5):
+def run_ocsync(local_folder, remote_folder="", n=None, user_num=None, use_new_dav_endpoint=False, timeout_min=5):
     """ Run the ocsync for local_folder against remote_folder (or the main folder on the owncloud account if remote_folder is None).
     Repeat the sync n times. If n given then n -> config.oc_sync_repeat (default 1).
     """
@@ -363,6 +403,12 @@ def run_ocsync(local_folder, remote_folder="", n=None, user_num=None, timeout_mi
 
     if platform.system() != "Windows":
         local_folder += os.sep # FIXME: HACK - is a trailing slash really needed by 1.6 owncloudcmd client?
+
+    # Force using old endpointif required, for owncloud client it is done by disabling chunking ng
+    if not use_new_dav_endpoint:
+        os.environ["OWNCLOUD_CHUNKING_NG"] = "0"
+    elif "OWNCLOUD_CHUNKING_NG" in os.environ:
+        del os.environ['OWNCLOUD_CHUNKING_NG']
 
     for i in range(n):
         t0 = datetime.datetime.now()
@@ -420,6 +466,9 @@ def expect_webdav_does_not_exist(path, user_num=None):
     error_check(r.rc >= 400,"Remote path exists: %s" % path) # class 4xx response is OK
 
 def expect_webdav_exist(path, user_num=None):
+    exitcode,stdout,stderr = runcmd('curl -s -k %s -XPROPFIND %s | xmllint --format - | grep NotFound | wc -l'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)))
+    exists = stdout.rstrip() == "0"
+    error_check(exists, "Remote path %s exists but should not" % path)
 
     r = _prop_check(path,user_num)
     error_check(200 <= r.rc and r.rc < 300,"Remote path does not exist: %s" % path) # class 2xx response is OK
@@ -545,9 +594,13 @@ def mv(a,b):
     logger.info("move %s %s",a,b)
     shutil.move(a, b)
 
+import fnmatch
+def remove_db_in_folder(path):
+    for file in os.listdir(path):
+        if fnmatch.fnmatch(file, '*.db'):
+            remove_file(os.path.join(path, file))
 
 def list_files(path,recursive=False):
-
     if platform.system() == 'Windows':
         runcmd('dir /s /b ' + path)
         return
@@ -710,46 +763,107 @@ def fatal_check(expr,message=""):
 
 # ###### Server Log File Scraping ############
 
-def reset_server_log_file():
+def reset_server_log_file(force = False):
     """ Deletes the existing server log file so that there is a clean
         log file for the test run
     """
 
-    try:
-        if not config.oc_check_server_log:
+    if not force:
+        try:
+            if not config.oc_check_server_log:
+                return
+        except AttributeError: # allow this option not to be defined at all
             return
-    except AttributeError: # allow this option not to be defined at all
-        return
 
     logger.info('Removing existing server log file')
     cmd = '%s rm -rf %s/owncloud.log' % (config.oc_server_shell_cmd, config.oc_server_datadirectory)
     runcmd(cmd)
 
+def reset_diagnostics(force = False):
+    """ Deletes the existing server log file so that there is a clean
+        log file for the test run, and set neccesairly flags on the server for diagnostic log generation
+    """
 
+    if not force:
+        try:
+            if not config.oc_check_diagnostic_log:
+                return
+        except AttributeError: # allow this option not to be defined at all
+            return
 
-def scrape_log_file(d):
+    logger.info('Initializing diagnostic log file')
+    log_url = 'http'
+    if config.oc_ssl_enabled:
+        log_url += 's'
+    log_url += '://' + config.oc_admin_user + ':' + config.oc_admin_password + '@' + config.oc_server
+
+    clean_log_url = log_url + '/' + os.path.join(config.oc_root, 'index.php/apps/diagnostics/log/clean')
+    res = requests.post(clean_log_url)
+
+    fatal_check(res.status_code == 200, 'Could not clean the diagnostic log file from the server, status code %i' % res.status_code)
+    fatal_check(res.text == "null", 'Diagnostic app seems disabled, returned body %s' % res.text)
+
+def parse_log_file_lines(res):
+    data = []
+    if res is not None:
+        import json
+        for line in res.iter_lines():
+            data.append(json.loads(line))
+    return data
+
+def get_diagnostic_log(force = False):
+    """
+    Obtains server diagnostic log in JSON format and parses it
+    """
+
+    if not force:
+        try:
+            if not config.oc_check_diagnostic_log:
+                return []
+        except AttributeError: # allow this option not to be defined at all
+            return []
+
+    logger.info('Obtaining diagnostic log file')
+    log_url = 'http'
+    if config.oc_ssl_enabled:
+        log_url += 's'
+    log_url += '://' + config.oc_admin_user + ':' + config.oc_admin_password + '@' + config.oc_server
+
+    dwn_log_url = log_url + '/' + os.path.join(config.oc_root, 'index.php/apps/diagnostics/log/download')
+    res = requests.get(dwn_log_url)
+
+    fatal_check(res.status_code == 200, 'Could not download the diagnostic log file from the server, status code %i' % res.status_code)
+    return parse_log_file_lines(res)
+
+def scrape_log_file(d, force = False):
     """ Copies over the server log file and searches it for specific strings
 
     :param d: The directory where the server log file is to be copied to
 
     """
 
-    try:
-        if not config.oc_check_server_log:
-            return
-    except AttributeError: # allow this option not to be defined at all
-        return
-
-    if config.oc_server == '127.0.0.1' or config.oc_server == 'localhost':
-        cmd = 'cp %s/owncloud.log %s/.' % (config.oc_server_datadirectory, d)
-    else:
+    if not force:
         try:
-            log_user = config.oc_server_log_user
-        except AttributeError:  # allow this option not to be defined at all
-            log_user = 'root'
-        cmd = 'scp -P %d %s@%s:%s/owncloud.log %s/.' % (config.scp_port, log_user, config.oc_server, config.oc_server_datadirectory, d)
-    rtn_code,stdout,stderr = runcmd(cmd)
-    error_check(rtn_code > 0, 'Could not copy the log file from the server, command returned %s' % rtn_code)
+            if not config.oc_check_server_log:
+                return
+        except AttributeError: # allow this option not to be defined at all
+            return
+
+    # download server log
+    log_url = 'http'
+    if config.oc_ssl_enabled:
+        log_url += 's'
+    log_url += '://' + config.oc_admin_user + ':' + config.oc_admin_password + '@' + config.oc_server
+    log_url += '/' + os.path.join(config.oc_root, 'index.php/settings/admin/log/download')
+
+    res = requests.get(log_url)
+
+    fatal_check(res.status_code == 200, 'Could not download the log file from the server, status code %i' % res.status_code)
+
+    file_handle = open(os.path.join(d, 'owncloud.log'), 'wb', 8192)
+    for chunk in res.iter_content(8192):
+        file_handle.write(chunk)
+    file_handle.close()
 
     # search logfile for string (1 == not found; 0 == found):
     cmd = "grep -i \"integrity constraint violation\" %s/owncloud.log" % d
@@ -759,6 +873,10 @@ def scrape_log_file(d):
     cmd = "grep -i \"Exception\" %s/owncloud.log" % d
     rtn_code,stdout,stderr = runcmd(cmd, ignore_exitcode=True, log_warning=False)
     error_check(rtn_code > 0, "\"Exception\" message found in server log file")
+
+    cmd = "grep -i \"Error\" %s/owncloud.log" % d
+    rtn_code,stdout,stderr = runcmd(cmd, ignore_exitcode=True, log_warning=False)
+    error_check(rtn_code > 0, "\"Error\" message found in server log file")
 
     cmd = "grep -i \"could not obtain lock\" %s/owncloud.log" % d
     rtn_code,stdout,stderr = runcmd(cmd, ignore_exitcode=True, log_warning=False)
@@ -787,7 +905,7 @@ def get_oc_api():
         protocol += 's'
 
     url = protocol + '://' + config.oc_server + '/' + config.oc_root
-    oc_api = owncloud.Client(url, verify_certs=False)
+    oc_api = owncloud.Client(url, verify_certs=False, dav_endpoint_version=use_new_dav_endpoint)
     return oc_api
 
 
@@ -933,39 +1051,3 @@ def expect_does_not_exist(fn):
     """
     error_check(not os.path.exists(fn), "File %s exists but should not" % fn)
 
-
-############ Helper functions to report/document the behaviour of the tests ############
-
-def do_not_report_as_failure(Issue=""):
-   config._test_ignored = Issue
-
-############ Smashbox Exceptions ############
-
-
-class Error(Exception):
-    """Base class for exceptions in this module."""
-    pass
-
-class SkipTestExecutionException(Error):
-    """Exception raised for unexpected errors/bugs in the execution engine of smashbox while executing a test.
-
-    Attributes:
-        message -- explanation of the error
-    """
-
-    def __init__(self, message):
-        self.message = message
-
-
-def restrict_execution(current_platform="",client_version="",endpoint="",disable=False):
-
-    if disable:
-        raise SkipTestExecutionException("Skipped Test: this test is not fully automated")
-    else:
-        text_message = "Skipped Test: specific test designed for: "
-        if platform.system() != current_platform:
-            raise SkipTestExecutionException(text_message + current_platform)
-        elif client_version!="" and str(str(ocsync_version())[1:-1].replace(", ","."))!=client_version:
-            raise SkipTestExecutionException(text_message + client_version)
-        elif endpoint!="" and config.oc_server != endpoint:
-            raise SkipTestExecutionException(text_message + endpoint)

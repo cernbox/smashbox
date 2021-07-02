@@ -22,6 +22,7 @@ verbose = bool(config.get('userload_verbose',False))
 
 hash_filemask = 'hash_{md5}'
 
+from smashbox.utilities import *
 from smashbox.utilities.hash_files import *
 
 @add_worker

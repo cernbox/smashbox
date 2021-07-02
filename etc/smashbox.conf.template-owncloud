@@ -29,7 +29,7 @@ oc_number_test_groups=1
 
 # password for test accounts: all test account will have the same password
 # if not set then it's an error
-oc_account_password=""
+oc_account_password="demo"
 
 # owncloud test server
 # if left blank or "localhost" then the real hostname of the localhost will be set
@@ -72,15 +72,11 @@ oc_server_tools_path = "server-tools"
 # a path to ocsync command with options
 # this path should work for all client hosts
 #
-# it may be specified as relative path "./dir" and then resolves to
+# it may be specified as relative path "dir" and then resolves to
 # <smashbox>/dir where <smashbox> is the top-level of of the tree
-# containing THIS configuration file, e.g.: "./client/build/mirall/bin/owncloudcmd --trust"
+# containing THIS configuration file
 #
-# it may be specified as a basename executable (PATH will be used), e.g. "cernboxcmd --trust"
-#
-# it may be specified as absolute executable path, e.g. "/usr/bin/cernboxcmd --trust"
-#
-oc_sync_cmd = "cernboxcmd"
+oc_sync_cmd = "client/build/mirall/bin/owncloudcmd --trust"
 
 # number of times to repeat ocsync run every time
 oc_sync_repeat = 1
@@ -143,3 +139,27 @@ oc_check_server_log = False
 # Reset the diagnostic log file and use diagnostics for assertions
 #
 oc_check_diagnostic_log = False
+
+from collections import OrderedDict
+_configgen = OrderedDict([('KeyRemoverProcessor',
+                                    {'keylist': ('_configgen', 'oc_server', 'oc_ssl_enabled',
+                                    'oc_admin_user', 'oc_admin_password',
+                                    'oc_root', 'oc_webdav_endpoint', 'oc_server_shell_cmd',
+                                    'oc_sync_cmd', 'scp_port')}),
+                            ('OverwritterProcessor',
+                                    {'dict_to_merge': {}}),
+                            ('RequiredKeysProcessor',
+                                    {'keylist': [
+                                        {'name': 'oc_server', 'help_text': 'ip or hostname of the server where owncloud is located, including the port, such as "10.20.30.40:8080"'},
+                                        {'name': 'oc_ssl_enabled', 'type': 'bool', 'default': False, 'help_text': 'if you access to the server through https, set this to True'},
+                                        {'name': 'oc_root', 'help_text': 'the path for the url to be added after the server. To access to "http://server.com/owncloud" use "owncloud", leave it empty if you want to access to "http://server.com/"'},
+                                        {'name': 'oc_webdav_endpoint', 'help_text': 'the path for the webdav endpoint. If the webdav endpoint is in "http://server.com/owncloud/remote.php/webdav" use "owncloud/remote.php/webdav"', 'default': 'remote.php/webdav'},
+                                        {'name': 'oc_admin_user', 'default':'admin'},
+                                        {'name': 'oc_admin_password', 'default': 'Password'},
+                                        {'name': 'oc_server_shell_cmd', 'help_text': 'ssh command to connect to the server such as "ssh -t -l root <server_url>" (include the server). Leave it empty if the server is localhost'},
+                                        {'name': 'scp_port', 'type': 'int', 'default': 22, 'help_text': 'port for scp commands accessing the owncloud server'},
+                                        {'name': 'oc_sync_cmd', 'default': '/usr/bin/owncloudcmd --trust', 'help_text': 'owncloudcmd command. Use the absolute path to the app and any required option'},
+                                        ],
+                                    'ask': True}),
+                            ('SortProcessor', None)])
+del OrderedDict

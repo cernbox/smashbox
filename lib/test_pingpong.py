@@ -89,7 +89,8 @@ def ping(step):
 
     step(90, "Verification if files moved at all")
 
-    error_check( len(glob.glob(os.path.join(d,'*_conflict-*-*'))) == 0, "Conflicts found!")
+    conflict_files = get_conflict_files(d)
+    error_check( len(conflict_files) == 0, "Conflicts found!")
 
 @add_worker
 def pong(step):
@@ -149,5 +150,5 @@ def pong(step):
 
     # FIXME: check if versions have been correctly created on the server
 
-
-    error_check( len(glob.glob(os.path.join(d,'*_conflict-*-*'))) == 0, "Conflicts found!")
+    conflict_files = get_conflict_files(d)
+    error_check( len(conflict_files) == 0, "Conflicts found!")

@@ -21,7 +21,84 @@ The goal of this is to:
 If you think you see a bug - write a test-case and let others
 reproduce it on their systems.
 
-This is work in progress. 
+Quickstart
+==========
+
+- Find your localhost owncloud server ip using e.g. `ipconfig`
+- Execute smashbox run over that server e.g. `172.16.12.112:80/octest`. Ensure to mount `smashdir` and `tmp` directory to local filesystem to be able to debug test run and cache client build
+- Smash wrapper will check if test nplusone exists in `lib` folder under `test_[name].py` scheme
+```
+docker run \
+-e SMASHBOX_URL=<ip>:<port>/<path-to-oc> \
+-e SMASHBOX_USERNAME=admin \
+-e SMASHBOX_PASSWORD=admin \
+-e SMASHBOX_ACCOUNT_PASSWORD=admin \
+-e SMASHBOX_TEST_NAME=nplusone \
+-v ~/smashdir:/smashdir \
+-v /tmp:/tmp \
+owncloud/smashbox:build
+```
+- Check run logs
+```
+$ cat ~/smashdir/log-test_nplusone.log | grep error (..warning, critical etc)
+```
+- Check client logs
+```
+$ cat ~/smashdir/test_nplusone/worker0-ocsync.step01.cnt000.log  | grep error (..warning, critical etc)
+```
+- Check sync client directories of workers
+```
+$ ls ~/smashdir/test_nplusone/worker1/
+```
+- You can also run whole integration tests suite in docker for you server
+```
+./bin/run_all_integration.sh 172.16.12.112:80/octest
+```
+
+Important integration tests
+===========================
+
+ * [Basic Sync and Conflicts ](lib/test_basicSync.py)
+    - basicSync_filesizeKB from 1kB to 50MB (normal and chunked files sync)
+    - basicSync_rmLocalStateDB removing local database in the test (index 0-3) or not (index 4-7)
+ * [Concurrently removing directory while files are being added ](lib/test_concurrentDirRemove.py)
+    - Currently only checks for corrupted files in the outcome
+    - Removing the directory while a large file is chunk-uploaded (index 0)
+    - Removing the directory while lots of smaller files are uploaded (index 1)
+    - Removing the directory before files are uploaded (index 2)
+ * [Resharing ](lib/oc-test/test_reshareDir.py)
+    - Share directory with receiver and receiver reshares one of the files with another user
+ * [Directory Sharing between users ](lib/oc-test/test_shareDir.py)
+    - Tests various sharing actions between users
+ * [Files Sharing between users ](lib/oc-test/test_shareFile.py)
+    - Tests various sharing actions between users
+ * [Files Sharing between users and groups ](lib/oc-test/test_shareGroup.py)
+    - Tests various sharing actions between users and groups
+ * [Files Sharing by link ](lib/oc-test/test_shareLink.py)
+    - Tests various sharing actions with links
+ * [Ensures correct behaviour having different permissions ](lib/oc-test/test_sharePermissions.py)
+    - Tests various sharing actions having share permissions
+ * [Ensures correct etag propagation 1](lib/owncloud/test_sharePropagationGroups.py)
+    - Tests etag propagation sharing/resharing between groups of users
+ * [Ensures correct etag propagation 2](lib/owncloud/test_sharePropagationInsideGroups.py)
+    - Tests etag propagation sharing/resharing between groups of users
+ * [Syncing shared mounts](lib/owncloud/test_shareMountInit.py)
+   - Test is oriented on syncing share mount in most sharing cases
+
+Important performance tests
+===========================
+
+ * [Upload/Download of small/big files](lib/test_nplusone.py)
+    - Test should monitor upload/download sync time in each of the scenarious (TODO)
+    - Test (index 0) verifies performance of many small files - 100 files - each 1kB
+    - Test (index 1) verifies performance of 1 big over-chunking-size file of total size 60MB
+ * [Shared Mount Performance](lib/owncloud/test_shareMountInit.py)
+    - PROPFIND on root folder - initialize mount points (initMount is done only on 1st propfind on received shares)
+    - PROPFIND on root folder with initialized content and mount points
+    - PUT to non-shared folder
+    - PUT to shared folder
+    - GET to non-shared folder
+    - GET to shared folder
 
 Project tree
 ============
@@ -96,6 +173,8 @@ Location of sync client may be configured like this:
 Installation
 ============
 
+Note: Currently this framework works on Unix-like systems only. Windows port is needed.
+
 Clone git repository into your local ``smashbox`` directory.
 
 Copy the etc/smashbox.conf.template into etc/smashbox.conf
@@ -140,7 +219,10 @@ Examples:
 
     # basic test
     bin/smash lib/test_basicSync.py
-    
+
+    # basic test, specifying test number as specified in tests' `testsets` array
+    bin/smash -t 0 lib/test_basicSync.py
+
     # run a test with different paremeters
     bin/smash -o nplusone_nfiles=10 lib/test_nplusone.py
     
@@ -149,6 +231,71 @@ Examples:
 
 You will find main log files in ~/smashdir/log* and all temporary files and detailed logs for each test-case in ~/smashdir/<test-case>
 
+Monitoring integration
+=======================
+
+Currently, monitoring module is supporting `local` and `prometheus` endpoints. Prometheus endpoint can be used in integration with Jenkins.
+
+By default, two values are prepared for export, 'total_duration' and 'number_of_queries', however one can embed inside the test their custom variables using e.g. `commit_to_monitoring("download_duration",time1-time0)` inside `lib/test_nplusone.py` test.
+
+**NOTE: To enable checking number of queries, one need to set `oc_check_diagnostic_log = True` in the `smashbox.conf` file**
+
+**NOTE: To enable diagnostics in SUMMARY level on the server one need to go to the server directory e.g. `/var/www/owncloud` and:**
+
+```
+git clone https://github.com/owncloud/diagnostics apps/diagnostics
+sudo -u www-data php occ app:enable diagnostics
+sudo -u www-data php occ config:system:set --value true debug
+sudo -u www-data php occ config:app:set --value 1 diagnostics diagnosticLogLevel
+```
+
+**Export to local monitor example:**
+
+Executing
+
+```
+bin/smash -t 1 -o monitoring_type=local lib/test_nplusone.py
+```
+
+will execute index `1` of `test_nplusone` test and adding option flag `-o monitoring_type=local` will result in the below output if test has been completed successfully
+
+```
+download_duration 0.750847816467
+upload_duration 1.4001121521
+returncode 0
+elapsed 6.87230300903
+```
+
+or below in case of failure
+
+```
+returncode 2
+elapsed 7.0446870327
+```
+
+**Export to prometheus with jenkins example:**
+
+Executing
+
+```
+bin/smash -t 1 -o monitoring_type=prometheus -o endpoint=http://localhost:9091/metrics/job/jenkins/instance/smashbox -o duration_label=jenkins_smashbox_test_duration -o queries_label=jenkins_smashbox_db_queries -o owncloud=daily-master -o client=2.3.1 -o suite=nplusonet1 -o build=test_build1 lib/test_nplusone.py
+```
+
+will result in:
+ * pushing the monitoring points to the Prometheus endpoint `http://localhost:9091/metrics/job/jenkins/instance/smashbox`
+ * Adding flags `-o duration_label=jenkins_smashbox_test_duration` and `-o queries_label=jenkins_smashbox_db_queries` will cause default results 'total_duration' and 'number_of_queries' to be exported to Prometheus.
+ * Additional flags `-o owncloud=daily-master`, `-o client=2.3.1`, `-o suite=nplusonet1`, `-o build=test_build1` can be used in order to distinguish smashbox runs
+
+or below in case of failure to push to monitoring
+
+`curl: (7) Failed to connect to localhost port 9091: Connection refused`
+
+**Adding custom monitoring endpoint:**
+
+One can add their own monitoring endpoint by [adding new option](python/smashbox/utilities/monitoring.py) in `push_to_monitoring`. You can test your custom test (as in [test_nplusone](lib/test_nplusone.py)) and monitoring endpoint setting flag
+`-o monitoring_type=MY_CUSTOM_MONITORING_TYPE` e.g. `-o monitoring_type=local`
+
+=======
 
 Different client/server
 =======================

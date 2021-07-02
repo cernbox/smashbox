@@ -237,6 +237,8 @@ Reponse body example:
       </d:response>
     </d:multistatus>
     
+Besides the actual quota sizes in bytes the server also returns the fileId and the permissions
+of the top directory.
 
 ### Connection Validation Call
 
@@ -303,7 +305,7 @@ Response body example:
 
     < PROPFIND
 
-    <?xml version='1.0' encoding='UTF-8'?>
+    <?xml version='1.0' encoding='utf-8'?>
     <d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:oc="http://owncloud.org/ns">
       <d:response>
         <d:href>/remote.php/webdav/</d:href>
@@ -317,14 +319,15 @@ Response body example:
        <d:response>
         <d:href>/remote.php/webdav/%d7%91%d7%a2%d7%91%d7%a8%d7%99%d7%aa-.txt</d:href>
         <d:propstat>
-        <d:prop>
-            <d:getetag>"93ae1a06ce4340d6502496228f43718d"</d:getetag>
-        </d:prop>
-        <d:status>HTTP/1.1 200 OK</d:status>
+          <d:prop>
+            <oc:id>00004227ocobzus5kn6s</oc:id>
+            <oc:permissions>RDNVW</oc:permissions>
+            <d:getetag>"ed3bcb4907f9ebdfd8998242993545ba"</d:getetag>
+          </d:prop>
+          <d:status>HTTP/1.1 200 OK</d:status>
         </d:propstat>
-    </d:response>
+      </d:response>
     </d:multistatus>
-
 
 Client returns with a listing of all top level files and directories with their meta data.
 Comparing the ETag of the toplevel directory with the one from the previous call, client 

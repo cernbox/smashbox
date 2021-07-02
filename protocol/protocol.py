@@ -190,7 +190,12 @@ def stat_top_level(url,depth=0):
 """
 
     client = smashbox.curl.Client()
+
+    #  TODO: check if etag is quoted
     r = client.PROPFIND(url,query,depth=depth)
+
+    for x in r.propfind_response:
+        print x
     return r
    
 def all_prop_android(url,depth=0):
@@ -231,7 +236,13 @@ def ls_prop_desktop17(url,depth=0):
 </prop></propfind>"""
 
     client = smashbox.curl.Client()
+
+    # make sure etag is quoted
+
     r=client.PROPFIND(url,query,depth=depth)
+
+    for x in r.propfind_response:
+        print x
     return r
 
 

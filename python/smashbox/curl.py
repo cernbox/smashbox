@@ -34,8 +34,8 @@ class Client:
                 from logging import DEBUG
                 self.verbose = config._loglevel <= DEBUG
         else:
-            self.verbose=verbose
-
+            from logging import DEBUG
+            self.verbose = config._loglevel <= DEBUG
 
         c.setopt(c.VERBOSE, self.verbose) 
 
@@ -67,10 +67,9 @@ class Client:
             logger.info('PROPFIND response body: %s',r.body_stream.getvalue())
 
         if parse_check:
-            if 200 <= r.rc and r.rc < 300: # only parse the reponse type for positive responses 
-                #TODO: multiple Content-Type response headers will confuse the client as well
-                fatal_check('application/xml; charset=utf-8' in r.headers['Content-Type'],'Wrong response header "Content-Type:%s"'%r.headers['Content-Type']) # as of client 1.7 and 1.8
-                r.propfind_response=_parse_propfind_response(r.response_body,depth=depth)
+            #TODO: multiple Content-Type response headers will confuse the client as well
+            fatal_check('application/xml; charset=utf-8' in r.headers['Content-Type'],'Wrong response header "Content-Type:%s"'%r.headers['Content-Type']) # as of client 1.7 and 1.8
+            r.propfind_response=_parse_propfind_response(r.body_stream.getvalue(),depth=depth)
       
         return r
 
@@ -111,20 +110,17 @@ class Client:
 
         c = self.c
 
-        if fn:
-            f = open(fn,'w')
-            c.setopt(c.WRITEFUNCTION,f.write)
-        else:
-            body_stream =  cStringIO.StringIO()
-            c.setopt(c.WRITEFUNCTION,body_stream.write)
-
-        r = self._perform_request(url,headers)
+        def perform_request(write_callback):
+            c.setup(c.WRITEFUNCTION, write_callback)
+            return self._perform_request(url, headers)
 
         if fn:
-            f.close()
-        else:
-            r.response_body=body_stream.getvalue()
+            with open(fn, 'w') as f:
+                return perform_request(f.write)
 
+        body_stream = cStringIO.StringIO()
+        r = perform_request(f.write)
+        r.response_body = body_stream.getvalue()
         return r
 
     def MKCOL(self,url):
