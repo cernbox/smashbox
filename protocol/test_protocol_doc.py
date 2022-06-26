@@ -3,7 +3,7 @@ from smashbox.utilities.hash_files import *
 from smashbox.protocol import *
 
 import smashbox.utilities.reflection
-import smashbox.curl
+import smashbox.webdav
 
 import re
 

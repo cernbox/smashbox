@@ -398,8 +398,8 @@ def run_ocsync(local_folder, remote_folder="", n=None, user_num=None, timeout_mi
 def _prop_check(path,user_num=None,depth="0"):
     """ Private function to implement other utilities.
     """
-    import smashbox.curl
-    c = smashbox.curl.Client()
+    import smashbox.webdav
+    c = smashbox.webdav.Client()
     url = oc_webdav_url(remote_folder=path, user_num=user_num)
     query = """<?xml version="1.0" encoding="UTF-8"?><D:propfind xmlns:D="DAV:"><D:allprop/></D:propfind>"""
 
@@ -444,8 +444,8 @@ def webdav_delete(path, silent=True, user_num=None):
             echo=False
         runcmd('curl %s -k %s -X DELETE %s '%(verbose,config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)),echo=echo)
     else:
-        import smashbox.curl
-        c = smashbox.curl.Client(verbose=not silent) # FIXME: handle config.get('curl_opts','')
+        import smashbox.webdav
+        c = smashbox.webdav.Client(verbose=not silent) # FIXME: handle config.get('curl_opts','')
         url = oc_webdav_url(remote_folder=path, user_num=user_num)
         return c.DELETE(url)
 
@@ -462,8 +462,8 @@ def webdav_mkcol(path, silent=True, user_num=None):
             echo=True
         runcmd('curl --verbose -k %s -X MKCOL %s %s'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num),out),echo=echo)
     else:
-        import smashbox.curl
-        c = smashbox.curl.Client(verbose=not silent)
+        import smashbox.webdav
+        c = smashbox.webdav.Client(verbose=not silent)
         url = oc_webdav_url(remote_folder=path, user_num=user_num)
         return c.MKCOL(url)
 
