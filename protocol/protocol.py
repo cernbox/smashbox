@@ -1,7 +1,7 @@
 from smashbox.utilities import *
 from smashbox.utilities.hash_files import *
 
-import smashbox.curl
+import smashbox.webdav
 
 import sys,os,os.path,random
 
