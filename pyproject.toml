@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "smashbox"
 version = "0.1.0"
-description = "Main test suite for CERNBox"
-authors = ["Your Name <you@example.com>"]
+description = "Test suite for the ownCloud sync client"
+authors = ["CERNBox Administrators <cernbox-admins@cern.ch>"]
 license = "AGPL-3.0"
 
 [tool.poetry.dependencies]
