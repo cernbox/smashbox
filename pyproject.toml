@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "smashbox"
+version = "0.1.0"
+description = "Main test suite for CERNBox"
+authors = ["Your Name <you@example.com>"]
+license = "AGPL-3.0"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pytest = "^7.1.2"
+httpx = "^0.23.0"
+pydantic = "^1.9.1"
+PyYAML = "^6.0"
+
+[tool.poetry.dev-dependencies]
+black = "^22.3.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
