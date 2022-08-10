@@ -1,25 +1,15 @@
-import logging
 import os.path
 import pickle
+from functools import cache
 from pathlib import Path
 from typing import Any, Literal
 
 import yaml
+from loguru import logger
 from pydantic import BaseSettings
 
 
-logger = None
-
-# this should probably be moved into a utilities module
-def get_logger(name: str = "config", level: int | None = None) -> logging.Logger:
-    global logger
-    if not logger:
-        if level is None:
-            level = (
-                logging.INFO
-            )  # change here to DEBUG if you want to debug config stuff
-        logging.basicConfig(level=level)
-    return logging.getLogger(".".join(["smash", name]))
+main_config_file = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'etc', 'smashbox.conf.yaml')
 
 
 class Configuration(BaseSettings):
@@ -74,8 +64,7 @@ class Configuration(BaseSettings):
     def get(self, key: str, default: object) -> object:
         """Returns the value of the specified setting, or the
         default if the key doesn't exist."""
-        logger = get_logger()
-        logger.debug("config.get(%s,default=%s)", key, default)
+        logger.debug("config.get({} ,default={})", key, default)
         return self._dict().get(key, default=default)
 
 
@@ -85,15 +74,15 @@ def log_config(
     """Dump the entire configuration to the logging system at the given level.
     If hide_password=True then do not show the real value of the options which contain "password" in their names.
     """
-    logger = get_logger()
     for key, val in config.dict().items():
         if hide_password and "password" in key:
             val = "***"
-        logger.log(level, "CONFIG: %s = %s", key, val)
+        logger.log(level, "CONFIG: {} = {}", key, val)
 
-
-def load_config(fp: Path | str) -> Configuration:
-    """Loads and parses the specified configuration file."""
+@cache()
+def load_config(fp: Path | str = main_config_file) -> Configuration:
+    """Loads and parses the specified configuration file.
+    This function call is cached, that is it will return the same object for a given file path."""
     with open(fp, "r") as file:
         return Configuration(**yaml.load(file))
 
