@@ -8,17 +8,13 @@ import yaml
 from pydantic import BaseSettings
 
 
-logger = None
-
 # this should probably be moved into a utilities module
 def get_logger(name: str = "config", level: int | None = None) -> logging.Logger:
-    global logger
-    if not logger:
-        if level is None:
-            level = (
-                logging.INFO
-            )  # change here to DEBUG if you want to debug config stuff
-        logging.basicConfig(level=level)
+    if level is None:
+        level = (
+            logging.INFO
+        )  # change here to DEBUG if you want to debug config stuff
+    logging.basicConfig(level=level)
     return logging.getLogger(".".join(["smash", name]))
 
 
@@ -80,7 +76,7 @@ class Configuration(BaseSettings):
 
 
 def log_config(
-    config: Configuration, level: int | None = None, hide_password: bool = False
+    config: Configuration, level: int = logging.DEBUG, hide_password: bool = False
 ) -> None:
     """Dump the entire configuration to the logging system at the given level.
     If hide_password=True then do not show the real value of the options which contain "password" in their names.
@@ -95,11 +91,12 @@ def log_config(
 def load_config(fp: Path | str) -> Configuration:
     """Loads and parses the specified configuration file."""
     with open(fp, "r") as file:
-        return Configuration(**yaml.load(file))
+        return Configuration(**yaml.load(file, Loader=yaml.Loader))
 
 
 def configure_from_blob(fp: Path | str) -> Configuration:
-    return pickle.load(fp)
+    with open(fp, "rb") as file:
+        return pickle.load(file)
 
 
 def dump_config(config: Configuration, fp: Path | str) -> None:

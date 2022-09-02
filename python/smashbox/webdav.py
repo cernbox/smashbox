@@ -8,7 +8,7 @@ from smashbox.config import get_logger
 
 
 logger = get_logger()
-RequestType = Literal["MOVE", "PROPFIND", "PUT", "GET", "MKCOL", "DELTETE"]
+RequestType = Literal["MOVE", "PROPFIND", "PUT", "GET", "MKCOL", "DELETE"]
 PropfindDepth = Literal["1", "0", "infinity"]
 OverwriteType = Literal["T", "F"]
 
