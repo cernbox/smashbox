@@ -3,6 +3,8 @@ import socket
 #import requests
 #import json
 import platform
+from requests.auth import HTTPBasicAuth
+import time
 
 class StateMonitor:
 
@@ -10,12 +12,18 @@ class StateMonitor:
         """
         Initialize the test state with initial information
         """
-        self.kibana_monitoring_host = config.get('kibana_monitoring_host', None)
-        self.kibana_monitoring_port = config.get('kibana_monitoring_port', 10012)
+        self.monit_host = config.get('monit_host', None)
+        self.monit_port = config.get('monit_port', 10012)
+
+
+        print ("------------------------------------------- monitoring info")
+        print (self.monit_host)
+        print (self.monit_port)
+        print ("-----------------------------------------------------------")
 
         self._test_ignored = config.get('_test_ignored', None)
 
-        if not self.kibana_monitoring_host:
+        if not self.monit_host:
             self.worker_results = None
             return
 
@@ -46,7 +54,7 @@ class StateMonitor:
 
 
         # initialize json to be sent for monitoring
-        self.test_results = {"activity": config.kibana_activity, 'test_name': testname, 'hostname': socket.gethostname(),'backend': config.instance_name,
+        self.test_results = {"activity": config.monit_activity, 'test_name': testname, 'hostname': socket.gethostname(),'backend': config.instance_name,
                              'oc_client_version': str(str(ocsync_version())[1:-1].replace(", ",".")),'oc_server': config.oc_server.split("/")[0],'platform': client_platform,
                              'parameters':parameters,'parameters_text':str(parameters),'errors': [],'errors_text': "",'success': [],
                              'total_errors':0,'total_success':0, 'qos_metrics': [],'ignoredFailures':0,'passed': 0,'failed': 0, 'test_ignored': self._test_ignored }
@@ -56,7 +64,7 @@ class StateMonitor:
         """
         Join partial worker tests results information. The partial results are stored in queue (FIFO order)
         """
-        if not self.kibana_monitoring_host:
+        if not self.monit_host:
             return
 
         partial_results = self.worker_results.get()
@@ -69,7 +77,7 @@ class StateMonitor:
         """"
         Check if the test has passed and publish results
         """
-        if not self.kibana_monitoring_host:
+        if not self.monit_host:
             return
 
         if self._test_ignored is None: # we just want to track tests that we considered fixed
@@ -91,18 +99,25 @@ class StateMonitor:
         """
         Saved results in a dictionary to be able to convert them in a json format
         """
+        thuman = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(self.runtimestamp))
+
         if (self.test_results['errors']): self.test_results['errors_text'] = str(self.test_results['errors'])
-        json_result = [{'producer':"cernbox", 'type':"ops", 'hostname': socket.gethostname(), 'timestamp':int(round(self.runtimestamp * 1000)), "data":self.test_results}]
+        json_result = [{'producer':"smashboxtests", 'type_prefix':"raw", 'type':"dbmetric", 'hostname': socket.gethostname(), 'timestamp':int(self.runtimestamp), 'elapsed':int(time.time() - self.runtimestamp), 'timestamp_full': thuman, "data":self.test_results}]
         return json_result
 
     # --------------------------------------------------------------------------------
-    # Send metrics to kibana-monit central service
-    #   Report tests results and statistics to the kibana monitoring dashboard
+    # Send metrics to the monit central service
+    #   Report tests results and statistics to the monitoring dashboard
     # --------------------------------------------------------------------------------
 
     def send(self,document):
         import requests, json
-        return requests.post(self.kibana_monitoring_host + ":" + self.kibana_monitoring_port + "/", data=json.dumps(document),
+        print ("------------------------------------------- monitoring data")
+        print (json.dumps(document))
+        print ("-----------------------------------------------------------")
+
+        return requests.post(self.monit_host + ":" + str(self.monit_port) + "/smashboxtests",data=json.dumps(document),
+                             auth=HTTPBasicAuth('smashboxtests', '0mILcBs^9M10'),
                              headers={"Content-Type": "application/json; charset=UTF-8"})
 
     def send_and_check(self,document, should_fail=False):

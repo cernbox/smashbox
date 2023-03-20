@@ -214,8 +214,8 @@ class _smash_:
 
         _smash_.steps = manager.list([0 for x in range(len(_smash_.workers))])
 
-        import smashbox.monitoring.kibana_monitoring
-        _smash_.monitor = smashbox.monitoring.kibana_monitoring.StateMonitor(manager,_smash_.args, config)
+        import smashbox.monitoring.monit
+        _smash_.monitor = smashbox.monitoring.monit.StateMonitor(manager,_smash_.args, config)
         _smash_.worker_results = _smash_.monitor.worker_results
 
         # first worker => process number == 0

@@ -73,6 +73,10 @@ def ping(step):
     # in the second one either ping or pong grabs and downloads the most recent version of the file
     step(2,'first sync')
     run_ocsync(d,n=2)
+
+    os.system('curl -v -s -k -XPROPFIND --data @/b/eos/CURL-TEST/p2.dat %s| xmllint --format -'%oc_webdav_url(remote_folder='BALL'))
+    os.system('curl -v -s -k -XPROPFIND -H "Depth: 1" --data @/b/eos/CURL-TEST/p2.dat %s| xmllint --format -'%oc_webdav_url(remote_folder=''))
+
     LAST_BALL = md5sum(os.path.join(d,'BALL'))
     logger.info('LAST_BALL: %s',LAST_BALL)
 
@@ -101,6 +105,9 @@ def pong(step):
     d = make_workdir()
     shared = reflection.getSharedObject()
 
+
+    #sleep(2)
+
     createfile(os.path.join(d,'BALL'),'1',count=1000,bs=filesizeKB)
 
     BALL = md5sum(os.path.join(d,'BALL'))
@@ -115,6 +122,10 @@ def pong(step):
         time.sleep(pongdelay)
 
     run_ocsync(d,n=2)
+
+    os.system('curl -v -s -k -XPROPFIND --data @/b/eos/CURL-TEST/p2.dat %s| xmllint --format -'%oc_webdav_url(remote_folder='BALL'))
+    os.system('curl -v -s -k -XPROPFIND --data @/b/eos/CURL-TEST/p2.dat %s| xmllint --format -'%oc_webdav_url(remote_folder=''))
+
     LAST_BALL = md5sum(os.path.join(d,'BALL'))
     logger.info('LAST_BALL: %s',LAST_BALL)
 
