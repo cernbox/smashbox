@@ -112,11 +112,13 @@ class StateMonitor:
 
     def send(self,document):
         import requests, json
+        dest = self.monit_host + ":" + str(self.monit_port) + "/smashboxtests"
         print ("------------------------------------------- monitoring data")
+        print ("Dest: %s" % dest)
         print (json.dumps(document))
         print ("-----------------------------------------------------------")
 
-        return requests.post(self.monit_host + ":" + str(self.monit_port) + "/smashboxtests",data=json.dumps(document),
+        return requests.post(dest, data=json.dumps(document),
                              auth=HTTPBasicAuth('smashboxtests', '0mILcBs^9M10'),
                              headers={"Content-Type": "application/json; charset=UTF-8"})
 
