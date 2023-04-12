@@ -20,16 +20,20 @@ def removeunicodejam(localdir):
 
 def checkunicodejam(localdir):
     import glob
-    fl = glob.glob(unicode(localdir+os.sep+'*'))
+    gf = localdir+os.sep+u'*'
+    gf = gf.encode('utf-8')
+    print 'Checking directory: ',gf
+    fl = glob.glob(gf)
 
     ngood = 0 
     nbad = 0
 
     for f in fl:
-        logger.debug('Checking: %s',f)
+        print 'Checking: ',f
         fh = file(f)
         a = localdir+os.sep+fh.read()
-        a = a.decode("UTF-8")
+       
+        print 'File content: ',a
 
         if a!=f: 
             logger.error('FILELEN: %d',len(f))
@@ -85,15 +89,15 @@ def createunicodejam(localdir):
         if cc in forbidden: continue
         raw+=cc
 
-    filename = raw
+    filename = raw.encode('utf-8', errors='ignore')
 
     assert( len(filename) > 0)
 
     ff = localdir+os.sep+filename
-    #print 'Preparing:',ff
+    print 'Preparing:',ff
     try:
         fh = file(ff,'w')
-        fh.write(filename.encode("UTF-8"))
+        fh.write(filename)
         fh.close
     except Exception,x:
         logger.warning('cannot create file: %s',x)
