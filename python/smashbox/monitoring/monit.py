@@ -5,6 +5,7 @@ import socket
 import platform
 from requests.auth import HTTPBasicAuth
 import time
+import urllib3
 
 class StateMonitor:
 
@@ -118,9 +119,11 @@ class StateMonitor:
         print (json.dumps(document))
         print ("-----------------------------------------------------------")
 
+        urllib3.disable_warnings()
         return requests.post(dest, data=json.dumps(document),
                              auth=HTTPBasicAuth('smashboxtests', '0mILcBs^9M10'),
-                             headers={"Content-Type": "application/json; charset=UTF-8"})
+                             headers={"Content-Type": "application/json; charset=UTF-8"},
+                             verify=False)
 
     def send_and_check(self,document, should_fail=False):
         response = self.send(document)
