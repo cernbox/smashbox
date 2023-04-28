@@ -23,7 +23,7 @@ forbidden_charsets = {
 nfiles = len(forbidden_charsets)
 
 
-do_not_report_as_failure()
+# do_not_report_as_failure()
 
 
 @add_worker
@@ -94,7 +94,7 @@ def worker1(step):
     ncorrupt = analyse_hashfiles(d)[2]
     k1 = count_files(d)
                        
-    error_check(k1-k0==nfiles,'Expecting to have %d files more: see k1=%d k0=%d'%(nfiles,k1,k0))
+    error_check(k1==0,'Expecting to have 0 files, due to illegal filenames: see k1=%d '%(k1))
 
     fatal_check(ncorrupt==0, 'Corrupted files (%d) found'%ncorrupt)
 
