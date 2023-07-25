@@ -322,26 +322,41 @@ def oc_webdav_url(protocol='http',remote_folder="",user_num=None,webdav_endpoint
 
     return protocol + '://' + urllib.quote(username, safe='') + ':' + urllib.quote(password, safe='') + '@' + config.oc_server + '/' + remote_path
 
-
 def ocsync_version():
     """ Return the version reported by oc_sync_cmd.
 
     Returns a tuple (major,minor,bugfix). For example: (1,7,2) or (2,1,1)
+
+    The version string is something like "cernboxcmd cernbox 4.1.0.11373"
     """
 
     # strip possible options from config.oc_sync_cmd
-    cmd = [config.oc_sync_cmd[0]] + ["--version"]
+    #cmd = [config.oc_sync_cmd[0]] + ["--version"]
+    cmd = config.oc_sync_cmd
+    cmd.append("--version")
+
+    print cmd
+
     rc,stdout,stderr = runcmd(cmd, shell=False, ignore_exitcode=True,log_warning=False) # do not warn about non-zero exit code (which is unfortunately normal)
 
+    print stdout
+
     versionstring = stdout.strip().splitlines()[0]
-    versionstring_parsed = re.match(r"\w+\s(version\s)?(.*)\s\(build.*", versionstring)
-    sver = versionstring_parsed.group(2)
+
+    print versionstring
+
+    #versionstring_parsed = re.match(r"\w+\s(version\s)?(.*)\s\(build.*", versionstring)
+    versionstring_parsed = str.split(versionstring)
+
+    print versionstring_parsed
+    sver = versionstring_parsed[2]
 
     version = str.split(sver, "daily")[0]
 
     version = str.split(version, "v")[0]
 
     return tuple([int(x) for x in version.split(".")])
+
 
 # this is a local variable for each worker that keeps track of the repeat count for the current step
 ocsync_cnt = {}
