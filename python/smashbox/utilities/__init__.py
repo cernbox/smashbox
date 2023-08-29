@@ -333,7 +333,10 @@ def ocsync_version():
     # strip possible options from config.oc_sync_cmd
     #cmd = [config.oc_sync_cmd[0]] + ["--version"]
     cmd = config.oc_sync_cmd
-    del cmd[1:]
+    for x in cmd[1:]:
+      if x != "--cmd":
+        cmd.remove(x)
+    
     cmd.append("--version")
 
     print "Guessing Owncloud version..."
