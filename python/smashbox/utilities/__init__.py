@@ -356,7 +356,7 @@ def ocsync_version():
         versionstring_parsed = x
         break
 
-    print "Version string found:" versionstring_parsed
+    print "Version string found:"+versionstring_parsed
     sver = versionstring_parsed[2]
 
     version = str.split(sver, "daily")[0]
