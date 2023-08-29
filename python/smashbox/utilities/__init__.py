@@ -333,22 +333,30 @@ def ocsync_version():
     # strip possible options from config.oc_sync_cmd
     #cmd = [config.oc_sync_cmd[0]] + ["--version"]
     cmd = config.oc_sync_cmd
+    del cmd[1:]
     cmd.append("--version")
 
+    print "Guessing Owncloud version..."
     print cmd
 
     rc,stdout,stderr = runcmd(cmd, shell=False, ignore_exitcode=True,log_warning=False) # do not warn about non-zero exit code (which is unfortunately normal)
 
     print stdout
+    print stderr
 
     versionstring = stdout.strip().splitlines()[0]
 
-    print versionstring
+    print "Version string: "+versionstring
 
     #versionstring_parsed = re.match(r"\w+\s(version\s)?(.*)\s\(build.*", versionstring)
-    versionstring_parsed = str.split(versionstring)
 
-    print versionstring_parsed
+    # Those printouts are highly variable. Stick to whatever token looks like a version
+    for x in str.split(versionstring):
+      if re.match(r"([\d.]+)\.([\d.]+)\.([\d.]+).*", x):
+        versionstring_parsed = x
+        break
+
+    print "Version string found:" versionstring_parsed
     sver = versionstring_parsed[2]
 
     version = str.split(sver, "daily")[0]
