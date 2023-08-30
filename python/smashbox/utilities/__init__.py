@@ -359,14 +359,12 @@ def ocsync_version():
         versionstring_parsed = x
         break
 
-    print "Version string found:"+versionstring_parsed
-    sver = versionstring_parsed[2]
+    print "Version string found: "+versionstring_parsed
 
-    version = str.split(sver, "daily")[0]
-
-    version = str.split(version, "v")[0]
-
-    return tuple([int(x) for x in version.split(".")])
+    print "Version parsed: "+versionstring_parsed
+    print "Version split: "
+    print versionstring_parsed.split(".")
+    return tuple([int(x) for x in versionstring_parsed.split(".")])
 
 
 # this is a local variable for each worker that keeps track of the repeat count for the current step

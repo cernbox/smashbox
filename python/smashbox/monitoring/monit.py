@@ -20,6 +20,8 @@ class StateMonitor:
         print ("------------------------------------------- monitoring info")
         print (self.monit_host)
         print (self.monit_port)
+        print (ocsync_version())
+        print (str(str(ocsync_version())[1:-1].replace(", ",".")))
         print ("-----------------------------------------------------------")
 
         self._test_ignored = config.get('_test_ignored', None)
