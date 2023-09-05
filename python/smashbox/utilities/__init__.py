@@ -332,7 +332,7 @@ def ocsync_version():
 
     # strip possible options from config.oc_sync_cmd
     #cmd = [config.oc_sync_cmd[0]] + ["--version"]
-    cmd = config.oc_sync_cmd
+    cmd = config.oc_sync_cmd[:] # note we don't want to change the original list
     for x in cmd[1:]:
       if x != "--cmd":
         cmd.remove(x)
