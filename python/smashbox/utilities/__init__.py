@@ -339,17 +339,17 @@ def ocsync_version():
     
     cmd.append("--version")
 
-    print "Guessing Owncloud version..."
-    print cmd
+    logger.info("Guessing Owncloud version...")
+    logger.info(cmd)
 
     rc,stdout,stderr = runcmd(cmd, shell=False, ignore_exitcode=True,log_warning=False) # do not warn about non-zero exit code (which is unfortunately normal)
 
-    print stdout
-    print stderr
+    logger.info(stdout)
+    logger.info(stderr)
 
     versionstring = stdout.strip().splitlines()[0]
 
-    print "Version string: "+versionstring
+    logger.info("Version string: "+versionstring)
 
     #versionstring_parsed = re.match(r"\w+\s(version\s)?(.*)\s\(build.*", versionstring)
 
@@ -359,11 +359,11 @@ def ocsync_version():
         versionstring_parsed = x
         break
 
-    print "Version string found: "+versionstring_parsed
+    logger.info("Version string found: "+versionstring_parsed)
 
-    print "Version parsed: "+versionstring_parsed
-    print "Version split: "
-    print versionstring_parsed.split(".")
+    logger.info("Version parsed: "+versionstring_parsed)
+    logger.info("Version split: ")
+    logger.info(versionstring_parsed.split("."))
     return tuple([int(x) for x in versionstring_parsed.split(".")])
 
 
