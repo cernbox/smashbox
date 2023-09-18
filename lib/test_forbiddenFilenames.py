@@ -73,7 +73,7 @@ def worker0(step):
     
     k1 = count_files(d)
 
-    error_check(k0+nfiles==k1+nfiles,'Expecting to have %d files in %s - found instead %d'%(k0+nfiles,d,k1+nfiles))
+    error_check(k0+nfiles==k1,'Expecting to have %d files in %s - found instead %d'%(k0+nfiles,d,k1))
 
     fatal_check(ncorrupt==0, 'Corrupted files (%s) found'%ncorrupt)
 
@@ -93,8 +93,8 @@ def worker1(step):
 
     ncorrupt = analyse_hashfiles(d)[2]
     k1 = count_files(d)
-                       
-    error_check(k1==0,'Expecting to have 0 files, due to illegal filenames: see k1=%d '%(k1))
+                      
+    error_check(k0+nfiles==k1,'Expecting to have %d files in %s - found instead %d'%(k0+nfiles,d,k1))
 
     fatal_check(ncorrupt==0, 'Corrupted files (%d) found'%ncorrupt)
 
