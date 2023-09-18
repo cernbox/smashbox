@@ -42,7 +42,7 @@ def worker0(step):
 
 
 
-    step(2,'Dir %s has %d files. Add %d files then resync and check if we still have %d files'%(d,k0,nfiles,d,k0+nfiles))
+    step(2,'Dir %s has %d files. Add %d files then resync and check if we still have %d files'%(d,k0,nfiles,k0+nfiles))
     logger.log(35,"Timestamp %f Files %d",time.time(),nfiles)
 
     for c in forbidden_charsets:
