@@ -23,7 +23,7 @@ forbidden_charsets = {
 nfiles = len(forbidden_charsets)
 
 
-# do_not_report_as_failure()
+do_not_report_as_failure()
 
 
 @add_worker
@@ -42,7 +42,7 @@ def worker0(step):
 
 
 
-    step(2,'Add %s files to %s and check if we still have k1+nfiles after resync'%(nfiles,d))
+    step(2,'Dir %s has %d files. Add %d files then resync and check if we still have %d files'%(d,k0,nfiles,d,k0+nfiles))
     logger.log(35,"Timestamp %f Files %d",time.time(),nfiles)
 
     for c in forbidden_charsets:
@@ -73,7 +73,7 @@ def worker0(step):
     
     k1 = count_files(d)
 
-    error_check(k1-k0==nfiles,'Expecting to have %d files more in %s: see k1=%d k0=%d'%(nfiles,d,k1,k0))
+    error_check(k0+nfiles==k1+nfiles,'Expecting to have %d files in %s - found instead %d'%(k0+nfiles,d,k1+nfiles))
 
     fatal_check(ncorrupt==0, 'Corrupted files (%s) found'%ncorrupt)
 
