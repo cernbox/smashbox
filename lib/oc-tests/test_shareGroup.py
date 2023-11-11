@@ -81,8 +81,31 @@ OCS_PERMISSION_DELETE = 8
 OCS_PERMISSION_SHARE = 16
 OCS_PERMISSION_ALL = 31
 
+# True => use new webdav endpoint (dav/files)
+# False => use old webdav endpoint (webdav)
+use_new_dav_endpoint = bool(config.get('use_new_dav_endpoint',True))
+
+testsets = [
+        {
+          'use_new_dav_endpoint':False
+        },
+        {
+          'use_new_dav_endpoint':True
+        }
+]
+
+def finish_if_not_capable():
+    # Finish the test if some of the prerequisites for this test are not satisfied
+    if compare_oc_version('10.0', '<') and use_new_dav_endpoint == True:
+        #Dont test for <= 9.1 with new endpoint, since it is not supported
+        logger.warn("Skipping test since webdav endpoint is not capable for this server version")
+        return True
+    return False
+
 @add_worker
 def setup(step):
+    if finish_if_not_capable():
+        return
 
     step (1, 'create test users')
     reset_owncloud_account(num_test_users=config.oc_number_test_users)
@@ -99,6 +122,8 @@ def setup(step):
 
 @add_worker
 def sharer(step):
+    if finish_if_not_capable():
+        return
 
     step (2, 'Create workdir')
     d = make_workdir()
@@ -114,7 +139,7 @@ def sharer(step):
     logger.info('md5_sharer: %s',shared['md5_sharer'])
 
     list_files(d)
-    run_ocsync(d,user_num=1)
+    run_ocsync(d,user_num=1, use_new_dav_endpoint=use_new_dav_endpoint)
     list_files(d)
 
     step (4, 'Sharer shares files')
@@ -128,7 +153,7 @@ def sharer(step):
     shared['TEST_FILE_MODIFIED_GROUP_SHARE'] = share_file_with_group ('TEST_FILE_MODIFIED_GROUP_SHARE.dat', user1, group, **kwargs)
 
     step (7, 'Sharer validates modified file')
-    run_ocsync(d,user_num=1)
+    run_ocsync(d,user_num=1, use_new_dav_endpoint=use_new_dav_endpoint)
     list_files(d)
     expect_modified(os.path.join(d,'TEST_FILE_MODIFIED_GROUP_SHARE.dat'), shared['md5_sharer'], comment=" compared to original file from sharer")
     expect_not_modified(os.path.join(d,'TEST_FILE_MODIFIED_GROUP_SHARE.dat'), shared['md5_shareeGroup'], comment=" compared to file from Sharee Group")
@@ -140,20 +165,22 @@ def sharer(step):
 
     list_files(d)
     remove_file(os.path.join(d,'TEST_FILE_MODIFIED_GROUP_SHARE.dat'))
-    run_ocsync(d,user_num=1)
+    run_ocsync(d,user_num=1, use_new_dav_endpoint=use_new_dav_endpoint)
     list_files(d)
 
     step (16, 'Sharer Final step')
 
 @add_worker
 def shareeGroup(step):
+    if finish_if_not_capable():
+        return
 
     step (2, 'Sharee Group creates workdir')
     d = make_workdir()
 
     step (5, 'Sharee Group syncs and validate files do exist')
 
-    run_ocsync(d,user_num=2)
+    run_ocsync(d,user_num=2, use_new_dav_endpoint=use_new_dav_endpoint)
     list_files(d)
 
     sharedFile = os.path.join(d,'TEST_FILE_GROUP_SHARE.dat')
@@ -173,7 +200,7 @@ def shareeGroup(step):
     modify_file(os.path.join(d,'TEST_FILE_MODIFIED_GROUP_SHARE.dat'),'1',count=10,bs=filesizeKB)
     shared = reflection.getSharedObject()
     shared['md5_shareeGroup'] = md5sum(os.path.join(d,'TEST_FILE_MODIFIED_GROUP_SHARE.dat'))
-    run_ocsync(d,user_num=2)
+    run_ocsync(d,user_num=2, use_new_dav_endpoint=use_new_dav_endpoint)
     list_files(d)
 
     step (8, 'Sharee Group shares file with Sharee One')
@@ -185,7 +212,7 @@ def shareeGroup(step):
 
     step (11, 'Sharee Group validates file does not exist after unsharing')
 
-    run_ocsync(d,user_num=2)
+    run_ocsync(d,user_num=2, use_new_dav_endpoint=use_new_dav_endpoint)
     list_files(d)
 
     sharedFile = os.path.join(d,'TEST_FILE_GROUP_RESHARE.dat')
@@ -194,7 +221,7 @@ def shareeGroup(step):
 
     step (13, 'Sharee Group validates file does not exist after deleting')
 
-    run_ocsync(d,user_num=2)
+    run_ocsync(d,user_num=2, use_new_dav_endpoint=use_new_dav_endpoint)
     list_files(d)
 
     sharedFile = os.path.join(d,'TEST_FILE_MODIFIED_GROUP_SHARE.dat')
@@ -203,7 +230,7 @@ def shareeGroup(step):
 
     step (15, 'Sharee Group validates file does not exist after being removed from group')
 
-    run_ocsync(d,user_num=2)
+    run_ocsync(d,user_num=2, use_new_dav_endpoint=use_new_dav_endpoint)
     list_files(d)
 
     sharedFile = os.path.join(d,'TEST_FILE_GROUP_SHARE.dat')
@@ -214,13 +241,15 @@ def shareeGroup(step):
 
 @add_worker
 def reshareeUser(step):
+    if finish_if_not_capable():
+        return
 
     step (2, 'Re-Sharee User creates workdir')
     d = make_workdir()
 
     step (5, 'Re-Sharee User syncs and validate files do not exist')
 
-    run_ocsync(d,user_num=3)
+    run_ocsync(d,user_num=3, use_new_dav_endpoint=use_new_dav_endpoint)
     list_files(d)
 
     sharedFile = os.path.join(d,'TEST_FILE_GROUP_SHARE.dat')
@@ -237,7 +266,7 @@ def reshareeUser(step):
 
     step (9, 'Re-Sharee User validates share file')
 
-    run_ocsync(d,user_num=3)
+    run_ocsync(d,user_num=3, use_new_dav_endpoint=use_new_dav_endpoint)
     list_files(d)
 
     sharedFile = os.path.join(d,'TEST_FILE_GROUP_RESHARE.dat')
@@ -249,7 +278,7 @@ def reshareeUser(step):
     else:
         step(11, 'Re-Sharee User validates file does still exist after unsharing')
 
-    run_ocsync(d,user_num=3)
+    run_ocsync(d,user_num=3, use_new_dav_endpoint=use_new_dav_endpoint)
     list_files(d)
 
     sharedFile = os.path.join(d,'TEST_FILE_GROUP_RESHARE.dat')
@@ -262,7 +291,7 @@ def reshareeUser(step):
 
     step (13, 'Re-Sharee User syncs and validates file does not exist')
 
-    run_ocsync(d,user_num=3)
+    run_ocsync(d,user_num=3, use_new_dav_endpoint=use_new_dav_endpoint)
     list_files(d)
 
     sharedFile = os.path.join(d,'TEST_FILE_GROUP_SHARE.dat')
@@ -273,7 +302,8 @@ def reshareeUser(step):
 
 @add_worker
 def admin(step):
-
+    if finish_if_not_capable():
+        return
 
     step (14, 'Admin user removes user from group')
 

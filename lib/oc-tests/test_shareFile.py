@@ -70,20 +70,49 @@ OCS_PERMISSION_ALL = 31
 filesizeKB = int(config.get('share_filesizeKB',10))
 sharePermissions = config.get('test_sharePermissions', OCS_PERMISSION_ALL)
 
+# True => use new webdav endpoint (dav/files)
+# False => use old webdav endpoint (webdav)
+use_new_dav_endpoint = bool(config.get('use_new_dav_endpoint',True))
+
 testsets = [
     { 
-        'test_sharePermissions':OCS_PERMISSION_ALL
+        'test_sharePermissions':OCS_PERMISSION_ALL,
+        'use_new_dav_endpoint':True
+    },
+    {
+        'test_sharePermissions':OCS_PERMISSION_ALL,
+        'use_new_dav_endpoint':False
     },
     { 
-        'test_sharePermissions':OCS_PERMISSION_READ | OCS_PERMISSION_UPDATE
+        'test_sharePermissions':OCS_PERMISSION_READ | OCS_PERMISSION_UPDATE,
+        'use_new_dav_endpoint':True
+    },
+    {
+        'test_sharePermissions':OCS_PERMISSION_READ | OCS_PERMISSION_UPDATE,
+        'use_new_dav_endpoint':False
     },
     { 
-        'test_sharePermissions':OCS_PERMISSION_READ | OCS_PERMISSION_SHARE
+        'test_sharePermissions':OCS_PERMISSION_READ | OCS_PERMISSION_SHARE,
+        'use_new_dav_endpoint':True
+    },
+    {
+        'test_sharePermissions':OCS_PERMISSION_READ | OCS_PERMISSION_SHARE,
+        'use_new_dav_endpoint':False
     }
 ]
 
+def finish_if_not_capable():
+    # Finish the test if some of the prerequisites for this test are not satisfied
+    if compare_oc_version('10.0', '<') and use_new_dav_endpoint == True:
+        #Dont test for <= 9.1 with new endpoint, since it is not supported
+        logger.warn("Skipping test since webdav endpoint is not capable for this server version")
+        return True
+    return False
+
 @add_worker
 def setup(step):
+    if finish_if_not_capable():
+        return
 
     step (1, 'create test users')
     reset_owncloud_account(num_test_users=config.oc_number_test_users)
@@ -93,6 +122,8 @@ def setup(step):
 
 @add_worker
 def sharer(step):
+    if finish_if_not_capable():
+        return
 
     step (2, 'Create workdir')
     d = make_workdir()
@@ -108,7 +139,7 @@ def sharer(step):
     logger.info('md5_sharer: %s',shared['md5_sharer'])
 
     list_files(d)
-    run_ocsync(d,user_num=1)
+    run_ocsync(d,user_num=1, use_new_dav_endpoint=use_new_dav_endpoint)
     list_files(d)
 
     step (4,'Sharer shares files')
@@ -123,7 +154,7 @@ def sharer(step):
     shared['sharer.TEST_FILE_MODIFIED_USER_SHARE'] = os.path.join(d,'TEST_FILE_MODIFIED_USER_SHARE.dat')
 
     step (7, 'Sharer validates modified file')
-    run_ocsync(d,user_num=1)
+    run_ocsync(d,user_num=1, use_new_dav_endpoint=use_new_dav_endpoint)
 
     if not sharePermissions & OCS_PERMISSION_UPDATE:
       expect_not_modified(os.path.join(d,'TEST_FILE_MODIFIED_USER_SHARE.dat'), shared['md5_sharer'])
@@ -137,20 +168,22 @@ def sharer(step):
 
     list_files(d)
     remove_file(os.path.join(d,'TEST_FILE_USER_SHARE.dat'))
-    run_ocsync(d,user_num=1)
+    run_ocsync(d,user_num=1, use_new_dav_endpoint=use_new_dav_endpoint)
     list_files(d)
 
     step (14, 'Sharer final step')
 
 @add_worker
 def shareeOne(step):
+    if finish_if_not_capable():
+        return
 
     step (2, 'Sharee One creates workdir')
     d = make_workdir()
 
     step (5, 'Sharee One syncs and validate files exist')
 
-    run_ocsync(d,user_num=2)
+    run_ocsync(d,user_num=2, use_new_dav_endpoint=use_new_dav_endpoint)
     list_files(d)
 
     sharedFile = os.path.join(d,'TEST_FILE_USER_SHARE.dat')
@@ -168,7 +201,7 @@ def shareeOne(step):
     step (6, 'Sharee One modifies TEST_FILE_MODIFIED_USER_SHARE.dat')
 
     modify_file(os.path.join(d,'TEST_FILE_MODIFIED_USER_SHARE.dat'),'1',count=10,bs=filesizeKB)
-    run_ocsync(d,user_num=2)
+    run_ocsync(d,user_num=2, use_new_dav_endpoint=use_new_dav_endpoint)
     list_files(d)
 
     shared = reflection.getSharedObject()
@@ -190,7 +223,7 @@ def shareeOne(step):
 
     step (11, 'Sharee one validates file does not exist after unsharing')
 
-    run_ocsync(d,user_num=2)
+    run_ocsync(d,user_num=2, use_new_dav_endpoint=use_new_dav_endpoint)
     list_files(d)
 
     sharedFile = os.path.join(d,'TEST_FILE_USER_RESHARE.dat')
@@ -199,7 +232,7 @@ def shareeOne(step):
 
     step (13, 'Sharee syncs and validates file does not exist')
 
-    run_ocsync(d,user_num=2)
+    run_ocsync(d,user_num=2, use_new_dav_endpoint=use_new_dav_endpoint)
     list_files(d)
 
     sharedFile = os.path.join(d,'TEST_FILE_USER_SHARE.dat')
@@ -210,13 +243,15 @@ def shareeOne(step):
 
 @add_worker
 def shareeTwo(step):
+    if finish_if_not_capable():
+        return
   
     step (2, 'Sharee Two creates workdir')
     d = make_workdir()
 
     step (9, 'Sharee two validates share file')
 
-    run_ocsync(d,user_num=3)
+    run_ocsync(d,user_num=3, use_new_dav_endpoint=use_new_dav_endpoint)
     list_files(d)
 
     sharedFile = os.path.join(d,'TEST_FILE_USER_RESHARE.dat')
@@ -230,7 +265,7 @@ def shareeTwo(step):
 
     if compare_oc_version('9.0', '<') or not sharePermissions & OCS_PERMISSION_SHARE:
         step(11, 'Sharee two validates file does not exist after unsharing')
-        run_ocsync(d, user_num=3)
+        run_ocsync(d, user_num=3, use_new_dav_endpoint=use_new_dav_endpoint)
         list_files(d)
 
         shared_file = os.path.join(d,'TEST_FILE_USER_RESHARE.dat')
@@ -240,7 +275,7 @@ def shareeTwo(step):
     else:
         step(11, 'Sharee two validates file still exist after unsharing for sharee one')
 
-        run_ocsync(d, user_num=3)
+        run_ocsync(d, user_num=3, use_new_dav_endpoint=use_new_dav_endpoint)
         list_files(d)
 
         shared_file = os.path.join(d,'TEST_FILE_USER_RESHARE.dat')

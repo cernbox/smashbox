@@ -48,26 +48,49 @@ filesizeKB = int(config.get('test_filesizeKB',10))
 sharePermissions = config.get('test_sharePermissions', OCS_PERMISSION_ALL)
 numFilesToCreate = config.get('test_numFilesToCreate', 1)
 
+# True => use new webdav endpoint (dav/files)
+# False => use old webdav endpoint (webdav)
+use_new_dav_endpoint = bool(config.get('use_new_dav_endpoint',True))
+
 testsets = [
     {
         'test_sharePermissions':OCS_PERMISSION_ALL,
-        'test_numFilesToCreate':50,
-        'test_filesizeKB':20000
+        'test_numFilesToCreate':5,
+        'test_filesizeKB':20000,
+        'use_new_dav_endpoint':True
     },
     {
         'test_sharePermissions':OCS_PERMISSION_ALL,
-        'test_numFilesToCreate':500,
-        'test_filesizeKB':2000
+        'test_numFilesToCreate':5,
+        'test_filesizeKB':20000,
+        'use_new_dav_endpoint':False
     },
     {
         'test_sharePermissions':OCS_PERMISSION_READ | OCS_PERMISSION_CREATE | OCS_PERMISSION_UPDATE,
-        'test_numFilesToCreate':50,
-        'test_filesizeKB':20000
+        'test_numFilesToCreate':5,
+        'test_filesizeKB':20000,
+        'use_new_dav_endpoint':True
+    },
+    {
+        'test_sharePermissions':OCS_PERMISSION_READ | OCS_PERMISSION_CREATE | OCS_PERMISSION_UPDATE,
+        'test_numFilesToCreate':5,
+        'test_filesizeKB':20000,
+        'use_new_dav_endpoint':False
     },
 ]
 
+def finish_if_not_capable():
+    # Finish the test if some of the prerequisites for this test are not satisfied
+    if compare_oc_version('10.0', '<') and use_new_dav_endpoint == True:
+        #Dont test for <= 9.1 with new endpoint, since it is not supported
+        logger.warn("Skipping test since webdav endpoint is not capable for this server version")
+        return True
+    return False
+
 @add_worker
 def setup(step):
+    if finish_if_not_capable():
+        return
 
     step (1, 'create test users')
     reset_owncloud_account(num_test_users=config.oc_number_test_users)
@@ -77,6 +100,8 @@ def setup(step):
 
 @add_worker
 def sharer(step):
+    if finish_if_not_capable():
+        return
 
     step (2,'Create workdir')
     d = make_workdir()
@@ -88,7 +113,7 @@ def sharer(step):
     localDir = make_workdir(dirName)
 
     list_files(d)
-    run_ocsync(d,user_num=1)
+    run_ocsync(d,user_num=1, use_new_dav_endpoint=use_new_dav_endpoint)
     list_files(d)
 
     step (4,'Sharer shares directory')
@@ -105,7 +130,7 @@ def sharer(step):
 
     step (7, 'Sharer validates newly added files')
 
-    run_ocsync(d,user_num=1)
+    run_ocsync(d,user_num=1, use_new_dav_endpoint=use_new_dav_endpoint)
 
     list_files(d+'/localShareDir')
     checkFilesExist(d) 
@@ -114,13 +139,15 @@ def sharer(step):
 
 @add_worker
 def shareeOne(step):
+    if finish_if_not_capable():
+        return
 
     step (2, 'Sharee One creates workdir')
     d = make_workdir()
 
     step (5,'Sharee One syncs and validates directory exist')
 
-    run_ocsync(d,user_num=2)
+    run_ocsync(d,user_num=2, use_new_dav_endpoint=use_new_dav_endpoint)
     list_files(d)
 
     sharedDir = os.path.join(d,'localShareDir')
@@ -137,7 +164,7 @@ def shareeOne(step):
         filename = "%s%i%s" % ('localShareDir/TEST_FILE_NEW_USER_SHARE_',i,'.dat')
         createfile(os.path.join(d,filename),'0',count=1000,bs=filesizeKB)
 
-    run_ocsync(d,user_num=2)
+    run_ocsync(d,user_num=2, use_new_dav_endpoint=use_new_dav_endpoint)
 
     list_files(d+'/localShareDir')
     checkFilesExist(d) 
@@ -146,6 +173,8 @@ def shareeOne(step):
 
 @add_worker
 def shareeTwo(step):
+    if finish_if_not_capable():
+        return
   
     step (2, 'Sharee Two creates workdir')
     d = make_workdir()
@@ -156,7 +185,7 @@ def shareeTwo(step):
 
     step (5, 'Sharee two syncs and validates directory exists')
 
-    run_ocsync(d,user_num=3)
+    run_ocsync(d,user_num=3, use_new_dav_endpoint=use_new_dav_endpoint)
     list_files(d)
 
     sharedDir = os.path.join(d,'localShareDir')
@@ -165,7 +194,7 @@ def shareeTwo(step):
 
     step (7, 'Sharee two validates new files exist')
 
-    run_ocsync(d,user_num=3)
+    run_ocsync(d,user_num=3, use_new_dav_endpoint=use_new_dav_endpoint)
 
     list_files(d+'/localShareDir')
     checkFilesExist(d) 

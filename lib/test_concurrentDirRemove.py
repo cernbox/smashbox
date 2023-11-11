@@ -23,24 +23,58 @@ nfiles = int(config.get('concurrentRemoveDir_nfiles',10))
 filesizeKB = int(config.get('concurrentRemoveDir_filesizeKB',9000))
 delaySeconds = int(config.get('concurrentRemoveDir_delaySeconds',3)) # if delaySeconds > 0 then remover waits; else the adder waits;
 
+# True => use new webdav endpoint (dav/files)
+# False => use old webdav endpoint (webdav)
+use_new_dav_endpoint = bool(config.get('use_new_dav_endpoint',True))
+
 testsets = [ 
     {'concurrentRemoveDir_nfiles':3,
      'concurrentRemoveDir_filesizeKB':10000,
-     'concurrentRemoveDir_delaySeconds':5 },  # removing the directory while a large file is chunk-uploaded
+     'concurrentRemoveDir_delaySeconds':5,
+     'use_new_dav_endpoint': True },  # removing the directory while a large file is chunk-uploaded
+    {'concurrentRemoveDir_nfiles':3,
+     'concurrentRemoveDir_filesizeKB':10000,
+     'concurrentRemoveDir_delaySeconds':5,
+     'use_new_dav_endpoint': False },  # removing the directory while a large file is chunk-uploaded
 
     {'concurrentRemoveDir_nfiles':40,
      'concurrentRemoveDir_filesizeKB':9000,
-     'concurrentRemoveDir_delaySeconds':5 }, # removing the directory while lots of smaller files are uploaded
+     'concurrentRemoveDir_delaySeconds':5,
+     'use_new_dav_endpoint': True }, # removing the directory while lots of smaller files are uploaded
+    {'concurrentRemoveDir_nfiles': 40,
+     'concurrentRemoveDir_filesizeKB': 9000,
+     'concurrentRemoveDir_delaySeconds': 5,
+     'use_new_dav_endpoint': False},  # removing the directory while lots of smaller files are uploaded
 
     {'concurrentRemoveDir_nfiles':5,
      'concurrentRemoveDir_filesizeKB':15000,
-     'concurrentRemoveDir_delaySeconds':-5 } # removing the directory before files are uploaded
-
+     'concurrentRemoveDir_delaySeconds':-5,
+     'use_new_dav_endpoint': True }, # removing the directory before files are uploaded
+    {'concurrentRemoveDir_nfiles':5,
+     'concurrentRemoveDir_filesizeKB':15000,
+     'concurrentRemoveDir_delaySeconds':-5,
+     'use_new_dav_endpoint': False }, # removing the directory before files are uploaded
     ]
 
+import time
+import tempfile
+
+from smashbox.utilities import *
+from smashbox.utilities.hash_files import *
+
+def finish_if_not_capable():
+    # Finish the test if some of the prerequisites for this test are not satisfied
+    if compare_oc_version('10.0', '<') and use_new_dav_endpoint == True:
+        #Dont test for <= 9.1 with new endpoint, since it is not supported
+        logger.warn("Skipping test since webdav endpoint is not capable for this server version")
+        return True
+    return False
 
 @add_worker
 def creator(step):
+    if finish_if_not_capable():
+        return
+
     reset_owncloud_account()
     reset_rundir()
 
@@ -48,19 +82,21 @@ def creator(step):
     d = make_workdir()
     d2 = os.path.join(d,'subdir')
     mkdir(d2)
-    run_ocsync(d)
+    run_ocsync(d, use_new_dav_endpoint=use_new_dav_endpoint)
 
     step(5,'final check')
-    run_ocsync(d)
+    run_ocsync(d, use_new_dav_endpoint=use_new_dav_endpoint)
     final_check(d)
 
     
 @add_worker
 def adder(step):
+    if finish_if_not_capable():
+        return
     
     step(2,'sync the empty directory created by the creator')
     d = make_workdir()
-    run_ocsync(d)
+    run_ocsync(d, use_new_dav_endpoint=use_new_dav_endpoint)
 
     step(3,'locally create content in the subdirectory')
     d2 = os.path.join(d,'subdir')
@@ -71,17 +107,20 @@ def adder(step):
     step(4,'sync the added files in parallel')
     if delaySeconds<0:
         sleep(-delaySeconds)
-    run_ocsync(d)
+    run_ocsync(d, use_new_dav_endpoint=use_new_dav_endpoint)
 
     step(5,'final check')
-    run_ocsync(d)
+    run_ocsync(d, use_new_dav_endpoint=use_new_dav_endpoint)
 
 
 @add_worker
 def remover(step):
+    if finish_if_not_capable():
+        return
+
     step(2,'sync the empty directory created by the creator')
     d = make_workdir()
-    run_ocsync(d)
+    run_ocsync(d, use_new_dav_endpoint=use_new_dav_endpoint)
 
     step(3,'locally remove subdir')
     d2 = os.path.join(d,'subdir')
@@ -90,18 +129,20 @@ def remover(step):
     step(4,'sync the removed subdir in parallel')
     if delaySeconds>0:
         sleep(delaySeconds)
-    run_ocsync(d)
+    run_ocsync(d, use_new_dav_endpoint=use_new_dav_endpoint)
 
     step(5,'final check')
-    run_ocsync(d)
+    run_ocsync(d, use_new_dav_endpoint=use_new_dav_endpoint)
     final_check(d)
 
 @add_worker
 def checker(step):
+    if finish_if_not_capable():
+        return
 
     step(5,'sync the final state of the repository into a fresh local folder')
     d = make_workdir()
-    run_ocsync(d)
+    run_ocsync(d, use_new_dav_endpoint=use_new_dav_endpoint)
 
     final_check(d)
 

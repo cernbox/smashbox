@@ -81,7 +81,7 @@ def adder(step):
     if delaySeconds<0:
         sleep(-delaySeconds)
 
-    run_ocsync(d)
+    run_ocsync(d,n=2)
 
     # when directory is renamed while file is uploaded the PUT request finishes with Conflict error code
     
