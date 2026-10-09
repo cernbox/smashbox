@@ -27,7 +27,7 @@ do_not_report_as_failure()
 
 
 @add_worker
-def worker0(step):
+def worker0(step: Step) -> None:
 
     # do not cleanup server files from previous run
     reset_owncloud_account()
@@ -81,7 +81,7 @@ def worker0(step):
 
 
 @add_worker
-def worker1(step):
+def worker1(step: Step) -> None:
     step(1,'Preparation')
     d = make_workdir()
     run_ocsync(d)

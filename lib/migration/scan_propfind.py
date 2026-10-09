@@ -25,7 +25,7 @@ class PropfindError(Exception):
 
 
 @add_worker
-def main(step):
+def main(step: Step) -> None:
 
     user=config.oc_account_name
     user_letter=user[0]
@@ -63,9 +63,9 @@ def main(step):
 
     propfind_list=[]
 
-    seen_dirs = set()
+    seen_dirs: set[str] = set()
     
-    def scan_dir(URL):
+    def scan_dir(URL: str) -> None:
         r=None
         rc=None
         try:

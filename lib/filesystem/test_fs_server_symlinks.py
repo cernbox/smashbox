@@ -13,7 +13,7 @@ from smashbox.utilities.hash_files import *
 fspath = config.get('fs_server_symlinks_path','/eos/user/%s/%s'%(config['oc_account_name'][0],config['oc_account_name']))
 
 @add_worker
-def worker0(step):    
+def worker0(step: Step) -> None:    
 
     # cleanup all local files for the test
     reset_owncloud_account()
@@ -30,8 +30,8 @@ def worker0(step):
     f2=os.path.basename(f2)
 
     #print os.path.join(d,f1),os.path.join(d,'link.file.abs.%s'%f1)
-    l1 = os.symlink(os.path.join(d,f1),os.path.join(d,'link.file.abs.%s'%f1))
-    l2 = os.symlink(f2,os.path.join(d,'link.file.rel.%s'%f2))
+    l1 = os.symlink(os.path.join(d,f1),os.path.join(d,'link.file.abs.%s'%f1))  # type: ignore[func-returns-value] # os.symlink returns None, the variable is unused
+    l2 = os.symlink(f2,os.path.join(d,'link.file.rel.%s'%f2))  # type: ignore[func-returns-value] # os.symlink returns None, the variable is unused
 
     subd = os.path.join(d,'subdir')
     os.mkdir(subd)
@@ -42,8 +42,8 @@ def worker0(step):
     create_hashfile(subd,size=30)
     create_hashfile(subd,size=40)
 
-    ldir1 = os.symlink(subd,os.path.join(d,'link.dir.abs'))
-    ldir2 = os.symlink('subdir',os.path.join(d,'link.dir.rel'))
+    ldir1 = os.symlink(subd,os.path.join(d,'link.dir.abs'))  # type: ignore[func-returns-value] # os.symlink returns None, the variable is unused
+    ldir2 = os.symlink('subdir',os.path.join(d,'link.dir.rel'))  # type: ignore[func-returns-value] # os.symlink returns None, the variable is unused
 
     # FIXME: sync and wait for fuse to flush changes to the server
     os.system('sync')
@@ -56,13 +56,13 @@ def worker0(step):
     syncd = make_workdir()
     run_ocsync(syncd)
 
-    def check_subdir_count(N):
+    def check_subdir_count(N: int) -> None:
         fatal_check(count_files(os.path.join(syncd,'subdir'))==N,'Expecting to have exactly %d entries'%N)
         fatal_check(count_files(os.path.join(syncd,'link.dir.abs'))==N,'Expecting to have exactly %d entries'%N)
         fatal_check(count_files(os.path.join(syncd,'link.dir.rel'))==N,'Expecting to have exactly %d entries'%N)
 
-    def check_all_corrupt():
-        def c(path):
+    def check_all_corrupt() -> None:
+        def c(path: str) -> None:
             ncorrupt = analyse_hashfiles(path)[2]
             fatal_check(ncorrupt==0, 'Corrupted files (%s) found in path %s'%(ncorrupt,path))
         c(syncd)

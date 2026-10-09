@@ -2,8 +2,8 @@
 
 import hashlib
 
-def md5sum(filename,BLOCK_SIZE,BLOCK_LIMIT,BLOCK_OFFSET):
-  blocks=[]
+def md5sum(filename: str,BLOCK_SIZE: int,BLOCK_LIMIT: int,BLOCK_OFFSET: int) -> tuple[str, list[str]]:
+  blocks: list[str]=[]
   cnt=0
   with open(filename, mode='rb') as f:
     d = hashlib.md5()
@@ -31,7 +31,7 @@ def md5sum(filename,BLOCK_SIZE,BLOCK_LIMIT,BLOCK_OFFSET):
 import sys
 import argparse
 
-def main():
+def main() -> None:
   parser = argparse.ArgumentParser()
 
   parser.add_argument('--block-size', '-b', action='store', dest="BLOCK_SIZE", type=int, default=16384, help='block size')
@@ -80,10 +80,10 @@ def main():
 
   print()
 
-  diff1 = []
-  diff2 = []
+  diff1: list[str] | str = []
+  diff2: list[str] | str = []
 
-  def print_header():
+  def print_header() -> None:
 
     print("    offset   i file1", end=' ')
     if args.file2:
@@ -104,7 +104,7 @@ def main():
        print('***', end=' ')
        diff1 = b1
        diff2 = b2
-       repeats=[]
+       repeats: list[int | str]=[]
        rcnt=0
        for j,bb in enumerate(blocks1):
          if bb == b2:

@@ -20,6 +20,7 @@ Note on effects of removing local state db (1.6):
 from smashbox.utilities import * 
 
 import glob
+from smashbox.utilities.reflection import SharedObject
 
 
 filesizeKB = int(config.get('basicSync_filesizeKB',10000))
@@ -70,14 +71,14 @@ for s in [1, 5000, 15000, 50000]:
                              'basicSync_rmLocalStateDB':t,
                              'basicSync_subdirPath':p } )
 
-def expect_content(fn,md5):
+def expect_content(fn: str, md5: str) -> None:
     actual_md5 = md5sum(fn)
     error_check(actual_md5 == md5, "inconsistent md5 of %s: expected %s, got %s"%(fn,md5,actual_md5))
 
-def expect_no_deleted_files(d):
+def expect_no_deleted_files(d: str) -> None:
     expect_deleted_files(d,[])
 
-def expect_deleted_files(d,expected_deleted_files):
+def expect_deleted_files(d: str, expected_deleted_files: list[str]) -> None:
     actual_deleted_files = glob.glob(os.path.join(d,'*_DELETED*'))
     logger.debug('deleted files in %s: %s',d,actual_deleted_files)
 
@@ -87,7 +88,7 @@ def expect_deleted_files(d,expected_deleted_files):
         error_check(any([fn in dfn for dfn in actual_deleted_files]), "expected deleted file for %s not found"%fn)
  
 
-def expect_conflict_files(d,expected_conflict_files):
+def expect_conflict_files(d: str, expected_conflict_files: list[str]) -> None:
     actual_conflict_files = glob.glob(os.path.join(d,'*conflict*.dat'))
 
     logger.debug('conflict files in %s: %s',d,actual_conflict_files)
@@ -102,12 +103,12 @@ def expect_conflict_files(d,expected_conflict_files):
     for bfn in exp_basefns:
         error_check(any([bfn in fn for fn in actual_conflict_files]), "expected conflict file for %s not found"%bfn)
     
-def expect_no_conflict_files(d):
+def expect_no_conflict_files(d: str) -> None:
     expect_conflict_files(d,[])
 
     
 @add_worker
-def creator(step):
+def creator(step: Step) -> None:
     
     reset_owncloud_account()
     reset_rundir()
@@ -152,7 +153,7 @@ def creator(step):
     expect_no_conflict_files(subdir) 
 
 @add_worker
-def winner(step):
+def winner(step: Step) -> None:
     step(2,'initial sync')
 
     d = make_workdir()
@@ -196,7 +197,7 @@ def winner(step):
 # this is the loser which lost it's local state db after initial sync
 
 @add_worker
-def loser(step):
+def loser(step: Step) -> None:
 
     step(2,'initial sync')
 
@@ -259,7 +260,7 @@ def loser(step):
                                   'TEST_FILE_MODIFIED_LOSER.dat', 'TEST_FILE_MODIFIED_WINNER.dat']) # because the local and remote state is different and it is assumed that this is a conflict (FIXME: in the future timestamp-based last-restort check could improve this situation)
 
 @add_worker
-def checker(step):
+def checker(step: Step) -> None:
     shared = reflection.getSharedObject()
 
     step(7,'download the repository for final verification')
@@ -274,7 +275,7 @@ def checker(step):
     expect_no_conflict_files(subdir) 
 
 
-def final_check(d,shared):
+def final_check(d: str, shared: SharedObject) -> None:
     """ This is the final check applicable to all workers - this reflects the status of the remote repository so everyone should be in sync.
     The only potential differences are with locally generated conflict files.
     """
@@ -303,7 +304,7 @@ def final_check(d,shared):
 
 ###############################################################################
 
-def final_check_1_5(d): # this logic applies for 1.5.x client and owncloud server...
+def final_check_1_5(d: str) -> None: # this logic applies for 1.5.x client and owncloud server...
     """ Final verification: all local sync folders should look the same. We expect conflicts and handling of deleted files depending on the rmLocalStateDB option. See code for details.
     """
     import glob

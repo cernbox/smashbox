@@ -1,7 +1,7 @@
 import operator
 
 
-def version_compare(v1, operator, v2):
+def version_compare(v1: str, operator: str, v2: str) -> bool:
     """
     The function first replaces _, - and + with a dot . in the version strings and also inserts dots . before and
     after any non number so that for example '4.3.2RC1' becomes '4.3.2.RC.1'. Then it compares the parts starting
@@ -18,7 +18,7 @@ def version_compare(v1, operator, v2):
     return __version_compare_tuple(__normalize_version(v1), operator, __normalize_version(v2))
 
 
-def __version_compare_tuple(t1, compare, t2):
+def __version_compare_tuple(t1: list[int], compare: str, t2: list[int]) -> bool:
 
     # Make both versions the same length
     if len(t1) < len(t2):
@@ -44,7 +44,7 @@ def __version_compare_tuple(t1, compare, t2):
         raise ValueError('Invalid operator')
 
 
-def __normalize_version(version):
+def __normalize_version(version: str) -> list[int]:
     v = version.lower()
     v = v.replace('-', '.')
     v = v.replace('_', '.')
@@ -74,7 +74,7 @@ def __normalize_version(version):
     return list(map(__prepare_tuple, v.split(".")))
 
 
-def __prepare_tuple(item):
+def __prepare_tuple(item: str) -> int:
     """
     Replaces strings with integers, so we can compare them correctly:
     any string not found in this list < dev < alpha = a < beta = b < RC = rc < #
@@ -101,7 +101,7 @@ def __prepare_tuple(item):
 
 if __name__ == "__main__":
 
-    def assert_version_compare(v1, operator, v2, result):
+    def assert_version_compare(v1: str, operator: str, v2: str, result: bool) -> None:
         if version_compare(v1, operator, v2) == result:
             print('[PASS] Comparing %s %s %s' % (v1, operator, v2))
         else:

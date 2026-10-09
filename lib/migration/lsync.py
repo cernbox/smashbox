@@ -13,6 +13,7 @@
 
 
 from smashbox.utilities import *
+from smashbox.utilities.reflection import SharedObject
 
 import glob
 
@@ -22,14 +23,14 @@ filesizeKB = 5000
 FOLDER_FILES = ['IMG_20180615_224839.jpg', 'IMG_20180615_224840.jpg', 'IMG_20180616_232842.jpg']
 
 
-def expect_content(fn,md5):
+def expect_content(fn: str,md5: str) -> None:
     actual_md5 = md5sum(fn)
     error_check(actual_md5 == md5, "inconsistent md5 of %s: expected %s, got %s"%(fn,md5,actual_md5))
 
-def expect_no_deleted_files(d):
+def expect_no_deleted_files(d: str) -> None:
     expect_deleted_files(d,[])
 
-def expect_deleted_files(d,expected_deleted_files):
+def expect_deleted_files(d: str,expected_deleted_files: list[str]) -> None:
     actual_deleted_files = glob.glob(os.path.join(d,'*_DELETED*'))
     logger.debug('deleted files in %s: %s',d,actual_deleted_files)
 
@@ -39,7 +40,7 @@ def expect_deleted_files(d,expected_deleted_files):
         error_check(any([fn in dfn for dfn in actual_deleted_files]), "expected deleted file for %s not found"%fn)
 
 
-def expect_conflict_files(d,expected_conflict_files):
+def expect_conflict_files(d: str,expected_conflict_files: list[str]) -> None:
     actual_conflict_files = glob.glob(os.path.join(d,'*_conflict-*-*'))
 
     logger.debug('conflict files in %s: %s',d,actual_conflict_files)
@@ -54,12 +55,12 @@ def expect_conflict_files(d,expected_conflict_files):
     for bfn in exp_basefns:
         error_check(any([bfn in fn for fn in actual_conflict_files]), "expected conflict file for %s not found"%bfn)
 
-def expect_no_conflict_files(d):
+def expect_no_conflict_files(d: str) -> None:
     expect_conflict_files(d,[])
 
 
 @add_worker
-def winner(step):
+def winner(step: Step) -> None:
     import shutil
 
     step(2,'initial sync')
@@ -129,7 +130,7 @@ def winner(step):
 
 
 @add_worker
-def checker(step):
+def checker(step: Step) -> None:
     shared = reflection.getSharedObject()
 
     step(7,'download the repository for final verification')
@@ -145,7 +146,7 @@ def checker(step):
     expect_no_conflict_files(subdir)
 
 
-def final_check(d,shared):
+def final_check(d: str,shared: SharedObject) -> None:
     """ This is the final check applicable to all workers - this reflects the status of the remote repository so everyone should be in sync.
     The only potential differences are with locally generated conflict files.
     """

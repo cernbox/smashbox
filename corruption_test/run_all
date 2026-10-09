@@ -7,7 +7,7 @@ smashdir=os.path.join(thisdir,'..')
 
 
 try:
-    LOOP=os.environ['LOOP']
+    LOOP: str | int=os.environ['LOOP']
 except KeyError as x:
     LOOP=1
 
@@ -26,11 +26,11 @@ action - %s
 
 You may user environment variable LOOP to defined the number of time the test should loop on each client. By default the command will loop: %d time(s) /-1 means forever/
 
-""" % (repr(x),sys.argv[0],', '.join(possible_actions),LOOP))
+""" % (repr(x),sys.argv[0],', '.join(possible_actions),LOOP)) # type: ignore[str-format] # FIXME: pre-existing bug, %d raises TypeError when LOOP is set in the environment (str)
     sys.exit(-1)
 
 
-def action_cmd():
+def action_cmd() -> str | None: # type: ignore[return] # implicit None fall-through (unreachable: action is checked against possible_actions)
     if action[0:3] == 'run':
         return 'time %(smashdir)s/corruption_test/%(action)s %(k)s  &' % {'smashdir':smashdir,'k':LOOP,'action':action}
     if action == 'kill':

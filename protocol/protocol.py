@@ -5,16 +5,18 @@ import smashbox.curl
 
 import sys,os,os.path,random
 
+from smashbox.curl import Response
+
 # Enable the checksuming functionality test as described in checksum.md
 # The type may be: Adler32 or MD5
-CHECKSUM_ENABLED=None
+CHECKSUM_ENABLED: str | None = None
 
-def enable_checksum(cstype):
+def enable_checksum(cstype: str | None) -> None:
     global CHECKSUM_ENABLED
     #assert(cstype in known_checksum_types)
     CHECKSUM_ENABLED=cstype
 
-def compute_checksum(fn):
+def compute_checksum(fn: str) -> str | None:
     if CHECKSUM_ENABLED:
         if CHECKSUM_ENABLED == "Adler32":
             return "Adler32:"+adler32(fn)
@@ -24,7 +26,7 @@ def compute_checksum(fn):
         
 known_checksum_types = ['MD5','Adler32']
 
-def chunk_file_upload(filename,dest_dir_url,chunk_size=None,header_if_match=None,android_client_bug_900=False,checksum=None):
+def chunk_file_upload(filename: str, dest_dir_url: str, chunk_size: int | None = None, header_if_match: str | None = None, android_client_bug_900: bool = False, checksum: str | None = None) -> Response:
     """ Use the checksum if provided, if not calculate automatically.
     """
     
@@ -48,7 +50,7 @@ def chunk_file_upload(filename,dest_dir_url,chunk_size=None,header_if_match=None
     # NOTE: 1.6 mirall implementation: rand() ^ mtime ^ (size << 16), propagator_qnam.cpp
     transfer_id = random.randint(0,sys.maxsize)
 
-    headers = {'OC-Chunked':'1', 'X-OC-Mtime':mtime, 'OC-Total-Length':total_size}
+    headers: dict[str, object] = {'OC-Chunked':'1', 'X-OC-Mtime':mtime, 'OC-Total-Length':total_size}
 
     if android_client_bug_900: # emulate this bug: https://github.com/owncloud/android/issues/900
         del headers['OC-Total-Length']
@@ -106,7 +108,7 @@ def chunk_file_upload(filename,dest_dir_url,chunk_size=None,header_if_match=None
 
     return r
 
-def file_upload(filename,dest_dir_url,header_if_match=None,checksum=None):
+def file_upload(filename: str, dest_dir_url: str, header_if_match: str | None = None, checksum: str | None = None) -> Response:
 
     logger.info('file_upload: %s %s %s',filename,dest_dir_url,header_if_match)
     
@@ -118,7 +120,7 @@ def file_upload(filename,dest_dir_url,header_if_match=None,checksum=None):
 
     client = smashbox.curl.Client()
 
-    headers = {'X-OC-Mtime':mtime, 'OC-Total-Length':total_size} #NOTE: OC-Total-Length seems to be ignored by the oc7 server but is still included by the client (1.6)
+    headers: dict[str, object] = {'X-OC-Mtime':mtime, 'OC-Total-Length':total_size} #NOTE: OC-Total-Length seems to be ignored by the oc7 server but is still included by the client (1.6)
 
     if header_if_match:
         headers['If-Match'] = header_if_match
@@ -146,7 +148,7 @@ def file_upload(filename,dest_dir_url,header_if_match=None,checksum=None):
     return r
 
 
-def file_download(filename,src_dir_url,dest_dir):
+def file_download(filename: str, src_dir_url: str, dest_dir: str) -> Response:
     import tempfile
 
     src_url = os.path.join(src_dir_url,filename)
@@ -167,7 +169,7 @@ def file_download(filename,src_dir_url,dest_dir):
     return r
 
 
-def quota_check(url,depth=0):
+def quota_check(url: str, depth: int | str = 0) -> Response:
     query="""<?xml version="1.0" ?>
   <d:propfind xmlns:d="DAV:"><d:prop>
       <d:quota-available-bytes/>   
@@ -179,7 +181,7 @@ def quota_check(url,depth=0):
 
     return client.PROPFIND(url,query,depth=depth)
 
-def stat_top_level(url,depth=0):
+def stat_top_level(url: str, depth: int | str = 0) -> Response:
 
     query="""<?xml version="1.0" ?>
 <d:propfind xmlns:d="DAV:">
@@ -193,7 +195,7 @@ def stat_top_level(url,depth=0):
     r = client.PROPFIND(url,query,depth=depth)
     return r
    
-def all_prop_android(url,depth=0):
+def all_prop_android(url: str, depth: int | str = 0) -> Response:
     """ All prop request as issued by Owncloud Android Client
     """
     query="""<?xml version="1.0" encoding="UTF-8"?><D:propfind xmlns:D="DAV:"><D:allprop/></D:propfind>"""
@@ -205,7 +207,7 @@ def all_prop_android(url,depth=0):
     return client.PROPFIND(url,query,depth=depth)
 
 
-def ls_prop_ios_f1e09c(url,depth):
+def ls_prop_ios_f1e09c(url: str, depth: int | str) -> Response:
     # fixed wrong propfind (our version has allprop)
     # code ref:
     # https://github.com/owncloud/ios-library/blame/c9897927fbe5f4695369412d9f2709b352a28f59/OCCommunicationLib/OCCommunicationLib/OCWebDavClient/OCWebDAVClient.m#L274
@@ -217,7 +219,7 @@ def ls_prop_ios_f1e09c(url,depth):
     return client.PROPFIND(url,query,depth=depth)
 
 
-def ls_prop_desktop17(url,depth=0):
+def ls_prop_desktop17(url: str, depth: int | str = 0) -> Response:
     """ List directory: desktop sync client 1.7
     """
 
@@ -235,7 +237,7 @@ def ls_prop_desktop17(url,depth=0):
     return r
 
 
-def ls_prop_desktop20(url,depth=0):
+def ls_prop_desktop20(url: str, depth: int | str = 0) -> Response:
     """ List directory: desktop sync client 2.0
     """
 
@@ -260,7 +262,7 @@ def ls_prop_desktop20(url,depth=0):
     r=client.PROPFIND(url,query,depth=depth)
 
     try:
-        r.propfind_reponse
+        r.propfind_reponse # type: ignore[attr-defined] # FIXME: pre-existing typo (propfind_response), so the checks below are always skipped
     except AttributeError:
         return r
 
@@ -289,7 +291,7 @@ def ls_prop_desktop20(url,depth=0):
     return r
    
 
-def get_url_path(url):
+def get_url_path(url: str) -> str:
     """ Return the path part of the url by stripping a properly formed URL (with protocol:// prefix)
     """
     url = url[url.find('//')+2:]
@@ -299,7 +301,7 @@ def get_url_path(url):
         return url[i+1:]
 
 
-def create_directory(url,d):
+def create_directory(url: str, d: str) -> Response:
     client = smashbox.curl.Client()
     r = client.MKCOL(os.path.join(url,d))
 
@@ -308,7 +310,7 @@ def create_directory(url,d):
     return r
 
 
-def move(url,x,y):
+def move(url: str, x: str, y: str) -> Response:
     client = smashbox.curl.Client()
 
     src_url = os.path.join(url,os.path.basename(x))

@@ -31,7 +31,7 @@ if not ok:
 
 
 @add_worker
-def main(step):
+def main(step: Step) -> None:
     t0 = time.time()
     print("Run options: nfiles=%d revad_address=%s username=%s password=%s blocksize=%d" % (nfiles, revad_address, username, "xxxx", blocksize))
 
@@ -84,7 +84,7 @@ def main(step):
     push_to_monitoring("cernbox.cboxsls.revad_corruption.downloaded_files", k1)
 
 # create_sample_files create the sample files
-def create_sample_files(d):
+def create_sample_files(d: str) -> None:
     print("Creating sample files ...")
 
     # create sample files inside folder
@@ -94,55 +94,55 @@ def create_sample_files(d):
 
 
 
-def get_hash_files(d):
+def get_hash_files(d: str) -> list[str]:
     hash_files = [join(d, f) for f in listdir(d) if isfile(join(d, f))]
     return hash_files
 
-def reva_authenticate():
+def reva_authenticate() -> None:
     uri = "tcp://%s:%s@%s" % (username, password, revad_address)
     cmd = "%s login %s" % (reva_cli, uri)
     print("REVA auth: cmd=%s" % (cmd))
     runcmd(cmd)
 
-def reva_create_target_folder(target_folder):
+def reva_create_target_folder(target_folder: str) -> None:
     # missing mkdir on the reva-cli, xrdcopy will create dir for us
     pass
 
 
-def reva_upload_sample_files(remote_folder, hash_files):
+def reva_upload_sample_files(remote_folder: str, hash_files: list[str]) -> None:
     print("Uploading sample files ...")
     # upload using reva-cli to remote server
     for f in hash_files:
          upload(remote_folder, f)
 
 # upload uploads a file to revad
-def upload(remote_folder, fn):
+def upload(remote_folder: str, fn: str) -> None:
     target_fn = join(remote_folder, os.path.basename(fn))
     cmd = "%s storage upload %s %s" % (reva_cli, target_fn, fn)
     print("REVA upload: cmd=%s" % (cmd))
     runcmd(cmd)
 
-def reva_download_sample_files(remote_folder, e, hash_files):
+def reva_download_sample_files(remote_folder: str, e: str, hash_files: list[str]) -> None:
     print("Downloading sample files ...")
     # download using reva-cli to local disk
     for f in hash_files:
          download(remote_folder, e, f)
 
 # download downloads a file to revad
-def download(remote_folder, e, fn):
+def download(remote_folder: str, e: str, fn: str) -> None:
     remote_fn = join(remote_folder, os.path.basename(fn))
     local_fn = join(e, os.path.basename(fn))
     cmd = "%s storage download %s %s" % (reva_cli, remote_fn, local_fn)
     print("REVA download: cmd=%s" % (cmd))
     runcmd(cmd)
 
-def verify_sample_files(d):
+def verify_sample_files(d: str) -> tuple[int, int, int]:
     print("Verifying uploaded files ...")
     # verify that the checksums of the downloaded files
     # matches the one of the sample file
     return analyse_hashfiles(d)
 
-def clean_run(remote_folder):
+def clean_run(remote_folder: str) -> None:
     cmd = "%s storage delete %s" % (reva_cli, remote_folder)
     print("REVA clean: cmd=%s" % (cmd))
     runcmd(cmd)

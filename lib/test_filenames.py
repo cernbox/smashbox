@@ -30,7 +30,7 @@ charsets_excluded_from_sync = {
                  'pipe'    : '|'
 }
 
-def is_excluded(name):
+def is_excluded(name: str) -> bool:
     """
     Returns true if the given file name matches an pattern
     excluded from sync by the sync client.
@@ -58,7 +58,7 @@ def is_excluded(name):
     return False
 
 @add_worker
-def creator(step):
+def creator(step: Step) -> None:
     
     reset_owncloud_account()
     reset_rundir()
@@ -134,7 +134,7 @@ def creator(step):
 
 
 @add_worker
-def propagator(step):
+def propagator(step: Step) -> None:
 
     step(2,'check propagation of files')
 

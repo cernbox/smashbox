@@ -13,7 +13,7 @@ from smashbox.utilities.hash_files import *
 fspath = config.get('fs_server_symlinks_path','/eos/user/%s/%s'%(config['oc_account_name'][0],config['oc_account_name']))
 
 @add_worker
-def worker0(step):    
+def worker0(step: Step) -> None:    
 
     # cleanup all local files for the test
     reset_owncloud_account()
@@ -30,7 +30,7 @@ def worker0(step):
     f2=os.path.basename(f2)
 
     link_path = os.path.join(d,'link.file.rel.%s'%f1)
-    link = os.symlink(f1,link_path)
+    link = os.symlink(f1,link_path)  # type: ignore[func-returns-value] # os.symlink returns None, the variable is unused
 
     # FIXME: sync and wait for fuse to flush changes to the server
     os.system('sync')
@@ -43,7 +43,7 @@ def worker0(step):
     syncd = make_workdir()
     run_ocsync(syncd)
 
-    def check_all_good(N):
+    def check_all_good(N: int) -> None:
         ncorrupt = analyse_hashfiles(syncd)[2]
         fatal_check(ncorrupt==0, 'Corrupted files (%s) found in path %s'%(ncorrupt,syncd))
         error_check(count_files(syncd)==N,'Expecting to have exactly %d entries'%N)
@@ -53,7 +53,7 @@ def worker0(step):
     step(3,'When a symlink becomes broken on the server the file is removed locally')
 
     os.remove(link_path)
-    link = os.symlink('nirvana/does/not/exist',link_path)
+    link = os.symlink('nirvana/does/not/exist',link_path)  # type: ignore[func-returns-value] # os.symlink returns None, the variable is unused
 
     # FIXME: sync and wait for fuse to flush changes to the server
     os.system('sync')

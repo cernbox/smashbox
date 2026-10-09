@@ -34,7 +34,7 @@ from smashbox.utilities import *
 from smashbox.utilities import reflection
 
 @add_worker
-def worker0(step):
+def worker0(step: Step) -> None:
     shared = reflection.getSharedObject()
     
     reset_owncloud_account()
@@ -80,7 +80,7 @@ def worker0(step):
 
 
 @add_worker
-def worker1(step):
+def worker1(step: Step) -> None:
     shared = reflection.getSharedObject()
     
     step(2,'sync initial state created by worker 0')
@@ -119,7 +119,7 @@ def worker1(step):
 
 
 @add_worker
-def checker(step):
+def checker(step: Step) -> None:
     shared = reflection.getSharedObject()
     
     step(6,'sync the final state of the repository into a fresh local folder')

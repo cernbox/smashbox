@@ -6,21 +6,21 @@ from smashbox.utilities import *
 from smashbox.utilities import reflection
 
 @add_worker
-def helloA(step):
+def helloA(step: Step) -> None:
     step(1)
 
     fatal_check(False,'this is a FATAL error')
 
 
 @add_worker
-def helloB(step):
+def helloB(step: Step) -> None:
     step(1)
 
     fatal_check(False,'this is a FATAL error')
 
 
 @add_worker
-def helloC(step):
+def helloC(step: Step) -> None:
     step(2)
 
     logger.error('Executing post fatal handler')

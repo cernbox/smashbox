@@ -7,7 +7,7 @@ import os
 import os.path
 
 @add_worker
-def main(step):
+def main(step: Step) -> None:
 
     d = make_workdir()
     reset_owncloud_account()
@@ -56,9 +56,9 @@ def main(step):
     # pass around  incorrect checksum (of the type supported by the server)
     # the puts should be failing
 
-    def corrupted_checksum(fn):
+    def corrupted_checksum(fn: str) -> str:
         c = smashbox.protocol.compute_checksum(fn)
-        c = c[:-1]+chr(ord(c[-1])+1)
+        c = c[:-1]+chr(ord(c[-1])+1) # type: ignore[index, operator] # FIXME: pre-existing bug, compute_checksum() returns None if the server checksum type is neither MD5 nor Adler32
         return c
 
     logger.info('*** 2. upload with corrupted checksum value (files should be refused by the server)')

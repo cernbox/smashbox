@@ -29,7 +29,7 @@ verbose = bool(config.get('storm_verbose',False))
 # File size. None = default size/distribution.
 filesize = config.get('storm_filesize',None)
 
-def uploader(step):
+def uploader(step: Step) -> None:
     
     step(1,'Preparation')
     d = make_workdir()
@@ -53,13 +53,13 @@ for i in range(nuploaders):
     add_worker(uploader,name="uploader%02d"%(i+1))
 
 @add_worker
-def initializer(step):
+def initializer(step: Step) -> None:
 
     reset_owncloud_account()
     reset_rundir()
 
 
-def downloader(step):    
+def downloader(step: Step) -> None:    
     step(1,'Active clients are syncing...')
     d = make_workdir()
     run_ocsync(d)

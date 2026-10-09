@@ -6,12 +6,14 @@ import smashbox.utilities.reflection
 import smashbox.curl
 
 import re
+from collections.abc import Callable
+from typing import cast
 
 """ Test docstrings in protocol.md
 """
 
 @add_worker
-def main(step):
+def main(step: Step) -> None:
 
     d = make_workdir()
     reset_owncloud_account()
@@ -33,34 +35,34 @@ def main(step):
 
     logger.info('checked %d ok out of %d',block_ok,len(blocks))
 
-def check_propfind_request(header,body):
+def check_propfind_request(header: list[str],body: str) -> None:
     # as a bare minimum check if XML syntax is correct
     
     from xml.etree import ElementTree
     ElementTree.fromstring(body)
 
-def check_propfind_response(header,body):
+def check_propfind_response(header: list[str],body: str) -> None:
     smashbox.curl._parse_propfind_response(body)
 
-def parse_docfile(docfile):
+def parse_docfile(docfile: str) -> list[tuple[Callable[[list[str], str], None], list[str], str, int]]:
 
     propfind_request = re.compile(r"(?P<indent>\s+)> PROPFIND")
     propfind_response = re.compile(r"(?P<indent>\s+)< PROPFIND")
 
-    blocks=[]
+    blocks: list[tuple[Callable[[list[str], str], None], list[str], str, int]]=[]
 
-    block_re=None
+    block_re: re.Pattern[str] | None=None
 
-    block_indent=0
-    block_check=None
-    block_header=[]
+    block_indent: int | None=0
+    block_check: Callable[[list[str], str], None] | None=None
+    block_header: list[str]=[]
     block_body=''
     in_header=False
     block_lineno=0
 
     lineno=0
 
-    def DEBUG(*x):
+    def DEBUG(*x: object) -> None:
         print('DEBUG:',lineno,x)
 
     for line in open(docfile, encoding='utf-8'):
@@ -76,7 +78,7 @@ def parse_docfile(docfile):
                 r=r1
             else:
                 block_check = check_propfind_response
-                r=r2
+                r=cast(re.Match[str], r2) # r1 is None here, so r2 matched
             block_indent=len(r.group('indent'))
             block_re=re.compile(r.group('indent')+"(?P<text>.*)")
             in_header=True
@@ -102,7 +104,7 @@ def parse_docfile(docfile):
                     block_body += text+'\n'
                     DEBUG('block_body',line)
             else:
-                blocks.append((block_check,block_header,block_body,block_lineno))
+                blocks.append((cast(Callable[[list[str], str], None], block_check),block_header,block_body,block_lineno)) # block_check is set whenever block_re is
                 block_check=None
                 block_header=[]
                 block_body=''

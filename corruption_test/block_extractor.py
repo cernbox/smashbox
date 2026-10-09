@@ -31,7 +31,7 @@ corrupted_file=sys.argv[1]
 block_order_file=sys.argv[2]
 
 lines = [line.rstrip('\n') for line in open(block_order_file)]
-chunks=[]
+chunks: list[tuple[int, int]]=[]
 for line in lines:
     tokens=line.split("-")
     offset,size=int(tokens[0]),int(tokens[1])

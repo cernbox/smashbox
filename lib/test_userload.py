@@ -25,7 +25,7 @@ hash_filemask = 'hash_{md5}'
 from smashbox.utilities.hash_files import *
 
 @add_worker
-def uploader(step):
+def uploader(step: Step) -> None:
 
     reset_owncloud_account()
     reset_rundir()
@@ -48,7 +48,7 @@ def uploader(step):
     return
 
 
-def downloader(step):
+def downloader(step: Step) -> None:
     
     step(1,'Active clients are syncing...')
     d = make_workdir()

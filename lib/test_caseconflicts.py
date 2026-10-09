@@ -1,5 +1,5 @@
 import os,sys,inspect
-currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) # type: ignore[arg-type] # currentframe() is never None in CPython
 parentdir = os.path.dirname(currentdir)
 
 sys.path.insert(0,os.path.join(parentdir,"protocol"))
@@ -31,7 +31,7 @@ Test input params:
 """ --- Auxiliar functions  --- """
 
 
-def getPosCapLetters(filename):
+def getPosCapLetters(filename: str) -> list[int]:
     """
     Given a word; it gets the positions where are located the
     capital letters
@@ -39,8 +39,8 @@ def getPosCapLetters(filename):
     return list(filter(lambda x: filename[x].isupper(), range(len(filename))))
 
 
-def upperLowerVariations(filename, pos_list, result, i, counter):
-    onecase = []
+def upperLowerVariations(filename: str, pos_list: list[int], result: list[str], i: int, counter: int) -> list[str]:
+    onecase: list[str] | str = []
     if counter == len(pos_list) - 1:  # last case is always all lowercase
         return result
     if i == len(pos_list):  # circular list
@@ -50,14 +50,14 @@ def upperLowerVariations(filename, pos_list, result, i, counter):
     return upperLowerVariations(onecase, pos_list, result, i + 1, counter + 1)
 
 
-def generateConflitiveCases(filename):
+def generateConflitiveCases(filename: str) -> list[list[str]]:
     """
     :return: filenames differing by case
     """
     pos_list = getPosCapLetters(filename)
     variation_list = [[filename, filename.lower()]]  ## uppercase and lowercase
     for i in range(len(pos_list)):  ## variations upper + lower
-        result = []
+        result: list[str] = []
         case_list = upperLowerVariations(filename, pos_list, result, i, 0)
         variation_list.append(case_list)
     return variation_list
@@ -85,7 +85,7 @@ URL = oc_webdav_url()
 
 
 @add_worker
-def creator(step):
+def creator(step: Step) -> None:
     shared = reflection.getSharedObject()
     # cleanup all local files for the test
     reset_rundir()
@@ -131,7 +131,7 @@ def creator(step):
 
 
 @add_worker
-def downloader(step):
+def downloader(step: Step) -> None:
     shared = reflection.getSharedObject()
 
     step(4, 'Sync and check if the same files are downloaded in a different directory')

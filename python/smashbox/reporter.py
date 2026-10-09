@@ -1,11 +1,18 @@
+import argparse
+from types import ModuleType
+from typing import Any
+
+
 class Reporter:
     """ Report execution state of smashbox.
     """
 
-    def __init__(self):
+    config: Any
+
+    def __init__(self) -> None:
         self.DEMO=False
 
-    def smashbox_start(self,args,config):
+    def smashbox_start(self,args: argparse.Namespace,config: Any) -> None:
         """
         Smashbox is starting.
         Arguments:
@@ -17,7 +24,7 @@ class Reporter:
             print("SMASHBOX_START",args,config)
             self.config=config
 
-    def smashbox_stop(self):
+    def smashbox_stop(self) -> None:
         """
         Smashbox is about to stop.
         """
@@ -26,7 +33,7 @@ class Reporter:
             print("SMASHBOX_STOP")
 
     
-    def testcase_start(self,name,loop_i,testset_i,namespace):
+    def testcase_start(self,name: str,loop_i: int | None,testset_i: int | None,namespace: ModuleType) -> None:
         """
         Testcase is about to start.
         Arguments:
@@ -53,7 +60,7 @@ class Reporter:
                     print(c,self.config[c])
 
 
-    def testcase_stop(self,returncode):
+    def testcase_stop(self,returncode: int) -> None:
         if self.DEMO:
             print("TESTCASE_STOP",returncode)
 

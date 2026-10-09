@@ -9,7 +9,7 @@ from smashbox.utilities import *
 import glob
 
 @add_worker
-def scrapeServerLog(step):
+def scrapeServerLog(step: Step) -> None:
 
     step (1, 'create directory for server log')
     d = make_workdir()

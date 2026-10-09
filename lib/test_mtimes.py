@@ -18,20 +18,20 @@ oc_client_version = str(str(ocsync_version())[1:-1].replace(", ", "."))
 if oc_client_version=="2.2.4" or oc_client_version=="2.3.3":
    do_not_report_as_failure()
 
-sleep = int(config.get('mtimes_sleep',0)) 
+sleep = int(config.get('mtimes_sleep',0)) # type: ignore[assignment] # deliberately shadows smashbox.utilities.sleep
 
 import random
 
 testsets = [ { 'mtimes_sleep' : 5 }, { 'mtimes_sleep' : 5 + random.random()*10 } ]
 
-def log_times(**kwds):
+def log_times(**kwds: os.stat_result) -> None:
     for k in sorted(kwds.keys()):
         st = kwds[k]
         logger.info("%15s atime %f mtime %f ctime %f", k,st.st_atime,st.st_mtime,st.st_ctime)
 
 
 @add_worker
-def worker0(step):    
+def worker0(step: Step) -> None:    
 
     # do not cleanup server files from previous run
     reset_owncloud_account()
@@ -80,7 +80,7 @@ def worker0(step):
 
         
 @add_worker
-def worker1(step):
+def worker1(step: Step) -> None:
 
     shared = reflection.getSharedObject()
 
@@ -95,7 +95,7 @@ def worker1(step):
     for k in [3,5,7]:
         step(k,'Resync and check files added by worker0')
 
-        time.sleep(sleep)
+        time.sleep(sleep) # type: ignore[arg-type] # mypy still sees smashbox.utilities.sleep; at runtime it is the int above
 
         run_ocsync(d)
 

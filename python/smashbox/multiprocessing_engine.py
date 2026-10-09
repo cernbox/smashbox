@@ -11,7 +11,7 @@
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Perform internal setup of the environment.
 # This is a Copy/Paste logic which must stay in THIS file
-def standardSetup():
+def standardSetup() -> None:
    import sys, os.path
    # insert the path to cernafs based on the relative position of this scrip inside the service directory tree
    exeDir = os.path.abspath(os.path.normpath(os.path.dirname(os.path.dirname(sys.argv[0]))))
@@ -27,9 +27,23 @@ del standardSetup
 # all internal symbols start with _smash_
 # other symbols defined in this file are available in the user's test scripts
 
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, TypeVar
+
+if TYPE_CHECKING:
+    import argparse
+    import logging
+    import multiprocessing.context
+    import multiprocessing.managers
+    import multiprocessing.process
+    import queue
+    import smashbox.monitoring.monit
+    from smashbox.utilities import Step
+
+_F = TypeVar('_F', bound=Callable[..., None])
 
 # obsolete to be removed
-def log(*args,**kwds):
+def log(*args: object,**kwds: object) -> None:
     import time
     print(time.ctime(),_smash_.process_name,(" ".join([str(s) for s in args]))%kwds)
 
@@ -39,11 +53,11 @@ class _smash_SmashSharedObject:
     """ A bunch of shared attributes stored in a directory as separate files.
     """
 
-    def __init__(self, d):
+    def __init__(self, d: str) -> None:
         self._dir = d
         self._makedir()
 
-    def _makedir(self):
+    def _makedir(self) -> None:
         try:
             os.makedirs(self._dir)
         except OSError as x:
@@ -51,7 +65,7 @@ class _smash_SmashSharedObject:
             if x.errno != errno.EEXIST:
                 raise
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> Any:
         self._makedir()
         import pickle
         try:
@@ -61,7 +75,7 @@ class _smash_SmashSharedObject:
             logger.debug(x)
             raise AttributeError(x)
 
-    def __setitem__(self, key, val):
+    def __setitem__(self, key: str, val: Any) -> None:
         self._makedir()
         import pickle
         import time
@@ -73,19 +87,19 @@ class _smash_SmashSharedObject:
         import shutil
         shutil.move(tmp_name, dest_name)
 
-    def keys(self):
+    def keys(self) -> list[str]:
         import glob
         self._makedir()
         attrs = [os.path.basename(a)[len('_attr_'):] for a in glob.glob(os.path.join(self._dir, '_attr_*'))]
         return attrs
 
-    def dict(self):
+    def dict(self) -> dict[str, Any]:
         keys = {}
         for a in self.keys():
             keys[a] = self[a]
         return keys
 
-    def __str__(self):
+    def __str__(self) -> str:
         return repr(self.dict())
 
 class _smash_:
@@ -96,7 +110,7 @@ class _smash_:
 
     # all the rest of attributes are internal -- accessors for process_name and common_dict are defined in utilities
 
-    process_name = None
+    process_name: str | None = None
     process_number = 0
     
     DEBUG = False
@@ -104,11 +118,20 @@ class _smash_:
     # this is a hardcoded maximum number of steps
     N_STEPS = 100
     
-    workers = []
-    all_procs = []
+    workers: list[tuple[Callable[['Step'], None], str | None]] = []
+    all_procs: list['multiprocessing.process.BaseProcess'] = []
+
+    # set at runtime
+    supervisor_step: 'multiprocessing.managers.ValueProxy[int]'
+    steps: 'multiprocessing.managers.ListProxy[int]'
+    shared_object: _smash_SmashSharedObject
+    monitor: 'smashbox.monitoring.monit.StateMonitor'
+    worker_results: 'queue.Queue[list[list[str]]] | None'
+    parser: 'argparse.ArgumentParser'
+    args: 'argparse.Namespace'
 
     @staticmethod
-    def supervisor(steps):
+    def supervisor(steps: 'multiprocessing.managers.ListProxy[int]') -> None:
 
         import time
         #print "SU",steps
@@ -136,11 +159,11 @@ class _smash_:
             log('stop',_smash_.supervisor_step.value,_smash_.steps)
 
     @staticmethod
-    def _step(i,wi,message):
+    def _step(i: int,wi: int,message: str | None) -> None:
         import time
         _smash_.steps[wi] = i
 
-        def supervisor_status():
+        def supervisor_status() -> str:
             return "(supervisor_step="+str(_smash_.supervisor_step.value)+" worker_steps="+str(_smash_.steps)+")"
 
         if _smash_.DEBUG:
@@ -156,7 +179,7 @@ class _smash_:
             logger.info( 'entering new step \n'+sep+'\n'+'(%d) %s:  %s\n'%(i,_smash_.process_name,message.upper())+sep)
 
     @staticmethod
-    def worker_wrap(wi,f,fname):
+    def worker_wrap(wi: int,f: Callable[['Step'], None],fname: str | None) -> None:
         if fname is None:
             fname = f.__name__
         _smash_.process_name=fname
@@ -165,7 +188,7 @@ class _smash_:
         import smashbox.utilities
         import time
 
-        def step(i,message=""):
+        def step(i: int,message: str | None = "") -> None:
             _smash_._step(i,wi,message)
 
             sleep_time_at_step = int(config.get('sleep_time_at_step',0))
@@ -194,7 +217,7 @@ class _smash_:
                   
 
     @staticmethod
-    def run():
+    def run() -> None:
         """ Lunch worker processes and the supervisor loop. Block until all is finished.
         """
         import multiprocessing
@@ -249,7 +272,7 @@ class _smash_:
               import sys
               sys.exit(p.exitcode)
 
-def add_worker(f,name=None):
+def add_worker(f: _F,name: str | None = None) -> _F:
     """ Decorator for worker functions in the user-defined test
     scripts: workers execute in parallel and may use 'step(N)' syntax
     to define synchronization points.
@@ -257,7 +280,7 @@ def add_worker(f,name=None):
     _smash_.workers.append((f,name))
     return f
 
-def _smash_worker_starter(i,funct,fname, shared_object, steps,supervisor_step, worker_results):
+def _smash_worker_starter(i: int,funct: Callable[['Step'], None],fname: str | None, shared_object: _smash_SmashSharedObject, steps: 'multiprocessing.managers.ListProxy[int]',supervisor_step: 'multiprocessing.managers.ValueProxy[int]', worker_results: 'queue.Queue[list[list[str]]] | None') -> None:
     """ Wrapper of worker_wrap() static method.
         Static methods cannot be used directly as the target
         argument on Windows. Since windows lacks of os.fork(), it is needed
@@ -294,7 +317,7 @@ if True:
     import smashbox.utilities.reflection
     smashbox.utilities.reflection._smash_ = _smash_
 
-    def getLogger():
+    def getLogger() -> 'logging.Logger':
        import logging
        import os.path
        import smashbox.utilities
@@ -305,7 +328,7 @@ if True:
        logger.setLevel(logging.NOTSET)
        
        class SmashFilter(logging.Filter):
-          def filter(self, record):
+          def filter(self, record: logging.LogRecord) -> bool:
              record.smash_process_name = smashbox.utilities.reflection.getProcessName()
              return True
 

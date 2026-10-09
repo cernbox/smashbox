@@ -26,9 +26,13 @@ BLOCK_SIZE = 1024*1024
 
 import os
 import fnmatch
+from typing import Any
+
+# a file size specification: number of bytes or a (mean,sigma) gaussian distribution of log10(nbytes)
+SizeSpec = int | str | tuple[float, float]
 
 
-def get_files(wdir, filemask=None):
+def get_files(wdir: str, filemask: str | None = None) -> set[str]:
     fl = [f for f in os.listdir(wdir) if os.path.isfile(os.path.join(wdir,f))]
     # if filemask defined then filter names out accordingly
     if filemask:
@@ -38,20 +42,20 @@ def get_files(wdir, filemask=None):
     return fl
 
 
-def count_files(wdir, filemask=None):
+def count_files(wdir: str, filemask: str | None = None) -> int:
     fl = get_files(wdir, filemask)
     nf = len(fl)
     logger.info('%s: %d files found', wdir, nf)
     return nf
 
 
-def size2nbytes(size):
+def size2nbytes(size: SizeSpec) -> int:
     """ Return the number of bytes from the size specification (size may be a distribution or nbytes directly).
     """
     
     import random, math
 
-    def make_distrib(size):
+    def make_distrib(size: Any) -> int:
         xxx = random.gauss(size[0],size[1])
         nbytes = int(math.pow(10,xxx))
         if nbytes<10:nbytes=10
@@ -60,13 +64,13 @@ def size2nbytes(size):
         return nbytes
 
     try:
-        return int(size)
+        return int(size) # type: ignore[arg-type] # a (mean,sigma) distribution raises TypeError
     except TypeError:
         return make_distrib(size)
     except ValueError:
         return make_distrib(size)        
 
-def create_hashfile(wdir,filemask=None,size=None,bs=None,slow_write=None):
+def create_hashfile(wdir: str, filemask: str | None = None, size: SizeSpec | None = None, bs: int | None = None, slow_write: float | None = None) -> str:
     """ Create a random file in wdir.The md5 checksum is placed in the filname name according to filemask: {md5} string in the filemask is replaced by the file checksum.
     By default the filemask == {md5} so the filename consists of only the checksum.
 
@@ -80,7 +84,7 @@ def create_hashfile(wdir,filemask=None,size=None,bs=None,slow_write=None):
     """
     return create_hashfile2(wdir,filemask,size,bs,slow_write)[0]
 
-def create_hashfile2(wdir,filemask=None,size=None,bs=None,slow_write=None):
+def create_hashfile2(wdir: str, filemask: str | None = None, size: SizeSpec | None = None, bs: int | None = None, slow_write: float | None = None) -> tuple[str, str]:
     """ Same as create_hashfile but return (filename,md5sum).
     """
 
@@ -143,7 +147,7 @@ def create_hashfile2(wdir,filemask=None,size=None,bs=None,slow_write=None):
     
     return fn,md5.hexdigest()
 
-def analyse_hashfiles(wdir,filemask=None):
+def analyse_hashfiles(wdir: str, filemask: str | None = None) -> tuple[int, int, int]:
 
     """ Analyse files in wdir for md5 correctness.
 
@@ -206,7 +210,7 @@ def analyse_hashfiles(wdir,filemask=None):
     
     return (nfiles,nanalysed,ncorrupt)
 
-def md5sum(fn):
+def md5sum(fn: str) -> str: # type: ignore[no-redef] # shadows smashbox.utilities.md5sum (which calls this one)
     import hashlib
     md5 = hashlib.md5()
         
@@ -221,7 +225,7 @@ def md5sum(fn):
         
     return md5.hexdigest()
 
-def adler32(fn):
+def adler32(fn: str) -> str:
     import zlib
     v = 1
     f = open(fn,'rb')
@@ -237,12 +241,12 @@ def adler32(fn):
 
 # TO BE REVIEWED...
 
-def create_hashfile_big(wdir,size=None):
+def create_hashfile_big(wdir: str, size: SizeSpec | None = None) -> str:
     if size is None:
         size = config.hashfile_bigsize
-    return create_random_file(wdir,size=size)
+    return create_random_file(wdir,size=size) # type: ignore[name-defined] # FIXME: pre-existing bug, create_random_file is not defined
 
-def cleanup_dir(wdir):
+def cleanup_dir(wdir: str) -> None:
     import hashlib
     import re
     conflict=re.compile(r"test_conflict-\d\d\d\d\d\d\d\d-\d\d\d\d\d\d.dat") # test.dat conflict
@@ -256,7 +260,7 @@ def cleanup_dir(wdir):
           os.unlink(wdir+'/'+f)
     return
 
-def detect_conflict(wdir):
+def detect_conflict(wdir: str) -> int | str: # type: ignore[return] # (the sys.exit() branch)
     import glob
     import hashlib
     ll = glob.glob(wdir+'/test_conflict*.dat')
@@ -265,7 +269,7 @@ def detect_conflict(wdir):
         return 0
     elif nl>1:
         print('+++ Severe error %d conflict files found!' % nl)
-        sys.exit(1)
+        sys.exit(1) # type: ignore[name-defined] # FIXME: pre-existing bug, sys is not imported
     else:
         bl = os.path.basename(ll[0])
         f1 = open(ll[0],'rb')

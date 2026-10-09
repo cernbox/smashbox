@@ -28,7 +28,7 @@ nfiles = int(config.get('dirMove_nfiles',10))
 TEST_FILES = ['test%02d.dat'%i for i in range(nfiles)]
 
 @add_worker
-def workerA(step):
+def workerA(step: Step) -> None:
 
     #cleanup remote and local test environment - this should be run once by one worker only
     reset_owncloud_account()
@@ -62,7 +62,7 @@ def workerA(step):
     run_ocsync(syncdir)
     
 @add_worker 
-def workerB(step):
+def workerB(step: Step) -> None:
 
     step(1,'sync the initial content')
 
