@@ -59,7 +59,7 @@ def main(step):
     ids_directories=[]
     etags_directories=[]
 
-    fout = file('report.propfind.%s.%s.txt'%(user,config.oc_server),'w',0)
+    fout = open('report.propfind.%s.%s.txt'%(user,config.oc_server),'w',1)
 
     propfind_list=[]
 
@@ -71,7 +71,7 @@ def main(step):
         try:
             r=propfind(URL,depth=0)
             r0=r.propfind_response
-        except Exception,x:
+        except Exception as x:
             if r is not None:
                 rc=r.rc
             msg="Failed to PROPFIND. Error code: %s URL: %s DETAILS: %s" % (rc,URL,x)
@@ -84,14 +84,14 @@ def main(step):
         try:
             r=propfind(URL,depth=1)
             r1=r.propfind_response
-        except Exception,x:
+        except Exception as x:
             if r is not None:
                 rc=r.rc
             else:
                 rc=-1 # really bad...
 
             if IGNORE_403 and rc == 403: 
-                print "WARN: Forbidden 403 ",URL
+                print("WARN: Forbidden 403 ",URL)
                 return
             else:        
                 msg="Failed to PROPFIND. Error code: %s URL: %s DETAILS: %s" % (rc,URL,x)
@@ -104,10 +104,10 @@ def main(step):
         r10=[x for x in r1 if x[0] == r0[0][0]]
         
         if r0 != r10 and not EOS_BUG_2732:
-            print "ERROR: r0 != r10"
-            print "URL",URL
-            print "r0",r0
-            print "r10",r10
+            print("ERROR: r0 != r10")
+            print("URL",URL)
+            print("r0",r0)
+            print("r10",r10)
             sys.exit(-1)
         
         path=r0[0][0]
@@ -116,7 +116,7 @@ def main(step):
         dir_id=attrs[NSOC+'id']
 
         if dir_id in seen_dirs:
-	    print >> fout, "is recursion", dir_id, seen_dirs
+            print("is recursion", dir_id, seen_dirs, file=fout)
             return
 
         seen_dirs.add(dir_id)
@@ -130,7 +130,7 @@ def main(step):
             if IGNORE_FOLDER_SIZE:
                 attrs[NSOC+'size'] = 'DDD'
 
-        print >> fout, repr(path),repr(attrs)
+        print(repr(path),repr(attrs), file=fout)
 
         for x in sorted(r1):
             if x[0] == r0[0][0]:
@@ -151,7 +151,7 @@ def main(step):
 
                 propfind_list.append((repr(path),repr(attrs)))
 
-                print >> fout, repr(path),repr(attrs)
+                print(repr(path),repr(attrs), file=fout)
 
     try:
         scan_dir(URL)
@@ -161,17 +161,17 @@ def main(step):
 
     fout.close()
 
-    fout1 = file('report.f-ids.%s.%s.txt'%(user,config.oc_server),'w',0)
+    fout1 = open('report.f-ids.%s.%s.txt'%(user,config.oc_server),'w',1)
     for x in sorted(ids_files):
-        print >> fout1, x
+        print(x, file=fout1)
 
-    fout2 = file('report.d-ids.%s.%s.txt'%(user,config.oc_server),'w',0)
+    fout2 = open('report.d-ids.%s.%s.txt'%(user,config.oc_server),'w',1)
     for x in sorted(ids_directories):
-        print >> fout2, x
+        print(x, file=fout2)
 
-    fout3 = file('report.d-etags.%s.%s.txt'%(user,config.oc_server),'w',0)
+    fout3 = open('report.d-etags.%s.%s.txt'%(user,config.oc_server),'w',1)
     for x in sorted(etags_directories):
-        print >> fout3, x
+        print(x, file=fout3)
 
 
 

@@ -1,5 +1,5 @@
 
-import smashbox.compatibility.argparse as argparse
+import argparse
 
 def keyval_tuple(x):
    a,b = x.split('=',1)
@@ -29,7 +29,7 @@ class Configuration:
         return getattr(self,x)
 
     def _dict(self,**args):
-        return dict(self.__dict__.items() + args.items()) 
+        return dict(self.__dict__, **args)
 
     def get(self,x,default):
         logger = getLogger()
@@ -42,16 +42,24 @@ class Configuration:
 
 config = Configuration()
 
+def execfile(filename, globals, locals=None):
+    """ Python 3 replacement of the execfile() builtin.
+    """
+    with open(filename, "rb") as f:
+        code = compile(f.read(), filename, 'exec')
+    exec(code, globals, locals)
+
+# the config blob is passed as a command line argument so it must be a printable string
 def configure_from_blob(config_blob):
-    import pickle
+    import pickle, base64
     global config
-    config = pickle.loads(config_blob)
+    config = pickle.loads(base64.b64decode(config_blob))
     config_log(level=logging.DEBUG)
     return config
 
 def dump_config_to_blob():
-    import pickle
-    return pickle.dumps(config)
+    import pickle, base64
+    return base64.b64encode(pickle.dumps(config)).decode('ascii')
         
 def configure(cmdline_opts,config_files=None):
    """ Initialize config object and return it.
@@ -89,7 +97,7 @@ def configure(cmdline_opts,config_files=None):
                try:
                   if attr is not None:
                      val = type(attr)(val)
-               except ValueError,x:
+               except ValueError as x:
                   # allow setting to None
                   logger.warning("cannot set option (type mismatch) %s=%s --> %s",key,repr(val),x)
                   continue

@@ -8,7 +8,7 @@ class Response:
         self.headers = []
         self.body = None
 
-import pycurl, cStringIO
+import pycurl, io
 
 class Client:
     
@@ -50,13 +50,14 @@ class Client:
         headers['Depth']=depth
         c.setopt(c.UPLOAD,1) 
 
-        import StringIO
-        c.setopt(c.READFUNCTION,StringIO.StringIO(query).read)
+        if isinstance(query, str):
+            query = query.encode('utf-8')
+        c.setopt(c.READFUNCTION,io.BytesIO(query).read)
         c.setopt(c.INFILESIZE,len(query))
 
         r = Response()
 
-        r.body_stream = cStringIO.StringIO()
+        r.body_stream = io.BytesIO()
         c.setopt(c.WRITEFUNCTION,r.body_stream.write)
 
         self._perform_request(url,headers,response_obj=r)
@@ -64,7 +65,7 @@ class Client:
         r.response_body=r.body_stream.getvalue()
 
         if self.verbose:
-            logger.info('PROPFIND response body: %s',r.body_stream.getvalue())
+            logger.info('PROPFIND response body: %s',r.body_stream.getvalue().decode('utf-8','replace'))
 
         if parse_check:
             if 200 <= r.rc and r.rc < 300: # only parse the reponse type for positive responses 
@@ -96,13 +97,13 @@ class Client:
 
         r = Response()
 
-        r.body_stream = cStringIO.StringIO()
+        r.body_stream = io.BytesIO()
         c.setopt(c.WRITEFUNCTION,r.body_stream.write)
 
         x = self._perform_request(url,headers)
 
         if self.verbose:
-            logger.info('PUT response body: %s',r.body_stream.getvalue())
+            logger.info('PUT response body: %s',r.body_stream.getvalue().decode('utf-8','replace'))
 
         return x
 
@@ -112,10 +113,10 @@ class Client:
         c = self.c
 
         if fn:
-            f = open(fn,'w')
+            f = open(fn,'wb')
             c.setopt(c.WRITEFUNCTION,f.write)
         else:
-            body_stream =  cStringIO.StringIO()
+            body_stream =  io.BytesIO()
             c.setopt(c.WRITEFUNCTION,body_stream.write)
 
         r = self._perform_request(url,headers)
@@ -149,7 +150,7 @@ class Client:
 
         # we are usually not interested in response body of this kind of request
         # if present, we capture it to a variable, otherwise it gets printed to stdout by pycurl
-        body_stream = cStringIO.StringIO()
+        body_stream = io.BytesIO()
         c.setopt(c.WRITEFUNCTION, body_stream.write)
 
         r = self._perform_request(url,{})
@@ -159,7 +160,7 @@ class Client:
     def MOVE(self,url,destination,overwrite=None):
         logger.debug
         
-        print 'MOVE %s %s %s'%(url,destination,overwrite)
+        print('MOVE %s %s %s'%(url,destination,overwrite))
         c = self.c
         
         c.setopt(c.CUSTOMREQUEST, "MOVE")
@@ -193,7 +194,7 @@ class Client:
 
         response_obj.headers = smashbox.utilities.structures.CaseInsensitiveDict()
         for h in ret_headers:
-            h = h.strip()
+            h = h.decode('iso-8859-1').strip() # HTTP header encoding as per RFC 7230
             if not h:
                 continue
             fields = h.split(':',1)
@@ -261,7 +262,7 @@ def _parse_propfind_response(text,depth=None):
 
             for p in prop:
                 logger.debug('xml.etree.ElementTree parsing: %s',p.tag)
-                fatal_check(not rp.has_key(p.tag),p.tag) # duplicate elements are not allowed
+                fatal_check(p.tag not in rp,p.tag) # duplicate elements are not allowed
                 if p.tag == '{DAV:}resourcetype':
                     fatal_check(len(list(p)) in [0,1]) # either empty or exactly one element
                     try:

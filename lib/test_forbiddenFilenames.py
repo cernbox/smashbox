@@ -46,7 +46,7 @@ def worker0(step):
     logger.log(35,"Timestamp %f Files %d",time.time(),nfiles)
 
     for c in forbidden_charsets:
-        print d+'/'+forbidden_charsets[c]
+        print(d+'/'+forbidden_charsets[c])
         createfile(d+'/'+forbidden_charsets[c], 'a', 1, 3)
 #    print '/\\'
 #    print '/:'

@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- python -*-
 #
 # The _open_SmashBox Project.
@@ -137,7 +137,7 @@ def main():
       logger.critical("config error: undefined oc_sync_cmd")
       sys.exit(1)
 
-   if isinstance(config.oc_sync_cmd, basestring):
+   if isinstance(config.oc_sync_cmd, str):
       config.oc_sync_cmd = config.oc_sync_cmd.split(' ')
 
    oc_sync_cmd_exe = config.oc_sync_cmd[0]
@@ -171,14 +171,14 @@ def main():
 
    try:
       config.oc_server_shell_cmd = string.Template(config.oc_server_shell_cmd).substitute({'oc_server':config.oc_server})
-   except ValueError,x:
+   except ValueError as x:
       logger.critical('Malformed options oc_server_shell_cmd: %s %s'%(repr(config.oc_server_shell_cmd),repr(x)))
       sys.exit(1)
 
 
    try:
       config.oc_server_folder = string.Template(config.oc_server_folder).substitute({'runid':config.runid})
-   except ValueError,x:
+   except ValueError as x:
       logger.critical('Malformed options oc_server_folder: %s %s'%(repr(config.oc_server_folder),repr(x)))
       sys.exit(1)
 
@@ -195,9 +195,9 @@ def main():
 
    def run_multiprocessing_engine(config,t,reporter):
        global global_exitcode_error
-       import subprocess, pickle
+       import subprocess
        t0=datetime.datetime.now()
-       cmd = [sys.executable,os.path.join(os.path.dirname(os.path.dirname(__file__)),'python/smashbox/multiprocessing_engine.py'), t, pickle.dumps(config)]
+       cmd = [sys.executable,os.path.join(os.path.dirname(os.path.dirname(__file__)),'python/smashbox/multiprocessing_engine.py'), t, smashbox.script.dump_config_to_blob()]
        p = subprocess.Popen(cmd)
        p.communicate()
        t1=datetime.datetime.now()
@@ -292,7 +292,7 @@ def main():
       smashbox.utilities.logger = logger
 
       try:
-         execfile(os.path.abspath(t), smashbox.no_engine.__dict__)
+         smashbox.script.execfile(os.path.abspath(t), smashbox.no_engine.__dict__)
       except SkipTestExecutionException as test_skipped:
          print(test_skipped.message)
          continue

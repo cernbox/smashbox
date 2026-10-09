@@ -27,10 +27,10 @@ def check_propfind_response(URL,filename,mtime,total_size):
         d2=int(mtime)
 
         if d1 != d2:
-            print resp
-            print filename
-            print d1,d2
-            assert("MTIME DOES NOT MATCH" is False)
+            print(resp)
+            print(filename)
+            print(d1,d2)
+            assert("MTIME DOES NOT MATCH" == False)
 
 
 

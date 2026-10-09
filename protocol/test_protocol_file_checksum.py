@@ -32,7 +32,7 @@ def main(step):
 
     try:
         active_server_checksum_type = r.headers['OC-Checksum'].strip().split(':')[0]
-    except KeyError,x:
+    except KeyError as x:
         logger.warning('Checksum not enabled for %s',oc_webdav_url(hide_password=True))
         return
 

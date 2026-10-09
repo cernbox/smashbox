@@ -52,14 +52,16 @@ Supported OSes
 ============
 
 Requires:
- * python 2.7+
+ * python 3.10+
  * pycurl
+ * requests
+ * pyocclient (see requirements.txt)
 
 Linux
 -----
 
 This framework should work out-of-the-box on any recent Linux
-which supports python2.
+which supports python3.
 
 Sync clients will usually be in the PATH.
 
@@ -67,12 +69,12 @@ MacOSX
 -------
 
 Dependency installation via pip (example):
-  * sudo pip install pycurl
+  * python3 -m pip install -r requirements.txt
 
 You may need to run the smashbox executable by calling python
 interpreter directly like this:
 
-python bin/smash
+python3 bin/smash
 
 Location of sync clients:
 
@@ -83,11 +85,11 @@ Windows
 --------
 
 Dependency installation via pip (example):
- * c:/Python27/python.exe -m pip install pycurl
+ * py -3 -m pip install -r requirements.txt
 
  You may need to call python interpreter directly:
 
-c:/Python27/python.exe bin/smash
+py -3 bin/smash
 
 Location of sync client may be configured like this:
 

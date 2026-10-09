@@ -42,10 +42,15 @@ class StateMonitor:
             if c.startswith(testname + "_"):
                 param[str((c.replace(testname + "_", "")))] = config[c]
                 parameters.append(param)
-                print c, config[c]
+                print(c, config[c])
 
         if platform.system() == 'Linux':
-            distribution = platform.dist()
+            # platform.dist() was removed in python 3.8
+            try:
+                os_release = platform.freedesktop_os_release()
+            except OSError:
+                os_release = {}
+            distribution = (os_release.get('ID', ''), os_release.get('VERSION_ID', ''))
             #client_platform = str(platform.system()) + "-" + str(distribution[0])+str(distribution[1])
             distr = tuple([str(x) for x in distribution[1].split(".")])
             client_platform = str(distribution[0])+distr[0]

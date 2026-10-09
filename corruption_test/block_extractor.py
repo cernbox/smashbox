@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import sys
 import shutil
 import os
@@ -24,7 +24,7 @@ os.mkdir(chunk_folder)
 
 
 if len(sys.argv) < 3:
-    print "Usage: %s <corrupted-file> <block-order-file>" % (sys.argv[0])
+    print("Usage: %s <corrupted-file> <block-order-file>" % (sys.argv[0]))
     sys.exit(1)
 
 corrupted_file=sys.argv[1]
@@ -45,8 +45,8 @@ source_index_map = dict([(x[1],x[0]) for x in source_index])
 c=0
 for i,r in corrupted_index:
     chunk_fn=os.path.join(chunk_folder, str(source_index_map[r]+1))
-    print "read corrupted file from offset=%d size_bytes=%d -> save as chunk index=%03d" % (c,r[1],source_index_map[r]+1) 
+    print("read corrupted file from offset=%d size_bytes=%d -> save as chunk index=%03d" % (c,r[1],source_index_map[r]+1)) 
     cmd="dd if=%s of=%s bs=%d count=1 skip=%d iflag=skip_bytes" % (corrupted_file,chunk_fn,r[1],c) 
-    print cmd
+    print(cmd)
     os.system(cmd)
     c += r[1]

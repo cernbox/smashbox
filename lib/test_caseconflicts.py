@@ -103,7 +103,7 @@ def creator(step):
     for i in range(nfiles):
         filename_path = os.path.join(d, conflict_cases[i])
         create_hashfile(d, conflict_cases[i])
-        file(os.path.join(d, conflict_cases[i]), 'w').write(conflict_cases[i])  # it writes the name of the file on it
+        open(os.path.join(d, conflict_cases[i]), 'w').write(conflict_cases[i])  # it writes the name of the file on it
         file_upload(filename_path, URL)
         remove_file(filename_path)
 

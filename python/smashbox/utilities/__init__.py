@@ -4,7 +4,7 @@ import os.path
 import datetime
 import subprocess
 import time
-import urllib
+import urllib.parse
 import platform
 import shutil
 import re
@@ -320,7 +320,7 @@ def oc_webdav_url(protocol='http',remote_folder="",user_num=None,webdav_endpoint
     else:
         password = config.oc_account_password
 
-    return protocol + '://' + urllib.quote(username, safe='') + ':' + urllib.quote(password, safe='') + '@' + config.oc_server + '/' + remote_path
+    return protocol + '://' + urllib.parse.quote(username, safe='') + ':' + urllib.parse.quote(password, safe='') + '@' + config.oc_server + '/' + remote_path
 
 def ocsync_version():
     """ Return the version reported by oc_sync_cmd.
@@ -391,11 +391,12 @@ def run_ocsync(local_folder, remote_folder="", n=None, user_num=None, timeout_mi
     for i in range(n):
         t0 = datetime.datetime.now()
         cmd = config.oc_sync_cmd+[local_folder,oc_webdav_url('http',remote_folder,user_num)]
-        logf = file(os.path.join(config.rundir,"%s-ocsync.step%02d.cnt%03d.log"%(reflection.getProcessName(),current_step,ocsync_cnt[current_step])),"wb")
+        logf = open(os.path.join(config.rundir,"%s-ocsync.step%02d.cnt%03d.log"%(reflection.getProcessName(),current_step,ocsync_cnt[current_step])),"wb")
 
         logger.info('sync cmd is: %s',repr(cmd))
 
         process = subprocess.Popen(cmd, shell=False, stdout=logf, stderr=subprocess.STDOUT)
+        logf.close() # the child process has its own copy of the file descriptor
 
         timeout = timeout_min * 60
 
@@ -498,7 +499,7 @@ def webdav_mkcol(path, silent=True, user_num=None):
 def runcmd(cmd,ignore_exitcode=False,echo=True,allow_stderr=True,shell=True,log_warning=True):
     logger.info('running %s', repr(cmd))
 
-    process = subprocess.Popen(cmd, shell=shell,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    process = subprocess.Popen(cmd, shell=shell,stdout=subprocess.PIPE,stderr=subprocess.PIPE,encoding='utf-8',errors='replace')
     stdout,stderr = process.communicate()
 
     if echo:
@@ -532,7 +533,7 @@ def mkdir(d):
     if not os.path.exists(d):
         try:
             os.makedirs(d)
-        except OSError,x:
+        except OSError as x:
             import errno
             if x.errno == errno.EEXIST:
                 logger.warning(x)
@@ -546,7 +547,7 @@ def remove_tree(path):
     logger.info('remove directory tree %s',path)
     try:
         shutil.rmtree(path)
-    except OSError,x:
+    except OSError as x:
         import errno
         if x.errno == errno.ENOENT:
             logger.warning(x)
@@ -558,7 +559,7 @@ def remove_file(path):
     logger.info('remove file %s',path)
     try:
         os.remove(path)
-    except OSError,x:
+    except OSError as x:
         import errno
         if x.errno == errno.ENOENT:
             logger.warning(x)
@@ -614,7 +615,7 @@ def createfile(fn,c,count,bs):
     # this replaces the dd as 1) more portable, 2) not prone to problems with escaping funny filenames in shell commands
     logger.info('createfile %s character=%s count=%d bs=%d',fn,repr(c),count,bs)
     buf = c*bs
-    of = file(fn,'w')
+    of = open(fn,'w',encoding='utf-8')
     for i in range(count):
         of.write(buf)
     of.close()
@@ -636,7 +637,7 @@ def modify_file(fn,c,count,bs):
         reported_errors.append(message)
         return
 
-    of = open(fn, 'a')
+    of = open(fn, 'a', encoding='utf-8')
     of.seek(0,2)
     for i in range(count):
         logger.info('modify_file: appending ')
@@ -656,7 +657,7 @@ def createfile_zero(fn,count,bs):
 # some tests depend on md5sum in this module
 # use portable implementation of md5sum
 def md5sum(fn):
-    from hash_files import md5sum as _md5sum
+    from smashbox.utilities.hash_files import md5sum as _md5sum
     return _md5sum(fn)
 
 def hexdump(fn):
@@ -665,7 +666,7 @@ def hexdump(fn):
         # byte offset column and spacing between bytes
         with open(fn, 'rb') as f:
             for chunk in iter(lambda: f.read(32), b''):
-                chunk.encode('hex')
+                chunk.hex()
     else:
         runcmd('hexdump %s'%fn)
 
@@ -684,7 +685,7 @@ def get_md5_versions_on_server(fn):
     cmd = "%(oc_server_shell_cmd)s md5sum %(oc_server_datadirectory)s/%(oc_account_name)s/files_versions/%(filename)s.v*" % config._dict(filename=os.path.join(config.oc_server_folder, os.path.basename(fn)))
 
     logger.info('running %s',repr(cmd))
-    process = subprocess.Popen(cmd,stdout=subprocess.PIPE,shell=True)
+    process = subprocess.Popen(cmd,stdout=subprocess.PIPE,shell=True,encoding='utf-8',errors='replace')
 
     stdout=process.communicate()[0]
 

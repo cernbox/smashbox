@@ -71,7 +71,7 @@ def __normalize_version(version):
     if v[-1:] == '.':
         v = v[:-1]
 
-    return map(__prepare_tuple, v.split("."))
+    return list(map(__prepare_tuple, v.split(".")))
 
 
 def __prepare_tuple(item):

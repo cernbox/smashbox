@@ -28,7 +28,7 @@ def main(step):
         try:
             block_check(block_header,block_body)
             block_ok += 1
-        except Exception,x:
+        except Exception as x:
             logger.error('while checking %s %s line %d: %s %s',block_check.__name__,block_header,lineno,block_body,x)
 
     logger.info('checked %d ok out of %d',block_ok,len(blocks))
@@ -44,8 +44,8 @@ def check_propfind_response(header,body):
 
 def parse_docfile(docfile):
 
-    propfind_request = re.compile("(?P<indent>\s+)> PROPFIND")
-    propfind_response = re.compile("(?P<indent>\s+)< PROPFIND")
+    propfind_request = re.compile(r"(?P<indent>\s+)> PROPFIND")
+    propfind_response = re.compile(r"(?P<indent>\s+)< PROPFIND")
 
     blocks=[]
 
@@ -61,9 +61,9 @@ def parse_docfile(docfile):
     lineno=0
 
     def DEBUG(*x):
-        print 'DEBUG:',lineno,x
+        print('DEBUG:',lineno,x)
 
-    for line in file(docfile):
+    for line in open(docfile, encoding='utf-8'):
 
         lineno+=1
 

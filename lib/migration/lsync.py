@@ -68,7 +68,7 @@ def winner(step):
     d = '/root/ownCloud/'
     subdir = os.path.join(d,subdirPath)
 
-    print "WORKDIR:" + d
+    print("WORKDIR:" + d)
 
     run_ocsync(d)
 

@@ -33,20 +33,20 @@ if not ok:
 @add_worker
 def main(step):
     t0 = time.time()
-    print "Run options: nfiles=%d revad_address=%s username=%s password=%s blocksize=%d" % (nfiles, revad_address, username, "xxxx", blocksize)
+    print("Run options: nfiles=%d revad_address=%s username=%s password=%s blocksize=%d" % (nfiles, revad_address, username, "xxxx", blocksize))
 
     # create work directory
     d = make_workdir()
     e = d + '-download' # work directory for downloads
-    os.mkdir(e, 0755)
+    os.mkdir(e, 0o755)
     
     remote_folder = join(revad_target_folder, os.path.basename(os.path.dirname(d)))
-    print "d=%s e=%s remote_folder=%s" % (d, e, remote_folder)
+    print("d=%s e=%s remote_folder=%s" % (d, e, remote_folder))
 
     # create sample files from the size_distribution
     create_sample_files(d)
     k0 = count_files(d)
-    print "Creating sample files succeded: numfiles=%d" % (k0)
+    print("Creating sample files succeded: numfiles=%d" % (k0))
 
     # get all the hash_files created
     hash_files = get_hash_files(d)
@@ -62,7 +62,7 @@ def main(step):
     # download the hash files to the original location
     reva_download_sample_files(remote_folder, e, hash_files) 
     k1 = count_files(e)
-    print "Downloading sample files succeded: numfiles=%d" % (k1)
+    print("Downloading sample files succeded: numfiles=%d" % (k1))
     
     error_check(k1-k0==0,'Expected to have the same number of files: nfiles=%d sampled=%d downloaded=%d'%(nfiles,k0,k1))
 
@@ -85,11 +85,11 @@ def main(step):
 
 # create_sample_files create the sample files
 def create_sample_files(d):
-    print "Creating sample files ..."
+    print("Creating sample files ...")
 
     # create sample files inside folder
     for size in size_distribution:
-        print "Creating sample file: size=%d bs=%d" % (size, blocksize)
+        print("Creating sample file: size=%d bs=%d" % (size, blocksize))
         create_hashfile(d, size=size, bs=blocksize)
 
 
@@ -101,7 +101,7 @@ def get_hash_files(d):
 def reva_authenticate():
     uri = "tcp://%s:%s@%s" % (username, password, revad_address)
     cmd = "%s login %s" % (reva_cli, uri)
-    print "REVA auth: cmd=%s" % (cmd)
+    print("REVA auth: cmd=%s" % (cmd))
     runcmd(cmd)
 
 def reva_create_target_folder(target_folder):
@@ -110,7 +110,7 @@ def reva_create_target_folder(target_folder):
 
 
 def reva_upload_sample_files(remote_folder, hash_files):
-    print "Uploading sample files ..."
+    print("Uploading sample files ...")
     # upload using reva-cli to remote server
     for f in hash_files:
          upload(remote_folder, f)
@@ -119,11 +119,11 @@ def reva_upload_sample_files(remote_folder, hash_files):
 def upload(remote_folder, fn):
     target_fn = join(remote_folder, os.path.basename(fn))
     cmd = "%s storage upload %s %s" % (reva_cli, target_fn, fn)
-    print "REVA upload: cmd=%s" % (cmd)
+    print("REVA upload: cmd=%s" % (cmd))
     runcmd(cmd)
 
 def reva_download_sample_files(remote_folder, e, hash_files):
-    print "Downloading sample files ..."
+    print("Downloading sample files ...")
     # download using reva-cli to local disk
     for f in hash_files:
          download(remote_folder, e, f)
@@ -133,18 +133,18 @@ def download(remote_folder, e, fn):
     remote_fn = join(remote_folder, os.path.basename(fn))
     local_fn = join(e, os.path.basename(fn))
     cmd = "%s storage download %s %s" % (reva_cli, remote_fn, local_fn)
-    print "REVA download: cmd=%s" % (cmd)
+    print("REVA download: cmd=%s" % (cmd))
     runcmd(cmd)
 
 def verify_sample_files(d):
-    print "Verifying uploaded files ..."
+    print("Verifying uploaded files ...")
     # verify that the checksums of the downloaded files
     # matches the one of the sample file
     return analyse_hashfiles(d)
 
 def clean_run(remote_folder):
     cmd = "%s storage delete %s" % (reva_cli, remote_folder)
-    print "REVA clean: cmd=%s" % (cmd)
+    print("REVA clean: cmd=%s" % (cmd))
     runcmd(cmd)
     
 

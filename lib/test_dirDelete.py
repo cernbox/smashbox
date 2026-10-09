@@ -32,7 +32,7 @@ def workerA(step):
 
     # create a folder and some files in it
     path = "0"
-    for i in xrange(1, NESTING_LEVELS):
+    for i in range(1, NESTING_LEVELS):
         path = path + "/" + str(i)
     d1 = mkdir(os.path.join(syncdir, path))
 

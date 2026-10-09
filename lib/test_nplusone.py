@@ -2,7 +2,7 @@ import os
 import time
 import socket
 import tempfile
-from ConfigParser import NoOptionError, NoSectionError
+from configparser import NoOptionError, NoSectionError
 
 __doc__ = """ Add nfiles to a directory and check consistency.
 """
@@ -119,7 +119,7 @@ def worker0(step):
     push_to_monitoring("%s.total_size" % source,total_size)
     push_to_monitoring("%s.transfer_rate" % source,total_size/(time1-time0))
     push_to_monitoring("%s.worker0.synced_files" % source,k1-k0)
-    push_to_monitoring("%s.norm_synced_files" % source,float((k1-k0)/nfiles))
+    push_to_monitoring("%s.norm_synced_files" % source,float((k1-k0)//nfiles))
 
 
         

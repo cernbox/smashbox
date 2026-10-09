@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- python -*-
 #
 # The _open_SmashBox Project.
@@ -31,7 +31,7 @@ del standardSetup
 # obsolete to be removed
 def log(*args,**kwds):
     import time
-    print time.ctime(),_smash_.process_name,(" ".join([str(s) for s in args]))%kwds
+    print(time.ctime(),_smash_.process_name,(" ".join([str(s) for s in args]))%kwds)
 
 #import shelve
 
@@ -46,7 +46,7 @@ class _smash_SmashSharedObject:
     def _makedir(self):
         try:
             os.makedirs(self._dir)
-        except OSError, x:
+        except OSError as x:
             import errno
             if x.errno != errno.EEXIST:
                 raise
@@ -55,8 +55,9 @@ class _smash_SmashSharedObject:
         self._makedir()
         import pickle
         try:
-            return pickle.load(file(os.path.join(self._dir, '_attr_' + key)))
-        except Exception, x:
+            with open(os.path.join(self._dir, '_attr_' + key), 'rb') as f:
+                return pickle.load(f)
+        except Exception as x:
             logger.debug(x)
             raise AttributeError(x)
 
@@ -66,7 +67,8 @@ class _smash_SmashSharedObject:
         import time
         tmp_name = os.path.join(self._dir, 'tmp.%s.%s._attr_%s' % (os.getpid(), time.time(), key))
         dest_name = os.path.join(self._dir, '_attr_' + key)
-        pickle.dump(val, file(tmp_name, 'w'))
+        with open(tmp_name, 'wb') as f:
+            pickle.dump(val, f)
 
         import shutil
         shutil.move(tmp_name, dest_name)
@@ -171,7 +173,7 @@ class _smash_:
         try:
             try:
                 f(step)
-            except Exception,x:
+            except Exception as x:
                 import traceback
                 logger.fatal("Exception occured: %s \n %s", x,traceback.format_exc())
 
@@ -195,12 +197,19 @@ class _smash_:
     def run():
         """ Lunch worker processes and the supervisor loop. Block until all is finished.
         """
-        from multiprocessing import Process, Manager
+        import multiprocessing
+
+        # python2 used fork on all POSIX platforms: workers inherit the namespace of the test-case
+        # (newer python versions default to forkserver/spawn which would re-execute this script in each worker)
+        if 'fork' in multiprocessing.get_all_start_methods():
+            mp = multiprocessing.get_context('fork')
+        else:
+            mp = multiprocessing.get_context()
 
         import smashbox.utilities
         smashbox.utilities.setup_test()        
 
-        manager = Manager()
+        manager = mp.Manager()
 
         _smash_.shared_object = _smash_SmashSharedObject(os.path.join(config.rundir,'_shared_objects'))
         
@@ -222,7 +231,7 @@ class _smash_:
         for i,f_n in enumerate(_smash_.workers):
             f = f_n[0]
             fname = f_n[1]
-            p = Process(target=_smash_worker_starter,args=(i,f,fname,_smash_.shared_object,_smash_.steps,_smash_.supervisor_step,_smash_.monitor.worker_results))
+            p = mp.Process(target=_smash_worker_starter,args=(i,f,fname,_smash_.shared_object,_smash_.steps,_smash_.supervisor_step,_smash_.monitor.worker_results))
             p.start()
             _smash_.all_procs.append(p)
 
@@ -266,11 +275,11 @@ def _smash_worker_starter(i,funct,fname, shared_object, steps,supervisor_step, w
 
 # common initialization
 if True:
-    import smashbox.compatibility.argparse
+    import argparse
     import smashbox.script
 
     # let's use _smash_ namespace to avoid name pollution...
-    _smash_.parser = smashbox.compatibility.argparse.ArgumentParser()
+    _smash_.parser = argparse.ArgumentParser()
     _smash_.parser.add_argument('test_target')
     _smash_.parser.add_argument('config_blob')
 
@@ -306,7 +315,7 @@ if True:
        try:
           fh = logging.FileHandler(os.path.join(logdir,'log-'+logfn+'.log'),mode='w')
        except IOError:
-          print 'File %s cannot be created (missing directory?) ' % (os.path.join(logdir,'log-'+logfn+'.log'))
+          print('File %s cannot be created (missing directory?) ' % (os.path.join(logdir,'log-'+logfn+'.log')))
           sys.exit(-1)
 
        fh.setLevel(logging.DEBUG)
@@ -326,7 +335,7 @@ if True:
     try:
        import os
        os.makedirs(config.rundir)
-    except OSError,x:
+    except OSError as x:
        import errno
        if x.errno != errno.EEXIST:
           raise
@@ -339,7 +348,7 @@ if True:
     smashbox.utilities.logger = logger
 
     # load test case file directly into the global namespace of this script
-    execfile(_smash_.args.test_target)
+    smashbox.script.execfile(_smash_.args.test_target, globals())
 
 if __name__ == "__main__":
     import multiprocessing

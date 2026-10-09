@@ -37,7 +37,7 @@ def chunk_file_upload(filename,dest_dir_url,chunk_size=None,header_if_match=None
 
     # calculate chunk number
     total_size = os.path.getsize(filename)
-    chunk_number = total_size/chunk_size
+    chunk_number = total_size//chunk_size
 
     if chunk_number==0:
         logger.info('chunk_file_upload: File %s too small (%d bytes) and should be uploaded unchunked',filename,total_size)
@@ -46,7 +46,7 @@ def chunk_file_upload(filename,dest_dir_url,chunk_size=None,header_if_match=None
         chunk_number += 1
 
     # NOTE: 1.6 mirall implementation: rand() ^ mtime ^ (size << 16), propagator_qnam.cpp
-    transfer_id = random.randint(0,sys.maxint)
+    transfer_id = random.randint(0,sys.maxsize)
 
     headers = {'OC-Chunked':'1', 'X-OC-Mtime':mtime, 'OC-Total-Length':total_size}
 
@@ -282,7 +282,7 @@ def ls_prop_desktop20(url,depth=0):
 
         try:
             int(props200['{http://owncloud.org/ns}size'])
-        except ValueError,x:
+        except ValueError as x:
             fatal_check(False,"{http://owncloud.org/ns}size: '%s' not an integer"%props200['{http://owncloud.org/ns}size'])
                
 
