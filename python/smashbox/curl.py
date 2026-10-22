@@ -1,31 +1,46 @@
 from smashbox.utilities import *
 
 import smashbox.utilities.structures
+from collections.abc import Mapping
+from typing import Any, cast
+from xml.etree.ElementTree import Element
+
+# one entry of a parsed PROPFIND response: [href, {status: {property: value}}]
+PropfindEntry = list[Any]
 
 class Response:
-    def __init__(self):
-        self.rc = None
-        self.headers = []
-        self.body = None
+    # set depending on the request type
+    response_body: bytes
+    body_stream: 'io.BytesIO'
+    propfind_response: list[PropfindEntry]
 
-import pycurl, cStringIO
+    def __init__(self) -> None:
+        # rc and headers are always set by Client._perform_request() before the response is returned
+        self.rc: int = None # type: ignore[assignment]
+        self.headers: smashbox.utilities.structures.CaseInsensitiveDict[str] = [] # type: ignore[assignment]
+        self.body: bytes | None = None
+
+import pycurl, io
 
 class Client:
     
-    extra_headers = {}
+    extra_headers: dict[str, object] = {}
+
+    verbose: bool
+    c: pycurl.Curl
     
-    def __init__(self,verbose=None):
+    def __init__(self,verbose: bool | None = None) -> None:
         c = pycurl.Curl()
 
-        c.setopt(c.SSL_VERIFYPEER, 0)
-        c.setopt(c.SSL_VERIFYHOST, 0) # allow self-signed or invalid certs etc.
-        c.setopt(c.CONNECTTIMEOUT, 60)
-        c.setopt(c.TIMEOUT, 60)
-        c.setopt(c.COOKIEFILE, '')
-        c.setopt(c.FOLLOWLOCATION, 0) # by default owncloud sync client does not follow redirects
+        c.setopt(pycurl.SSL_VERIFYPEER, 0)
+        c.setopt(pycurl.SSL_VERIFYHOST, 0) # allow self-signed or invalid certs etc.
+        c.setopt(pycurl.CONNECTTIMEOUT, 60)
+        c.setopt(pycurl.TIMEOUT, 60)
+        c.setopt(pycurl.COOKIEFILE, '')
+        c.setopt(pycurl.FOLLOWLOCATION, 0) # by default owncloud sync client does not follow redirects
 
         if config.get('pycurl_USERAGENT',None):
-            c.setopt(c.USERAGENT, config.pycurl_USERAGENT)
+            c.setopt(pycurl.USERAGENT, config.pycurl_USERAGENT)
 
         if verbose is None:
             if config.get('pycurl_VERBOSE',None) is not None:
@@ -37,34 +52,35 @@ class Client:
             self.verbose=verbose
 
 
-        c.setopt(c.VERBOSE, self.verbose) 
+        c.setopt(pycurl.VERBOSE, self.verbose) 
 
         self.c = c
 
-    def PROPFIND(self,url,query,depth,parse_check=True,headers={}):
+    def PROPFIND(self,url: str,query: str | bytes,depth: int | str,parse_check: bool = True,headers: dict[str, object] = {}) -> Response:
         logger.info("PROPFIND %s depth=%s %s query=%s",url,depth,headers,query)
 
         c = self.c
 
-        c.setopt(c.CUSTOMREQUEST, "PROPFIND")
+        c.setopt(pycurl.CUSTOMREQUEST, "PROPFIND")
         headers['Depth']=depth
-        c.setopt(c.UPLOAD,1) 
+        c.setopt(pycurl.UPLOAD,1) 
 
-        import StringIO
-        c.setopt(c.READFUNCTION,StringIO.StringIO(query).read)
-        c.setopt(c.INFILESIZE,len(query))
+        if isinstance(query, str):
+            query = query.encode('utf-8')
+        c.setopt(pycurl.READFUNCTION,io.BytesIO(query).read)
+        c.setopt(pycurl.INFILESIZE,len(query))
 
         r = Response()
 
-        r.body_stream = cStringIO.StringIO()
-        c.setopt(c.WRITEFUNCTION,r.body_stream.write)
+        r.body_stream = io.BytesIO()
+        c.setopt(pycurl.WRITEFUNCTION,r.body_stream.write)
 
         self._perform_request(url,headers,response_obj=r)
 
         r.response_body=r.body_stream.getvalue()
 
         if self.verbose:
-            logger.info('PROPFIND response body: %s',r.body_stream.getvalue())
+            logger.info('PROPFIND response body: %s',r.body_stream.getvalue().decode('utf-8','replace'))
 
         if parse_check:
             if 200 <= r.rc and r.rc < 300: # only parse the reponse type for positive responses 
@@ -75,13 +91,13 @@ class Client:
         return r
 
 
-    def PUT(self,fn,url,headers={},offset=0,size=0):
+    def PUT(self,fn: str,url: str,headers: Mapping[str, object] = {},offset: int = 0,size: int = 0) -> Response:
         logger.debug('PUT %s %s %s',fn,url,headers)
 
         c = self.c
 
-        c.setopt(c.CUSTOMREQUEST, "PUT")
-        c.setopt(c.UPLOAD,1) 
+        c.setopt(pycurl.CUSTOMREQUEST, "PUT")
+        c.setopt(pycurl.UPLOAD,1) 
 
         f = open(fn,'rb')
 
@@ -91,32 +107,32 @@ class Client:
         if not size:
             size = os.path.getsize(fn) - offset
 
-        c.setopt(c.INFILE,f)
-        c.setopt(c.INFILESIZE,size)
+        c.setopt(pycurl.INFILE,f)
+        c.setopt(pycurl.INFILESIZE,size)
 
         r = Response()
 
-        r.body_stream = cStringIO.StringIO()
-        c.setopt(c.WRITEFUNCTION,r.body_stream.write)
+        r.body_stream = io.BytesIO()
+        c.setopt(pycurl.WRITEFUNCTION,r.body_stream.write)
 
         x = self._perform_request(url,headers)
 
         if self.verbose:
-            logger.info('PUT response body: %s',r.body_stream.getvalue())
+            logger.info('PUT response body: %s',r.body_stream.getvalue().decode('utf-8','replace'))
 
         return x
 
-    def GET(self,url,fn,headers={}):
+    def GET(self,url: str,fn: str | None,headers: Mapping[str, object] = {}) -> Response:
         logger.debug('GET %s %s %s',url,fn,headers)
 
         c = self.c
 
         if fn:
-            f = open(fn,'w')
-            c.setopt(c.WRITEFUNCTION,f.write)
+            f = open(fn,'wb')
+            c.setopt(pycurl.WRITEFUNCTION,f.write)
         else:
-            body_stream =  cStringIO.StringIO()
-            c.setopt(c.WRITEFUNCTION,body_stream.write)
+            body_stream =  io.BytesIO()
+            c.setopt(pycurl.WRITEFUNCTION,body_stream.write)
 
         r = self._perform_request(url,headers)
 
@@ -127,43 +143,43 @@ class Client:
 
         return r
 
-    def MKCOL(self,url):
+    def MKCOL(self,url: str) -> Response:
         logger.debug('MKCOL %s',url)
         
         c = self.c
         
-        c.setopt(c.CUSTOMREQUEST, "MKCOL")
+        c.setopt(pycurl.CUSTOMREQUEST, "MKCOL")
 
         r = self._perform_request(url,{})
 
         return r        
 
 
-    def DELETE(self,url):
+    def DELETE(self,url: str) -> Response:
 
         logger.debug('DELETE %s',url)
         
         c = self.c
         
-        c.setopt(c.CUSTOMREQUEST, "DELETE")
+        c.setopt(pycurl.CUSTOMREQUEST, "DELETE")
 
         # we are usually not interested in response body of this kind of request
         # if present, we capture it to a variable, otherwise it gets printed to stdout by pycurl
-        body_stream = cStringIO.StringIO()
-        c.setopt(c.WRITEFUNCTION, body_stream.write)
+        body_stream = io.BytesIO()
+        c.setopt(pycurl.WRITEFUNCTION, body_stream.write)
 
         r = self._perform_request(url,{})
         r.response_body=body_stream.getvalue()
         return r        
 
-    def MOVE(self,url,destination,overwrite=None):
+    def MOVE(self,url: str,destination: str,overwrite: str | None = None) -> Response:
         logger.debug
         
-        print 'MOVE %s %s %s'%(url,destination,overwrite)
+        print('MOVE %s %s %s'%(url,destination,overwrite))
         c = self.c
         
-        c.setopt(c.CUSTOMREQUEST, "MOVE")
-        headers={}
+        c.setopt(pycurl.CUSTOMREQUEST, "MOVE")
+        headers: dict[str, object] = {}
         headers['Destination']=destination
         if overwrite:
             headers['Overwrite']=overwrite
@@ -173,15 +189,15 @@ class Client:
         return r
 
 
-    def _perform_request(self,url,headers,response_obj=None):
+    def _perform_request(self,url: str,headers: Mapping[str, object],response_obj: Response | None = None) -> Response:
         c = self.c
 
         _headers = self.extra_headers.copy()
         _headers.update(headers)
-        c.setopt(c.URL, url)
+        c.setopt(pycurl.URL, url)
         c.setopt(pycurl.HTTPHEADER,[str(x)+':'+str(y) for x,y in zip(_headers.keys(),_headers.values())])
 
-        ret_headers=[]
+        ret_headers: list[bytes] = []
         c.setopt(pycurl.HEADERFUNCTION, ret_headers.append)
 
         c.perform()
@@ -189,11 +205,11 @@ class Client:
         if response_obj is None:
             response_obj = Response()
         
-        response_obj.rc=c.getinfo(c.HTTP_CODE)
+        response_obj.rc=c.getinfo(pycurl.HTTP_CODE)
 
         response_obj.headers = smashbox.utilities.structures.CaseInsensitiveDict()
         for h in ret_headers:
-            h = h.strip()
+            h = h.decode('iso-8859-1').strip() # HTTP header encoding as per RFC 7230
             if not h:
                 continue
             fields = h.split(':',1)
@@ -206,13 +222,13 @@ class Client:
         return response_obj
 
 
-def _parse_propfind_response(text,depth=None):
+def _parse_propfind_response(text: str | bytes,depth: int | str | None = None) -> list[PropfindEntry]:
     """ Basic parsing and validation of PROPFIND responses.
 
     If depth is defined add validation according to the depth.
     """
 
-    def allowed_children_tags(e,tags):
+    def allowed_children_tags(e: Element,tags: list[str]) -> None:
         for c in e:
             fatal_check(c.tag in tags)
 
@@ -242,9 +258,9 @@ def _parse_propfind_response(text,depth=None):
         allowed_children_tags(child,['{DAV:}href','{DAV:}propstat']) # only these elements are allowed
         
         fatal_check(len(child.findall('{DAV:}href'))==1) # exactly one href per response
-        href = child.find('{DAV:}href')
+        href = cast(Element, child.find('{DAV:}href')) # exactly one (checked above)
 
-        r = [href.text,{}]
+        r: PropfindEntry = [href.text,{}]
 
         for propstat in child.findall('{DAV:}propstat'):
 
@@ -254,14 +270,14 @@ def _parse_propfind_response(text,depth=None):
             fatal_check(len(propstat.findall('{DAV:}prop'))==1) # exactly one
             fatal_check(len(propstat.findall('{DAV:}status'))==1) # exactly one
 
-            status = propstat.find('{DAV:}status')
-            prop = propstat.find('{DAV:}prop')
+            status = cast(Element, propstat.find('{DAV:}status')) # exactly one (checked above)
+            prop = cast(Element, propstat.find('{DAV:}prop')) # exactly one (checked above)
 
-            rp = {}
+            rp: dict[str, str | None] = {}
 
             for p in prop:
                 logger.debug('xml.etree.ElementTree parsing: %s',p.tag)
-                fatal_check(not rp.has_key(p.tag),p.tag) # duplicate elements are not allowed
+                fatal_check(p.tag not in rp,p.tag) # duplicate elements are not allowed
                 if p.tag == '{DAV:}resourcetype':
                     fatal_check(len(list(p)) in [0,1]) # either empty or exactly one element
                     try:

@@ -3,7 +3,7 @@ from smashbox.utilities.hash_files import *
 from smashbox.protocol import *
 
 @add_worker
-def main(step):
+def main(step: Step) -> None:
 
     d = make_workdir()
     reset_owncloud_account()

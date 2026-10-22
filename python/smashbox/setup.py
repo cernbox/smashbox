@@ -1,4 +1,4 @@
-def standardSetup(script_path):
+def standardSetup(script_path: str) -> None:
     """A setup hook called when the internal environment setup is
     performed (typically by the boilterplate logic of the
     executables).  The `script_path` of the calling script may be used

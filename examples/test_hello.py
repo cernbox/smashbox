@@ -19,7 +19,7 @@ logger.debug("globals() %s",globals().keys())
 # implicitly completed all steps 0..N-1
 
 @add_worker
-def helloA(step):
+def helloA(step: Step) -> None:
     logger.debug("globals() %s",globals().keys())
 
 
@@ -68,7 +68,7 @@ def helloA(step):
     fatal_check(list(shared['xyz'])==[1,2,3,4], 'problem handlign shared xyz=%s'%repr(shared['xyz']))
     
 @add_worker 
-def helloB(step):
+def helloB(step: Step) -> None:
     logger.debug("dir() %s",dir())
     
     shared = reflection.getSharedObject()
@@ -83,7 +83,7 @@ def helloB(step):
 
 
 @add_worker    
-def reporter(step):
+def reporter(step: Step) -> None:
     shared = reflection.getSharedObject()
 
     # report on shared objects at every step
@@ -95,7 +95,7 @@ def reporter(step):
 
 # shared.k is an example on how NOT to use the shared object -- see comments at the top of this file
 # this worker code will run N times in parallel -- see below
-def any_worker(step):
+def any_worker(step: Step) -> None:
     shared=reflection.getSharedObject()
 
     shared['k'] = 0

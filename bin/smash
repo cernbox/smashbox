@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- python -*-
 #
 # The _open_SmashBox Project.
@@ -14,7 +14,7 @@
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Perform internal setup of the environment.
 # This is a Copy/Paste logic which must stay in THIS file
-def standardSetup():
+def standardSetup() -> None:
    import sys, os.path
    # insert the path to cernafs based on the relative position of this scrip inside the service directory tree
    exeDir = os.path.abspath(os.path.normpath(os.path.dirname(sys.argv[0])))
@@ -29,7 +29,7 @@ del standardSetup
 
 global_exitcode_error = False
 
-def main():
+def main() -> None:
    import os, os.path, sys
    import glob
    import datetime
@@ -37,6 +37,7 @@ def main():
    import smashbox.no_engine
    import time
    import shutil
+   from typing import Any
 
    parser=smashbox.script.arg_parser(description='Run the tests and smash the box')
 
@@ -56,12 +57,12 @@ def main():
 
    import logging
    logging.addLevelName(35,"SUMMARY")
-   logging.SUMMARY = 35
+   logging.SUMMARY = 35 # type: ignore[attr-defined]
    
    # in the --quiet mode we do not log INFO
    # use log_quiet() to log in the --quiet mode
-   def log_quiet(fmt,*args, **kwds):
-       logger.log(logging.SUMMARY,fmt,*args,**kwds)
+   def log_quiet(fmt: str, *args: object, **kwds: Any) -> None:
+       logger.log(logging.SUMMARY,fmt,*args,**kwds) # type: ignore[attr-defined]
    
    level = logging.WARNING # log warnings, errors and quiet messages
 
@@ -137,7 +138,7 @@ def main():
       logger.critical("config error: undefined oc_sync_cmd")
       sys.exit(1)
 
-   if isinstance(config.oc_sync_cmd, basestring):
+   if isinstance(config.oc_sync_cmd, str):
       config.oc_sync_cmd = config.oc_sync_cmd.split(' ')
 
    oc_sync_cmd_exe = config.oc_sync_cmd[0]
@@ -171,14 +172,14 @@ def main():
 
    try:
       config.oc_server_shell_cmd = string.Template(config.oc_server_shell_cmd).substitute({'oc_server':config.oc_server})
-   except ValueError,x:
+   except ValueError as x:
       logger.critical('Malformed options oc_server_shell_cmd: %s %s'%(repr(config.oc_server_shell_cmd),repr(x)))
       sys.exit(1)
 
 
    try:
       config.oc_server_folder = string.Template(config.oc_server_folder).substitute({'runid':config.runid})
-   except ValueError,x:
+   except ValueError as x:
       logger.critical('Malformed options oc_server_folder: %s %s'%(repr(config.oc_server_folder),repr(x)))
       sys.exit(1)
 
@@ -193,11 +194,11 @@ def main():
       logger.warning("No tests specified to run...")
       sys.exit(1)
 
-   def run_multiprocessing_engine(config,t,reporter):
+   def run_multiprocessing_engine(config: 'smashbox.script.Configuration', t: str, reporter: 'smashbox.reporter.Reporter') -> None:
        global global_exitcode_error
-       import subprocess, pickle
+       import subprocess
        t0=datetime.datetime.now()
-       cmd = [sys.executable,os.path.join(os.path.dirname(os.path.dirname(__file__)),'python/smashbox/multiprocessing_engine.py'), t, pickle.dumps(config)]
+       cmd = [sys.executable,os.path.join(os.path.dirname(os.path.dirname(__file__)),'python/smashbox/multiprocessing_engine.py'), t, smashbox.script.dump_config_to_blob()]
        p = subprocess.Popen(cmd)
        p.communicate()
        t1=datetime.datetime.now()
@@ -239,13 +240,13 @@ def main():
 
       workdir = None
 
-      def barename(t):
+      def barename(t: str) -> str:
          return os.path.splitext(os.path.basename(t))[0]
       
       if test_mode == "single":
          pass
 
-      def set_rundir_name(test_name, runid, loop=None, test_set=None):
+      def set_rundir_name(test_name: str, runid: str, loop: int | None = None, test_set: int | None = None) -> None:
          config.rundir = os.path.join(config.smashdir, barename(test_name))
          if config.workdir_runid_enabled:
             config.rundir += '-' + str(runid)
@@ -263,7 +264,7 @@ def main():
          config.oc_account_name += '-'+str(config.runid)
 
 
-      def run_test(t,j,i):
+      def run_test(t: str, j: int, i: int | None) -> None:
          set_rundir_name(t, config.runid, j, i)
          
          if i is None:
@@ -292,7 +293,7 @@ def main():
       smashbox.utilities.logger = logger
 
       try:
-         execfile(os.path.abspath(t), smashbox.no_engine.__dict__)
+         smashbox.script.execfile(os.path.abspath(t), smashbox.no_engine.__dict__)
       except SkipTestExecutionException as test_skipped:
          print(test_skipped.message)
          continue

@@ -2,5 +2,5 @@
 # functions together with the documentation in this directory
 
 
-from protocol import *
+from .protocol import *
 

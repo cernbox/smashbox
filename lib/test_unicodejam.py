@@ -11,29 +11,29 @@ from smashbox.utilities.hash_files import *
 
 nfiles = 10
 
-def removeunicodejam(localdir):
+def removeunicodejam(localdir: str) -> None:
     import glob
     fl = glob.glob(localdir+os.sep+'*')
     for f in fl:
         os.remove(f)
     return
 
-def checkunicodejam(localdir):
+def checkunicodejam(localdir: str) -> tuple[int, int]:
     import glob
-    gf = localdir+os.sep+u'*'
+    gf = localdir+os.sep+'*'
     gf = gf.encode('utf-8')
-    print 'Checking directory: ',gf
+    print('Checking directory: ',gf)
     fl = glob.glob(gf)
 
     ngood = 0 
     nbad = 0
 
     for f in fl:
-        print 'Checking: ',f
-        fh = file(f)
-        a = localdir+os.sep+fh.read()
+        print('Checking: ',f)
+        fh = open(f,'rb')
+        a = (localdir+os.sep).encode('utf-8')+fh.read()
        
-        print 'File content: ',a
+        print('File content: ',a)
 
         if a!=f: 
             logger.error('FILELEN: %d',len(f))
@@ -58,34 +58,34 @@ import sys
 # 
 import random
 
-def g_massimo():
+def g_massimo() -> int:
     return int( 1 + random.triangular(0,10,100)*(1+random.uniform(0,1)))  # this gives only ASCII ?
 
-def g_all_unicode():
+def g_all_unicode() -> int:
     return int(random.uniform(97,sys.maxunicode))   # with this I manage to "break" owncloud server 5.0.14a  --> I needed to manually delete entries from oc_filecache
 
-def g_plane0_unicode():
+def g_plane0_unicode() -> int:
     return int(random.uniform(0x80,0xffff)) # unicode plane0 only, non-ascii
 
-def g_plane0_unicode_degressive():
+def g_plane0_unicode_degressive() -> int:
     return int(random.triangular(0x80,0xffff,0x80))   # unicode plane0 only, non-ascii
 
-def g_plane0_reduced():
+def g_plane0_reduced() -> int:
     return int(random.uniform(0x80,0x1000))   # unicode plane0 only, non-ascii, first few pages only...
 
 ##
 
 
-def createunicodejam(localdir):
+def createunicodejam(localdir: str) -> None:
 
     forbidden = "/"
     nchar = int(random.uniform(1,50))
-    raw = u""
+    raw = ""
     for i in range(nchar):
 
         j = g_plane0_reduced()
 
-        cc = unichr(j)
+        cc = chr(j)
         if cc in forbidden: continue
         raw+=cc
 
@@ -93,18 +93,18 @@ def createunicodejam(localdir):
 
     assert( len(filename) > 0)
 
-    ff = localdir+os.sep+filename
-    print 'Preparing:',ff
+    ff = (localdir+os.sep).encode('utf-8')+filename
+    print('Preparing:',ff)
     try:
-        fh = file(ff,'w')
+        fh = open(ff,'wb')
         fh.write(filename)
         fh.close
-    except Exception,x:
+    except Exception as x:
         logger.warning('cannot create file: %s',x)
 
 
 @add_worker
-def worker0(step):    
+def worker0(step: Step) -> None:    
 
     # do not cleanup server files from previous run
     reset_owncloud_account()
@@ -141,7 +141,7 @@ def worker0(step):
 
         
 @add_worker
-def worker1(step):
+def worker1(step: Step) -> None:
 
     step(1,'Preparation')
     d = make_workdir()

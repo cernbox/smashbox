@@ -47,7 +47,7 @@ filesizeKB = int(config.get('pingpong_filesizeKB',5000))
 pongdelay = float(config.get('pingpong_pongdelay',0))
 
 @add_worker
-def ping(step):
+def ping(step: Step) -> None:
     
     reset_owncloud_account()
     reset_rundir()
@@ -96,7 +96,7 @@ def ping(step):
     error_check( len(glob.glob(os.path.join(d,'*_conflict-*-*'))) == 0, "Conflicts found!")
 
 @add_worker
-def pong(step):
+def pong(step: Step) -> None:
 
     seen_files = set()
 

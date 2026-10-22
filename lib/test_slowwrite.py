@@ -57,7 +57,7 @@ testsets = [
 ]
 
 @add_worker
-def writer(step):    
+def writer(step: Step) -> None:    
 
     ver=ocsync_version()
 
@@ -85,7 +85,7 @@ def writer(step):
     create_hashfile(d,size=filesizeKB*1000,bs=blockSize,slow_write=slowWrite) #config.hashfile_size)
 
 @add_worker
-def synchronizer(step):
+def synchronizer(step: Step) -> None:
 
     step(2,'Sync the file as it is being written by writer')
 
@@ -95,7 +95,7 @@ def synchronizer(step):
 
     
 @add_worker
-def checker(step):
+def checker(step: Step) -> None:
 
     step(1,'Preparation')
     d = make_workdir()

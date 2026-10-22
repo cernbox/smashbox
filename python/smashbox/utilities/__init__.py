@@ -4,16 +4,36 @@ import os.path
 import datetime
 import subprocess
 import time
-import urllib
+import urllib.parse
 import platform
 import shutil
 import re
+import logging
+from typing import TYPE_CHECKING, Any, Protocol, TypeVar
 
 # Utilities to be used in the test-cases.
 from smashbox.utilities.version import version_compare
 
+if TYPE_CHECKING:
+    import owncloud
+    import smashbox.curl
+    from smashbox.utilities import reflection as reflection
 
-def compare_oc_version(compare_to, operator):
+# set by the execution framework before the test-case is loaded
+logger: logging.Logger
+
+class Step(Protocol):
+    """ The step(i, message) synchronization function passed to every worker. """
+    def __call__(self, i: int, message: str | None = ...) -> None: ...
+
+_WorkerT = TypeVar('_WorkerT')
+
+if TYPE_CHECKING:
+    # injected into the namespace of the test-case by the execution framework
+    def add_worker(f: _WorkerT, name: str | None = None) -> _WorkerT: ...
+
+
+def compare_oc_version(compare_to: str, operator: str) -> bool:
     """
 
     :param compare_to: E.g. '9.0'
@@ -30,7 +50,7 @@ def compare_oc_version(compare_to, operator):
     return version_compare(version, operator, compare_to)
 
 
-def compare_client_version(compare_to, operator):
+def compare_client_version(compare_to: str, operator: str) -> bool:
     """
 
     :param compare_to: E.g. '2.1'
@@ -39,7 +59,7 @@ def compare_client_version(compare_to, operator):
     """
 
     cmd = config.oc_sync_cmd
-    cmd = cmd[:cmd.find(' --')]
+    cmd = cmd[:cmd.find(' --')] # type: ignore[attr-defined] # FIXME: pre-existing bug, oc_sync_cmd is a list (see bin/smash)
     cmd += ' --version'
     rtn_code, std_out, std_err = runcmd(cmd)
 
@@ -50,7 +70,7 @@ def compare_client_version(compare_to, operator):
     return version_compare(version, operator, compare_to)
 
 
-def OWNCLOUD_CHUNK_SIZE(factor=1):
+def OWNCLOUD_CHUNK_SIZE(factor: float = 1) -> int:
     """Calculate file size as a fraction of owncloud client's default chunk size.
     """
     return int(20*1024*1024*factor) # 20MB as of client 1.7
@@ -58,7 +78,7 @@ def OWNCLOUD_CHUNK_SIZE(factor=1):
 
 ######## TEST SETUP AND PREPARATION
 
-def setup_test():
+def setup_test() -> None:
     """ Setup hooks run before any worker kicks-in.
     This is run under the name of the "supervisor" worker.
 
@@ -74,7 +94,7 @@ def setup_test():
     reset_server_log_file()
 
 
-def finalize_test():
+def finalize_test() -> None:
     """ Finalize hooks run after last worker terminated.
     This is run under the name of the "supervisor" worker.
 
@@ -89,7 +109,7 @@ def finalize_test():
 
 ######### HELPERS
 
-def reset_owncloud_account(reset_procedure=None, num_test_users=None):
+def reset_owncloud_account(reset_procedure: str | None = None, num_test_users: int | None = None) -> None:
     """
     Prepare the test account on the owncloud server (remote state). Run this once at the beginning of the test.
 
@@ -133,7 +153,7 @@ def reset_owncloud_account(reset_procedure=None, num_test_users=None):
         webdav_mkcol('/')
 
 
-def reset_rundir(reset_procedure=None):
+def reset_rundir(reset_procedure: str | None = None) -> None:
     """ Prepare the run directory for the current test (local state). Run this once at the beginning of the test.
 
     The reset_procedure defines what actually happens. If not set then the config default rundir_reset_procedure
@@ -156,7 +176,7 @@ def reset_rundir(reset_procedure=None):
         mkdir(config.rundir)
 
 
-def make_workdir(name=None):
+def make_workdir(name: str | None = None) -> str:
     """ Create a worker directory in the current run directory for the test (by default the name is derived from
     the worker's name).
     """
@@ -171,7 +191,7 @@ def make_workdir(name=None):
     return d
 
 
-def create_owncloud_account(username=None, password=None):
+def create_owncloud_account(username: str | None = None, password: str | None = None) -> None:
     """ Creates a user account on the server
 
     :param username: name of the user to be created, if None then the username is retrieved from the config file
@@ -190,7 +210,7 @@ def create_owncloud_account(username=None, password=None):
     oc_api.create_user(username, password)
 
 
-def login_owncloud_account(username=None, password=None):
+def login_owncloud_account(username: str | None = None, password: str | None = None) -> None:
     """ Login as user on the server (to generate the encryption keys)
 
     :param username: name of the user to be logged in
@@ -207,7 +227,7 @@ def login_owncloud_account(username=None, password=None):
     oc_api = get_oc_api()
     oc_api.login(username, password)
 
-def delete_owncloud_account(username):
+def delete_owncloud_account(username: str) -> None:
     """ Deletes a user account on the server
 
     :param username: name of the user to be created
@@ -220,7 +240,7 @@ def delete_owncloud_account(username):
     oc_api.delete_user(username)
 
 
-def check_owncloud_account(username):
+def check_owncloud_account(username: str) -> bool:
     """ Checks if a user account exists on the server
 
     :param user: name of the user to be checked
@@ -234,7 +254,7 @@ def check_owncloud_account(username):
     return exists
 
 
-def reset_owncloud_group(num_groups=None):
+def reset_owncloud_group(num_groups: int | None = None) -> None:
     """ Deletes and recreates groups on the server
 
     :param num_groups: the number of groups to be created
@@ -253,7 +273,7 @@ def reset_owncloud_group(num_groups=None):
         create_owncloud_group(group_name)
 
 
-def check_owncloud_group(group_name):
+def check_owncloud_group(group_name: str) -> bool:
     """ Checks if a group exists on the server
 
     :param group_name: name of the group to be checked
@@ -267,7 +287,7 @@ def check_owncloud_group(group_name):
     return exists
 
 
-def delete_owncloud_group(group_name):
+def delete_owncloud_group(group_name: str) -> None:
     """ Deletes a group on the server
 
     :param group_name: name of the group to be deleted
@@ -280,7 +300,7 @@ def delete_owncloud_group(group_name):
     oc_api.delete_group(group_name)
 
 
-def create_owncloud_group(group_name):
+def create_owncloud_group(group_name: str) -> None:
     """ Creates a group on the server
 
     :param group_name: name of the group to be created
@@ -295,7 +315,7 @@ def create_owncloud_group(group_name):
 
 ######### WEBDAV AND SYNC UTILITIES #####################
 
-def oc_webdav_url(protocol='http',remote_folder="",user_num=None,webdav_endpoint=None,hide_password=False):
+def oc_webdav_url(protocol: str = 'http', remote_folder: str = "", user_num: int | None = None, webdav_endpoint: str | None = None, hide_password: bool = False) -> str:
     """ Protocol for sync client should be set to 'owncloud'. Protocol for generic webdav clients is http.
     """
 
@@ -320,9 +340,9 @@ def oc_webdav_url(protocol='http',remote_folder="",user_num=None,webdav_endpoint
     else:
         password = config.oc_account_password
 
-    return protocol + '://' + urllib.quote(username, safe='') + ':' + urllib.quote(password, safe='') + '@' + config.oc_server + '/' + remote_path
+    return protocol + '://' + urllib.parse.quote(username, safe='') + ':' + urllib.parse.quote(password, safe='') + '@' + config.oc_server + '/' + remote_path
 
-def ocsync_version():
+def ocsync_version() -> tuple[int, ...]:
     """ Return the version reported by oc_sync_cmd.
 
     Returns a tuple (major,minor,bugfix). For example: (1,7,2) or (2,1,1)
@@ -368,10 +388,10 @@ def ocsync_version():
 
 
 # this is a local variable for each worker that keeps track of the repeat count for the current step
-ocsync_cnt = {}
+ocsync_cnt: dict[int, int] = {}
 
 
-def run_ocsync(local_folder, remote_folder="", n=None, user_num=None, timeout_min=5):
+def run_ocsync(local_folder: str, remote_folder: str = "", n: int | None = None, user_num: int | None = None, timeout_min: float = 5) -> None:
     """ Run the ocsync for local_folder against remote_folder (or the main folder on the owncloud account if remote_folder is None).
     Repeat the sync n times. If n given then n -> config.oc_sync_repeat (default 1).
     """
@@ -391,11 +411,12 @@ def run_ocsync(local_folder, remote_folder="", n=None, user_num=None, timeout_mi
     for i in range(n):
         t0 = datetime.datetime.now()
         cmd = config.oc_sync_cmd+[local_folder,oc_webdav_url('http',remote_folder,user_num)]
-        logf = file(os.path.join(config.rundir,"%s-ocsync.step%02d.cnt%03d.log"%(reflection.getProcessName(),current_step,ocsync_cnt[current_step])),"wb")
+        logf = open(os.path.join(config.rundir,"%s-ocsync.step%02d.cnt%03d.log"%(reflection.getProcessName(),current_step,ocsync_cnt[current_step])),"wb")
 
         logger.info('sync cmd is: %s',repr(cmd))
 
         process = subprocess.Popen(cmd, shell=False, stdout=logf, stderr=subprocess.STDOUT)
+        logf.close() # the child process has its own copy of the file descriptor
 
         timeout = timeout_min * 60
 
@@ -419,7 +440,7 @@ def run_ocsync(local_folder, remote_folder="", n=None, user_num=None, timeout_mi
             ocsync_cnt[current_step]+=1
             sleep(2+ocsync_cnt[current_step])
 
-def _prop_check(path,user_num=None,depth="0"):
+def _prop_check(path: str, user_num: int | None = None, depth: int | str = "0") -> 'smashbox.curl.Response':
     """ Private function to implement other utilities.
     """
     import smashbox.curl
@@ -432,18 +453,18 @@ def _prop_check(path,user_num=None,depth="0"):
 
 
 
-def webdav_propfind_ls(path, user_num=None):
+def webdav_propfind_ls(path: str, user_num: int | None = None) -> None:
     import xml.dom.minidom
     r = _prop_check(path,user_num,depth="1")
     x=xml.dom.minidom.parseString(r.response_body)
     logger.info('Listing %s by PROPFIND: %s'%(repr(path),x.toprettyxml()))
 
-def expect_webdav_does_not_exist(path, user_num=None):
+def expect_webdav_does_not_exist(path: str, user_num: int | None = None) -> None:
 
     r = _prop_check(path,user_num)
     error_check(r.rc >= 400,"Remote path exists: %s" % path) # class 4xx response is OK
 
-def expect_webdav_exist(path, user_num=None):
+def expect_webdav_exist(path: str, user_num: int | None = None) -> None:
 
     r = _prop_check(path,user_num)
     error_check(200 <= r.rc and r.rc < 300,"Remote path does not exist: %s" % path) # class 2xx response is OK
@@ -455,7 +476,7 @@ def expect_webdav_exist(path, user_num=None):
 # * Closing connection #0
 # * SSL connect error
 
-def webdav_delete(path, silent=True, user_num=None):
+def webdav_delete(path: str, silent: bool = True, user_num: int | None = None) -> 'smashbox.curl.Response | None':
 
     # work around buggy pycurl.so on MacOSX... buggy pycurl also on linux: https://bugzilla.redhat.com/show_bug.cgi?id=1317691
     if platform.system() != "Windows":
@@ -467,13 +488,14 @@ def webdav_delete(path, silent=True, user_num=None):
             verbose = ""
             echo=False
         runcmd('curl %s -k %s -X DELETE %s '%(verbose,config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num)),echo=echo)
+        return None
     else:
         import smashbox.curl
         c = smashbox.curl.Client(verbose=not silent) # FIXME: handle config.get('curl_opts','')
         url = oc_webdav_url(remote_folder=path, user_num=user_num)
         return c.DELETE(url)
 
-def webdav_mkcol(path, silent=True, user_num=None):
+def webdav_mkcol(path: str, silent: bool = True, user_num: int | None = None) -> 'smashbox.curl.Response | None':
 
     # work around buggy pycurl.so on MacOSX... buggy pycurl also on linux: https://bugzilla.redhat.com/show_bug.cgi?id=1317691
     if platform.system() != "Windows":
@@ -485,6 +507,7 @@ def webdav_mkcol(path, silent=True, user_num=None):
         else:
             echo=True
         runcmd('curl --verbose -k %s -X MKCOL %s %s'%(config.get('curl_opts',''),oc_webdav_url(remote_folder=path, user_num=user_num),out),echo=echo)
+        return None
     else:
         import smashbox.curl
         c = smashbox.curl.Client(verbose=not silent)
@@ -495,10 +518,10 @@ def webdav_mkcol(path, silent=True, user_num=None):
 
 # #### SHELL COMMANDS AND TIME FUNCTIONS
 
-def runcmd(cmd,ignore_exitcode=False,echo=True,allow_stderr=True,shell=True,log_warning=True):
+def runcmd(cmd: str | list[str], ignore_exitcode: bool = False, echo: bool = True, allow_stderr: bool = True, shell: bool = True, log_warning: bool = True) -> tuple[int, str, str]:
     logger.info('running %s', repr(cmd))
 
-    process = subprocess.Popen(cmd, shell=shell,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    process = subprocess.Popen(cmd, shell=shell,stdout=subprocess.PIPE,stderr=subprocess.PIPE,encoding='utf-8',errors='replace')
     stdout,stderr = process.communicate()
 
     if echo:
@@ -520,19 +543,19 @@ def runcmd(cmd,ignore_exitcode=False,echo=True,allow_stderr=True,shell=True,log_
     return (process.returncode, stdout, stderr)
 
 
-def sleep(n):
+def sleep(n: float) -> None:
     logger.info('sleeping %s seconds',n)
     time.sleep(n)
 
 
 ######## BASIC FILE AND DIRECTORY OPERATIONS
 
-def mkdir(d):
+def mkdir(d: str) -> str:
     logger.info('mkdir %s',d)
     if not os.path.exists(d):
         try:
             os.makedirs(d)
-        except OSError,x:
+        except OSError as x:
             import errno
             if x.errno == errno.EEXIST:
                 logger.warning(x)
@@ -542,11 +565,11 @@ def mkdir(d):
     return d
 
 
-def remove_tree(path):
+def remove_tree(path: str) -> None:
     logger.info('remove directory tree %s',path)
     try:
         shutil.rmtree(path)
-    except OSError,x:
+    except OSError as x:
         import errno
         if x.errno == errno.ENOENT:
             logger.warning(x)
@@ -554,23 +577,23 @@ def remove_tree(path):
             raise
 
 
-def remove_file(path):
+def remove_file(path: str) -> None:
     logger.info('remove file %s',path)
     try:
         os.remove(path)
-    except OSError,x:
+    except OSError as x:
         import errno
         if x.errno == errno.ENOENT:
             logger.warning(x)
         else:
             raise
 
-def mv(a,b):
+def mv(a: str, b: str) -> None:
     logger.info("move %s %s",a,b)
     shutil.move(a, b)
 
 
-def list_files(path,recursive=False):
+def list_files(path: str, recursive: bool = False) -> None:
 
     if platform.system() == 'Windows':
         runcmd('dir /s /b ' + path)
@@ -588,11 +611,11 @@ def list_files(path,recursive=False):
 
 #http://stackoverflow.com/questions/377017/test-if-executable-exists-in-python#377028
 
-def is_exe(fpath):
+def is_exe(fpath: str) -> bool:
     import os
     return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
-def which(program):
+def which(program: str) -> str | None:
     import os
     fpath, fname = os.path.split(program)
     if fpath:
@@ -610,17 +633,17 @@ def which(program):
 
 # ## DATA FILES AND VERSIONS
 
-def createfile(fn,c,count,bs):
+def createfile(fn: str, c: str, count: int, bs: int) -> None:
     # this replaces the dd as 1) more portable, 2) not prone to problems with escaping funny filenames in shell commands
     logger.info('createfile %s character=%s count=%d bs=%d',fn,repr(c),count,bs)
     buf = c*bs
-    of = file(fn,'w')
+    of = open(fn,'w',encoding='utf-8')
     for i in range(count):
         of.write(buf)
     of.close()
 
 
-def modify_file(fn,c,count,bs):
+def modify_file(fn: str, c: str, count: int, bs: int) -> None:
     logger.info('modify_file %s character=%s count=%d bs=%d',fn,repr(c),count,bs)
     buf = c*bs
 
@@ -636,7 +659,7 @@ def modify_file(fn,c,count,bs):
         reported_errors.append(message)
         return
 
-    of = open(fn, 'a')
+    of = open(fn, 'a', encoding='utf-8')
     of.seek(0,2)
     for i in range(count):
         logger.info('modify_file: appending ')
@@ -644,47 +667,47 @@ def modify_file(fn,c,count,bs):
     of.close()
 
 
-def delete_file(fn):
+def delete_file(fn: str) -> None:
     logger.info('delete_file: deleting file %s ',fn)
     if os.path.exists(fn):
         os.remove(fn)
 
 
-def createfile_zero(fn,count,bs):
+def createfile_zero(fn: str, count: int, bs: int) -> None:
     createfile(fn,'\0',count,bs)
 
 # some tests depend on md5sum in this module
 # use portable implementation of md5sum
-def md5sum(fn):
-    from hash_files import md5sum as _md5sum
+def md5sum(fn: str) -> str:
+    from smashbox.utilities.hash_files import md5sum as _md5sum
     return _md5sum(fn)
 
-def hexdump(fn):
+def hexdump(fn: str) -> None:
     if platform.system() == "Windows":
         # FIXME: this implementation is missing some formatting features of hexdump:
         # byte offset column and spacing between bytes
         with open(fn, 'rb') as f:
             for chunk in iter(lambda: f.read(32), b''):
-                chunk.encode('hex')
+                chunk.hex()
     else:
         runcmd('hexdump %s'%fn)
 
 
-def list_versions_on_server(fn):
+def list_versions_on_server(fn: str) -> None:
     cmd = "%(oc_server_shell_cmd)s md5sum %(oc_server_datadirectory)s/%(oc_account_name)s/files_versions/%(filename)s.v*" % config._dict(filename=os.path.join(config.oc_server_folder, os.path.basename(fn)))  # PENDING: bash -x
     runcmd(cmd)
 
 
-def hexdump_versions_on_server(fn):
+def hexdump_versions_on_server(fn: str) -> None:
     cmd = "%(oc_server_shell_cmd)s hexdump %(oc_server_datadirectory)s/%(oc_account_name)s/files_versions/%(filename)s.v*" % config._dict(filename=os.path.join(config.oc_server_folder, os.path.basename(fn)))  # PENDING: bash -x
     runcmd(cmd)
 
 
-def get_md5_versions_on_server(fn):
+def get_md5_versions_on_server(fn: str) -> list[tuple[str, str]]:
     cmd = "%(oc_server_shell_cmd)s md5sum %(oc_server_datadirectory)s/%(oc_account_name)s/files_versions/%(filename)s.v*" % config._dict(filename=os.path.join(config.oc_server_folder, os.path.basename(fn)))
 
     logger.info('running %s',repr(cmd))
-    process = subprocess.Popen(cmd,stdout=subprocess.PIPE,shell=True)
+    process = subprocess.Popen(cmd,stdout=subprocess.PIPE,shell=True,encoding='utf-8',errors='replace')
 
     stdout=process.communicate()[0]
 
@@ -702,31 +725,31 @@ def get_md5_versions_on_server(fn):
 
 # ###### LOGIC OPERANDS  ############
 
-def implies(p,q):
+def implies(p: object, q: object) -> object:
     return not p or q
 
 # ###### ERROR REPORTING ############
 
-reported_errors = []
+reported_errors: list[str] = []
 
-def error_check(expr,message=""):
+def error_check(expr: object, message: str = "") -> None:
     """ Assert expr is True. If not, then mark the test as failed but carry on the execution.
     """
 
     if not expr:
         import inspect
         f=inspect.getouterframes(inspect.currentframe())[1]
-        message=" ".join([message, "%s failed in %s() [\"%s\" at line %s]" %(''.join(f[4]).strip(),f[3],f[1],f[2])])
+        message=" ".join([message, "%s failed in %s() [\"%s\" at line %s]" %(''.join(f[4]).strip(),f[3],f[1],f[2])]) # type: ignore[arg-type] # code_context is available for test-case files
         logger.error(message)
         reported_errors.append(message)
 
-def fatal_check(expr,message=""):
+def fatal_check(expr: object, message: str = "") -> None:
     """ Assert expr is True. If not, then mark the test as failed and stop immediately.
     """
     if not expr:
         import inspect
         f=inspect.getouterframes(inspect.currentframe())[1]
-        message=" ".join([message, "%s failed in %s() [\"%s\" at line %s]" %(''.join(f[4]).strip(),f[3],f[1],f[2])])
+        message=" ".join([message, "%s failed in %s() [\"%s\" at line %s]" %(''.join(f[4]).strip(),f[3],f[1],f[2])]) # type: ignore[arg-type] # code_context is available for test-case files
         logger.fatal(message)
         reported_errors.append(message)
         raise AssertionError(message)
@@ -734,7 +757,7 @@ def fatal_check(expr,message=""):
 
 # ###### Server Log File Scraping ############
 
-def reset_server_log_file():
+def reset_server_log_file() -> None:
     """ Deletes the existing server log file so that there is a clean
         log file for the test run
     """
@@ -751,7 +774,7 @@ def reset_server_log_file():
 
 
 
-def scrape_log_file(d):
+def scrape_log_file(d: str) -> None:
     """ Copies over the server log file and searches it for specific strings
 
     :param d: The directory where the server log file is to be copied to
@@ -799,7 +822,7 @@ def scrape_log_file(d):
 
 # ###### API Calls ############
 
-def get_oc_api():
+def get_oc_api() -> 'owncloud.Client':
     """ Returns an instance of the Client class
 
     :returns: Client instance
@@ -815,7 +838,7 @@ def get_oc_api():
     return oc_api
 
 
-def share_file_with_user(filename, sharer, sharee, **kwargs):
+def share_file_with_user(filename: str, sharer: str, sharee: str, **kwargs: Any) -> int:
     """ Shares a file with a user
 
     :param filename: name of the file being shared
@@ -844,7 +867,7 @@ def share_file_with_user(filename, sharer, sharee, **kwargs):
             return -2
 
 
-def delete_share(sharer, share_id):
+def delete_share(sharer: str, share_id: int) -> None:
     """ Deletes a share
 
     :param sharer: user who created the original share
@@ -858,7 +881,7 @@ def delete_share(sharer, share_id):
     oc_api.delete_share(share_id)
 
 
-def share_file_with_group(filename, sharer, group, **kwargs):
+def share_file_with_group(filename: str, sharer: str, group: str, **kwargs: Any) -> int:
     """ Shares a file with a group
 
     :param filename: name of the file being shared
@@ -878,7 +901,7 @@ def share_file_with_group(filename, sharer, group, **kwargs):
     return groupshare_info.share_id
 
 
-def add_user_to_group(username, group_name):
+def add_user_to_group(username: str, group_name: str) -> None:
     """ Adds a user to a group
 
     :param username: name of user to be added to the group
@@ -891,7 +914,7 @@ def add_user_to_group(username, group_name):
     oc_api.add_user_to_group(username, group_name)
 
 
-def remove_user_from_group(username, group_name):
+def remove_user_from_group(username: str, group_name: str) -> None:
     """ Removes a user from a group
 
     :param username: name of user to be removed from the group
@@ -904,7 +927,7 @@ def remove_user_from_group(username, group_name):
     oc_api.remove_user_from_group(username, group_name)
 
 
-def check_users(num_test_users=None):
+def check_users(num_test_users: int | None = None) -> None:
     """ Checks if a user(s) exists or not
     """
     result = check_owncloud_account(config.oc_account_name)
@@ -917,7 +940,7 @@ def check_users(num_test_users=None):
             fatal_check(result, 'User %s not found' % username)
 
 
-def check_groups(num_groups=None):
+def check_groups(num_groups: int | None = None) -> None:
     """ Checks if a group exists or not
     """
     if num_groups is None:
@@ -930,7 +953,7 @@ def check_groups(num_groups=None):
             fatal_check(result, 'Group %s not found' % group_name)
 
 
-def expect_modified(fn, md5, comment=''):
+def expect_modified(fn: str, md5: str, comment: str = '') -> None:
     """ Compares that the checksum of two files is different
     """
     actual_md5 = md5sum(fn)
@@ -938,7 +961,7 @@ def expect_modified(fn, md5, comment=''):
                 "md5 of modified file %s did not change%s: expected %s" % (fn, comment, md5))
 
 
-def expect_not_modified(fn, md5, comment=''):
+def expect_not_modified(fn: str, md5: str, comment: str = '') -> None:
     """ Compares that the checksum of two files is the same
     """
     actual_md5 = md5sum(fn)
@@ -946,13 +969,13 @@ def expect_not_modified(fn, md5, comment=''):
                 "md5 of modified file %s changed%s and should not have: expected %s, got %s" % (fn, comment, md5, actual_md5))
 
 
-def expect_exists(fn):
+def expect_exists(fn: str) -> None:
     """ Checks that a files exists as expected
     """
     error_check(os.path.exists(fn), "File %s does not exist but should" % fn)
 
 
-def expect_does_not_exist(fn):
+def expect_does_not_exist(fn: str) -> None:
     """ Checks that a file does not exist, as expected
     """
     error_check(not os.path.exists(fn), "File %s exists but should not" % fn)
@@ -960,7 +983,7 @@ def expect_does_not_exist(fn):
 
 ############ Helper functions to report/document the behaviour of the tests ############
 
-def do_not_report_as_failure(Issue=""):
+def do_not_report_as_failure(Issue: str = "") -> None:
    config._test_ignored = Issue
 
 ############ Smashbox Exceptions ############
@@ -977,11 +1000,11 @@ class SkipTestExecutionException(Error):
         message -- explanation of the error
     """
 
-    def __init__(self, message):
+    def __init__(self, message: str) -> None:
         self.message = message
 
 
-def restrict_execution(current_platform="",client_version="",endpoint="",disable=False):
+def restrict_execution(current_platform: str = "", client_version: str = "", endpoint: str = "", disable: bool = False) -> None:
 
     if disable:
         raise SkipTestExecutionException("Skipped Test: this test is not fully automated")

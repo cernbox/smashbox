@@ -1,11 +1,18 @@
+import argparse
+from types import ModuleType
+from typing import Any
+
+
 class Reporter:
     """ Report execution state of smashbox.
     """
 
-    def __init__(self):
+    config: Any
+
+    def __init__(self) -> None:
         self.DEMO=False
 
-    def smashbox_start(self,args,config):
+    def smashbox_start(self,args: argparse.Namespace,config: Any) -> None:
         """
         Smashbox is starting.
         Arguments:
@@ -14,19 +21,19 @@ class Reporter:
         """
 
         if self.DEMO:
-            print "SMASHBOX_START",args,config
+            print("SMASHBOX_START",args,config)
             self.config=config
 
-    def smashbox_stop(self):
+    def smashbox_stop(self) -> None:
         """
         Smashbox is about to stop.
         """
 
         if self.DEMO:
-            print "SMASHBOX_STOP"
+            print("SMASHBOX_STOP")
 
     
-    def testcase_start(self,name,loop_i,testset_i,namespace):
+    def testcase_start(self,name: str,loop_i: int | None,testset_i: int | None,namespace: ModuleType) -> None:
         """
         Testcase is about to start.
         Arguments:
@@ -37,23 +44,23 @@ class Reporter:
 
          Example: 
           try:
-           print "Current testset configuration", namespace.testsets[testset_i]
+           print("Current testset configuration", namespace.testsets[testset_i])
           expect AttributeError:
-           print "Testsets not defined"
+           print("Testsets not defined")
 
         """
 
         if self.DEMO:
-            print "TESTCASE_START",name,loop_i,testset_i,namespace.__doc__
+            print("TESTCASE_START",name,loop_i,testset_i,namespace.__doc__)
 
             barename=name.replace("test_","")
 
             for c in self.config.__dict__:
                 if c.startswith(barename+"_"):
-                    print c,self.config[c]
+                    print(c,self.config[c])
 
 
-    def testcase_stop(self,returncode):
+    def testcase_stop(self,returncode: int) -> None:
         if self.DEMO:
-            print "TESTCASE_STOP",returncode
+            print("TESTCASE_STOP",returncode)
 

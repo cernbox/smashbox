@@ -11,32 +11,37 @@ Data structures that power Requests.
 """
 
 import os
-import collections
+import collections.abc
+from collections.abc import Iterable, Iterator, Mapping
 from itertools import islice
+from typing import Any, TypeVar
+
+_V = TypeVar('_V')
 
 
 class IteratorProxy(object):
     """docstring for IteratorProxy"""
-    def __init__(self, i):
+    def __init__(self, i: Any) -> None:
         self.i = i
         # self.i = chain.from_iterable(i)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Any]:
         return self.i
 
-    def __len__(self):
+    def __len__(self) -> int | None:
         if hasattr(self.i, '__len__'):
             return len(self.i)
         if hasattr(self.i, 'len'):
             return self.i.len
         if hasattr(self.i, 'fileno'):
             return os.fstat(self.i.fileno()).st_size
+        return None
 
-    def read(self, n):
+    def read(self, n: int | None) -> str:
         return "".join(islice(self.i, None, n))
 
 
-class CaseInsensitiveDict(collections.MutableMapping):
+class CaseInsensitiveDict(collections.abc.MutableMapping[str, _V]):
     """
     A case-insensitive ``dict``-like object.
 
@@ -64,30 +69,30 @@ class CaseInsensitiveDict(collections.MutableMapping):
     behavior is undefined.
 
     """
-    def __init__(self, data=None, **kwargs):
-        self._store = dict()
+    def __init__(self, data: Mapping[str, _V] | Iterable[tuple[str, _V]] | None = None, **kwargs: _V) -> None:
+        self._store: dict[str, tuple[str, _V]] = dict()
         if data is None:
             data = {}
         self.update(data, **kwargs)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: _V) -> None:
         # Use the lowercased key for lookups, but store the actual
         # key alongside the value.
         self._store[key.lower()] = (key, value)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> _V:
         return self._store[key.lower()][1]
 
-    def __delitem__(self, key):
+    def __delitem__(self, key: str) -> None:
         del self._store[key.lower()]
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:
         return (casedkey for casedkey, mappedvalue in self._store.values())
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._store)
 
-    def lower_items(self):
+    def lower_items(self) -> Iterator[tuple[str, _V]]:
         """Like iteritems(), but with all lowercase keys."""
         return (
             (lowerkey, keyval[1])
@@ -95,8 +100,8 @@ class CaseInsensitiveDict(collections.MutableMapping):
             in self._store.items()
         )
 
-    def __eq__(self, other):
-        if isinstance(other, collections.Mapping):
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, collections.abc.Mapping):
             other = CaseInsensitiveDict(other)
         else:
             return NotImplemented
@@ -104,27 +109,27 @@ class CaseInsensitiveDict(collections.MutableMapping):
         return dict(self.lower_items()) == dict(other.lower_items())
 
     # Copy is required
-    def copy(self):
+    def copy(self) -> 'CaseInsensitiveDict[_V]':
          return CaseInsensitiveDict(self._store.values())
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '%s(%r)' % (self.__class__.__name__, dict(self.items()))
 
 
-class LookupDict(dict):
+class LookupDict(dict[Any, Any]):
     """Dictionary lookup object."""
 
-    def __init__(self, name=None):
+    def __init__(self, name: str | None = None) -> None:
         self.name = name
         super(LookupDict, self).__init__()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '<lookup \'%s\'>' % (self.name)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: Any) -> Any:
         # We allow fall-through here, so values default to None
 
         return self.__dict__.get(key, None)
 
-    def get(self, key, default=None):
+    def get(self, key: Any, default: Any = None) -> Any:
         return self.__dict__.get(key, default)

@@ -7,9 +7,22 @@ from requests.auth import HTTPBasicAuth
 import time
 import urllib3
 
+import argparse
+import queue
+import multiprocessing.managers
+from typing import Any
+
+import requests
+
+from smashbox.script import Configuration
+
 class StateMonitor:
 
-    def __init__(self,manager, args, config):
+    worker_results: 'queue.Queue[list[list[str]]] | None'
+    test_results: dict[str, Any]
+    runtimestamp: float
+
+    def __init__(self,manager: multiprocessing.managers.SyncManager, args: argparse.Namespace, config: Configuration) -> None:
         """
         Initialize the test state with initial information
         """
@@ -36,16 +49,21 @@ class StateMonitor:
         self.runtimestamp = config._run_timestamp
 
         # extract test parameters
-        parameters = []
-        param = {}
+        parameters: list[dict[str, Any]] = []
+        param: dict[str, Any] = {}
         for c in config.__dict__:
             if c.startswith(testname + "_"):
                 param[str((c.replace(testname + "_", "")))] = config[c]
                 parameters.append(param)
-                print c, config[c]
+                print(c, config[c])
 
         if platform.system() == 'Linux':
-            distribution = platform.dist()
+            # platform.dist() was removed in python 3.8
+            try:
+                os_release = platform.freedesktop_os_release()
+            except OSError:
+                os_release = {}
+            distribution = (os_release.get('ID', ''), os_release.get('VERSION_ID', ''))
             #client_platform = str(platform.system()) + "-" + str(distribution[0])+str(distribution[1])
             distr = tuple([str(x) for x in distribution[1].split(".")])
             client_platform = str(distribution[0])+distr[0]
@@ -63,20 +81,20 @@ class StateMonitor:
                              'total_errors':0,'total_success':0, 'qos_metrics': [],'ignoredFailures':0,'passed': 0,'failed': 0, 'test_ignored': self._test_ignored }
 
 
-    def join_worker_results(self):
+    def join_worker_results(self) -> None:
         """
         Join partial worker tests results information. The partial results are stored in queue (FIFO order)
         """
         if not self.monit_host:
             return
 
-        partial_results = self.worker_results.get()
+        partial_results = self.worker_results.get() # type: ignore[union-attr] # set whenever monit_host is
         if(partial_results[0]): self.test_results['errors'].append(partial_results[0])
 
         self.test_results['total_errors']+=len(self.test_results['errors'])
 
 
-    def test_finish(self):
+    def test_finish(self) -> None:
         """"
         Check if the test has passed and publish results
         """
@@ -98,7 +116,7 @@ class StateMonitor:
         self.send_and_check(json_results)
 
 
-    def get_json_results(self):
+    def get_json_results(self) -> list[dict[str, Any]]:
         """
         Saved results in a dictionary to be able to convert them in a json format
         """
@@ -113,7 +131,7 @@ class StateMonitor:
     #   Report tests results and statistics to the monitoring dashboard
     # --------------------------------------------------------------------------------
 
-    def send(self,document):
+    def send(self,document: list[dict[str, Any]]) -> requests.Response:
         import requests, json
         dest = self.monit_host + ":" + str(self.monit_port) + "/smashboxtests"
         print ("------------------------------------------- monitoring data")
@@ -127,7 +145,7 @@ class StateMonitor:
                              headers={"Content-Type": "application/json; charset=UTF-8"},
                              verify=False)
 
-    def send_and_check(self,document, should_fail=False):
+    def send_and_check(self,document: list[dict[str, Any]], should_fail: bool = False) -> None:
         response = self.send(document)
         assert (
         (response.status_code in [200]) != should_fail), 'With document: {0}. Status code: {1}. Message: {2}'.format(

@@ -2,7 +2,7 @@ from smashbox.utilities import *
 
 # simple monitoring to grafana (disabled if not set in config)
 
-def push_to_monitoring(metric,value,timestamp=None):
+def push_to_monitoring(metric: str, value: object, timestamp: float | None = None) -> None:
 
     monitoring_host=config.get('monitoring_host',None)
     monitoring_port=config.get('monitoring_port',2003)

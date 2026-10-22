@@ -19,7 +19,7 @@ nfiles = int(config.get('dirDel_nfiles', 100))
 TEST_FILES = ['test%02d.dat'%i for i in range(nfiles)]
 
 @add_worker
-def workerA(step):
+def workerA(step: Step) -> None:
 
     #cleanup remote and local test environment - this should be run once by one worker only
     reset_owncloud_account()
@@ -32,7 +32,7 @@ def workerA(step):
 
     # create a folder and some files in it
     path = "0"
-    for i in xrange(1, NESTING_LEVELS):
+    for i in range(1, NESTING_LEVELS):
         path = path + "/" + str(i)
     d1 = mkdir(os.path.join(syncdir, path))
 

@@ -12,14 +12,14 @@ testsets = [{"hello3_A":1,"hello3_B":2},{"hello3_A":111,"hello3_B":222}]
 logger.info("Loading tescase module...")
 
 @add_worker
-def helloA(step):
+def helloA(step: Step) -> None:
     step(1)
 
     logger.info("My A=%d",A)
     list_files('.')
 
 @add_worker
-def helloB(step):
+def helloB(step: Step) -> None:
     step(2)
 
     logger.info("My B=%d",B)
@@ -27,7 +27,7 @@ def helloB(step):
 
 
 @add_worker
-def helloC(step):
+def helloC(step: Step) -> None:
     step(3)
 
     logger.info("My A+B=%d",A+B)

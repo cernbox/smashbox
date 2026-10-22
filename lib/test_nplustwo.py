@@ -10,7 +10,7 @@ from smashbox.utilities.hash_files import *
 
 nfiles = int(config.get('nplustwo_nfiles',10))
 
-def adder(step):
+def adder(step: Step) -> None:
 
     # if you don't want to  cleanup server files from previous run then set oc_account_reset_procedure=keep option
     #
@@ -45,10 +45,10 @@ def adder(step):
     logger.info('SUCCESS: %d files found',k1)
 
 @add_worker
-def worker0(step):
+def worker0(step: Step) -> None:
     adder(step)
         
 @add_worker
-def worker1(step):
+def worker1(step: Step) -> None:
     adder(step)
 

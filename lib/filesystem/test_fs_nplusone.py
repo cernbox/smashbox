@@ -22,6 +22,7 @@ if type(filesize) is type(''):
 testsets = []
 
 # create cartesian product of all test configurations
+s: Any  # heterogeneous [size spec, nfiles] pairs
 for s in [[1000, 100], [OWNCLOUD_CHUNK_SIZE(0.3), 10], [OWNCLOUD_CHUNK_SIZE(1.3), 2], [OWNCLOUD_CHUNK_SIZE(3.5), 1], [(3.5,1.37), 10]]:
   for t in [None, config.get('fs_nplusone_path0',"")]:
       for p in [None, config.get('fs_nplusone_path1',"")]:
@@ -31,7 +32,7 @@ for s in [[1000, 100], [OWNCLOUD_CHUNK_SIZE(0.3), 10], [OWNCLOUD_CHUNK_SIZE(1.3)
                              'fs_nplusone_fspath1':p } )
 
 @add_worker
-def worker0(step):    
+def worker0(step: Step) -> None:    
 
     # do not cleanup server files from previous run
     reset_owncloud_account()
@@ -74,7 +75,7 @@ def worker0(step):
     logger.info('SUCCESS: %d files found',k1)
         
 @add_worker
-def worker1(step):
+def worker1(step: Step) -> None:
     step(1,'Preparation')
 
     if fspath1:

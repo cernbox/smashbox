@@ -49,7 +49,7 @@ import tempfile
 from smashbox.utilities.hash_files import *
 
 @add_worker
-def creator(step):
+def creator(step: Step) -> None:
     reset_owncloud_account()
     reset_rundir()
 
@@ -65,7 +65,7 @@ def creator(step):
 
 
 @add_worker
-def adder(step):
+def adder(step: Step) -> None:
     
     step(2,'sync the empty directory created by the creator')
     d = make_workdir()
@@ -98,7 +98,7 @@ def adder(step):
 
 
 @add_worker
-def mover(step):
+def mover(step: Step) -> None:
     step(2,'sync the empty directory created by the creator')
     d = make_workdir()
     run_ocsync(d)
@@ -118,7 +118,7 @@ def mover(step):
     final_check(d)
 
 @add_worker
-def checker(step):
+def checker(step: Step) -> None:
 
     step(6,'sync the final state of the repository into a fresh local folder')
     d = make_workdir()
@@ -127,7 +127,7 @@ def checker(step):
     final_check(d)
 
 
-def final_check(d):
+def final_check(d: str) -> None:
 
     list_files(d,recursive=True)
 

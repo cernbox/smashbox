@@ -91,7 +91,7 @@ OCS_PERMISSION_SHARE = 16
 OCS_PERMISSION_ALL = 31
 
 @add_worker
-def setup(step):
+def setup(step: Step) -> None:
 
     step (1, 'create test users')
     reset_owncloud_account(num_test_users=config.oc_number_test_users)
@@ -100,7 +100,7 @@ def setup(step):
     reset_rundir()
 
 @add_worker
-def sharer(step):
+def sharer(step: Step) -> None:
 
     step (2, 'Create workdir')
     d = make_workdir()
@@ -150,7 +150,7 @@ def sharer(step):
     step (19, 'Sharer Final step')
 
 @add_worker
-def shareeOne(step):
+def shareeOne(step: Step) -> None:
 
     step (2, 'Sharee One creates workdir')
     d = make_workdir()
@@ -207,7 +207,7 @@ def shareeOne(step):
     step (19, 'Sharee One final step')
 
 @add_worker
-def shareeTwo(step):
+def shareeTwo(step: Step) -> None:
   
     step (2, 'Sharee Two creates workdir')
     d = make_workdir()

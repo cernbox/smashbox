@@ -36,7 +36,7 @@ testsets = [
 
 
 @add_worker
-def worker0(step):    
+def worker0(step: Step) -> None:    
     shared = reflection.getSharedObject()
 
     # do not cleanup server files from previous run
@@ -60,7 +60,7 @@ def worker0(step):
     run_ocsync(d)
         
 @add_worker
-def worker1(step):
+def worker1(step: Step) -> None:
     shared = reflection.getSharedObject()
     step(1,'Preparation')
     d = make_workdir('worker1')
@@ -74,7 +74,7 @@ def worker1(step):
     step(4)
 
 @add_worker
-def tinkerer(step):
+def tinkerer(step: Step) -> None:
     shared = reflection.getSharedObject()
     d = make_workdir('worker1') # use the same workdir as worker1
 

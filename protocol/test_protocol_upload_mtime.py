@@ -5,7 +5,7 @@ from smashbox.protocol import chunk_file_upload, file_upload, ls_prop_desktop20,
 import time
 import dateutil.parser
 
-def check_propfind_response(URL,filename,mtime,total_size):
+def check_propfind_response(URL: str,filename: str,mtime: int,total_size: int) -> None:
 
     filename = os.path.basename(filename)
 
@@ -27,16 +27,16 @@ def check_propfind_response(URL,filename,mtime,total_size):
         d2=int(mtime)
 
         if d1 != d2:
-            print resp
-            print filename
-            print d1,d2
-            assert("MTIME DOES NOT MATCH" is False)
+            print(resp)
+            print(filename)
+            print(d1,d2)
+            assert("MTIME DOES NOT MATCH" == False)
 
 
 
 
 @add_worker
-def main(step):
+def main(step: Step) -> None:
 
     d = make_workdir()
     reset_owncloud_account()

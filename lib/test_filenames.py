@@ -30,7 +30,7 @@ charsets_excluded_from_sync = {
                  'pipe'    : '|'
 }
 
-def is_excluded(name):
+def is_excluded(name: str) -> bool:
     """
     Returns true if the given file name matches an pattern
     excluded from sync by the sync client.
@@ -58,7 +58,7 @@ def is_excluded(name):
     return False
 
 @add_worker
-def creator(step):
+def creator(step: Step) -> None:
     
     reset_owncloud_account()
     reset_rundir()
@@ -81,7 +81,7 @@ def creator(step):
     charsets = { 'space' : ' ', 
                  'plus' : '+', 
                  'underscore' : '_',
-                 'moscicki' : '\xc5\x9b', # some UTF-8 unicode character...
+                 'moscicki' : '\u015b', # some UTF-8 unicode character...
                  'singlequote' : "'"
         }
 
@@ -98,7 +98,7 @@ def creator(step):
 
     # generic charsets -- let's take a hammer and test (almost) all ANSI characters
     # we don't test for the foward slash
-    char_range = range(32,47)+range(58,65)+range(91,97)+range(123,127)
+    char_range = list(range(32,47))+list(range(58,65))+list(range(91,97))+list(range(123,127))
 
     #char_range.remove(37) #to see the tests to complition temporarily remove this character as it crashes csync
     #char_range=[]
@@ -134,7 +134,7 @@ def creator(step):
 
 
 @add_worker
-def propagator(step):
+def propagator(step: Step) -> None:
 
     step(2,'check propagation of files')
 
@@ -149,7 +149,7 @@ def propagator(step):
     # also exclude file name patterns
     expected_files = [fn for fn in expected_files if not is_excluded(fn)]
 
-    logger.info("expected %d files to be propagated (excluding the ones with unsyncable characters %s)",len(expected_files),repr(charsets_excluded_from_sync.values()))
+    logger.info("expected %d files to be propagated (excluding the ones with unsyncable characters %s)",len(expected_files),repr(list(charsets_excluded_from_sync.values())))
 
     run_ocsync(d)
 
