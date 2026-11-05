@@ -11,6 +11,10 @@ from smashbox.utilities.hash_files import *
 
 nfiles = 10
 
+# Unicode normalization form (NFC, NFD, NFKC or NFKD) for the generated file names. Set it for
+# servers that normalize file names, else the test reports the changed names as corrupt.
+normalization = config.get('unicodejam_normalization', None)
+
 def removeunicodejam(localdir: str) -> None:
     import glob
     fl = glob.glob(localdir+os.sep+'*')
@@ -88,6 +92,11 @@ def createunicodejam(localdir: str) -> None:
         cc = chr(j)
         if cc in forbidden: continue
         raw+=cc
+
+    if normalization:
+        import unicodedata
+        # NFKC and NFKD can make a forbidden character
+        raw = ''.join(c for c in unicodedata.normalize(normalization, raw) if c not in forbidden)
 
     filename = raw.encode('utf-8', errors='ignore')
 
